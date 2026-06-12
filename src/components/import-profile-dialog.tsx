@@ -90,11 +90,9 @@ export function ImportProfileDialog({
     useBrowserSupport();
   const { storedProxies } = useProxyEvents();
 
-  // Firefox-based browsers map to the deprecated Camoufox and can no longer be
-  // imported (the backend rejects them); only offer Chromium-family sources.
-  const importableBrowsers = supportedBrowsers.filter(
-    (browser) => getMappedBrowser(browser) === "wayfern",
-  );
+  // All detected browsers are importable — both Wayfern (Chromium-family)
+  // and Camoufox (Firefox-family) sources are accepted.
+  const importableBrowsers = supportedBrowsers;
 
   const loadDetectedProfiles = useCallback(async () => {
     setIsLoading(true);
@@ -189,8 +187,7 @@ export function ImportProfileDialog({
         browserType,
         newProfileName,
         proxyId: selectedProxyId ?? null,
-        // Camoufox import is deprecated/blocked; only Wayfern configs are sent.
-        camoufoxConfig: null,
+        camoufoxConfig: mappedBrowser === "camoufox" ? {} : null,
         wayfernConfig: mappedBrowser === "wayfern" ? wayfernConfig : null,
       });
 
@@ -582,17 +579,24 @@ export function ImportProfileDialog({
                 </Select>
               </div>
 
-              {/* Only Wayfern profiles are importable now (Camoufox/Firefox
-                  import is deprecated and blocked). */}
-              <WayfernConfigForm
-                config={wayfernConfig}
-                onConfigChange={(key, value) => {
-                  setWayfernConfig((prev) => ({ ...prev, [key]: value }));
-                }}
-                isCreating={true}
-                crossOsUnlocked={crossOsUnlocked}
-                limitedMode={!crossOsUnlocked}
-              />
+              {/* Show Wayfern config for Wayfern imports; Camoufox imports
+                  use server-side defaults. */}
+              {currentMappedBrowser === "wayfern" && (
+                <WayfernConfigForm
+                  config={wayfernConfig}
+                  onConfigChange={(key, value) => {
+                    setWayfernConfig((prev) => ({ ...prev, [key]: value }));
+                  }}
+                  isCreating={true}
+                  crossOsUnlocked={crossOsUnlocked}
+                  limitedMode={!crossOsUnlocked}
+                />
+              )}
+              {currentMappedBrowser === "camoufox" && (
+                <p className="text-sm text-muted-foreground">
+                  {t("importProfile.camoufoxConfigNote")}
+                </p>
+              )}
             </div>
           )}
         </div>
