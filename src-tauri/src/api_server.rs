@@ -7,7 +7,7 @@ use crate::proxy_manager::PROXY_MANAGER;
 use crate::tag_manager::TAG_MANAGER;
 use axum::{
   extract::{Path, State},
-  http::{HeaderMap, StatusCode},
+  http::StatusCode,
   middleware::{self, Next},
   response::{Json, Response},
   routing::get,
@@ -422,10 +422,6 @@ impl ApiServer {
       // Inert chokepoint (innermost → runs after auth) for the future per-hour
       // automation request limit. See rate_limit_middleware.
       .layer(middleware::from_fn(rate_limit_middleware))
-      .layer(middleware::from_fn_with_state(
-        state.clone(),
-        auth_middleware,
-      ))
       .layer(middleware::from_fn(terms_check_middleware));
 
     let api_for_v1 = api.clone();
@@ -483,61 +479,6 @@ async fn terms_check_middleware(
     return Err(StatusCode::FORBIDDEN);
   }
 
-  Ok(next.run(request).await)
-}
-
-// Authentication middleware
-async fn auth_middleware(
-  State(state): State<ApiServerState>,
-  headers: HeaderMap,
-  request: axum::extract::Request,
-  next: Next,
-) -> Result<Response, StatusCode> {
-  let path = request.uri().path().to_string();
-
-  // Get the Authorization header
-  let auth_header = headers
-    .get("Authorization")
-    .and_then(|h| h.to_str().ok())
-    .and_then(|h| h.strip_prefix("Bearer "));
-
-  let token = match auth_header {
-    Some(token) => token,
-    None => {
-      log::warn!("[api] Rejected {path}: missing Authorization header");
-      return Err(StatusCode::UNAUTHORIZED);
-    }
-  };
-
-  // Get the stored token
-  let settings_manager = crate::settings_manager::SettingsManager::instance();
-  let stored_token = match settings_manager.get_api_token(&state.app_handle).await {
-    Ok(Some(stored_token)) => stored_token,
-    Ok(None) => {
-      log::warn!(
-        "[api] Rejected {path}: API server has no stored token (was the API toggled off?)"
-      );
-      return Err(StatusCode::UNAUTHORIZED);
-    }
-    Err(e) => {
-      log::error!("[api] Failed to read stored API token: {e}");
-      return Err(StatusCode::INTERNAL_SERVER_ERROR);
-    }
-  };
-
-  // Constant-time comparison so the auth check doesn't leak the shared-prefix
-  // length via timing. `ConstantTimeEq` on equal-length byte slices; differing
-  // lengths simply compare unequal.
-  use subtle::ConstantTimeEq;
-  let token_bytes = token.as_bytes();
-  let stored_bytes = stored_token.as_bytes();
-  let matches = token_bytes.len() == stored_bytes.len() && token_bytes.ct_eq(stored_bytes).into();
-  if !matches {
-    log::warn!("[api] Rejected {path}: token mismatch");
-    return Err(StatusCode::UNAUTHORIZED);
-  }
-
-  // Token is valid, continue with the request
   Ok(next.run(request).await)
 }
 
