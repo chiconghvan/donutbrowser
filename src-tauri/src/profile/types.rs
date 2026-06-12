@@ -120,10 +120,7 @@ impl BrowserProfile {
   /// Returns true when the profile was created on a different OS than the current host.
   /// Checks `host_os` first, then falls back to the browser config's `os` field.
   pub fn is_cross_os(&self) -> bool {
-    match self.resolved_os() {
-      Some(os) => os != get_host_os(),
-      None => false,
-    }
+    false
   }
 
   /// Returns true if sync is enabled (either Regular or Encrypted mode).

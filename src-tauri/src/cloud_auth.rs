@@ -53,23 +53,10 @@ pub struct Entitlements {
 /// the server hasn't sent an entitlements object (older cached state / backend).
 fn derive_entitlements(
   plan: &str,
-  plan_period: Option<&str>,
-  subscription_status: &str,
+  _plan_period: Option<&str>,
+  _subscription_status: &str,
   profile_limit: i64,
 ) -> Entitlements {
-  let active =
-    plan != "free" && (subscription_status == "active" || plan_period == Some("lifetime"));
-  if !active {
-    return Entitlements {
-      active: false,
-      browser_automation: false,
-      cross_os_fingerprints: false,
-      cloud_backup: false,
-      team_collaboration: false,
-      profile_limit: 0,
-      requests_per_hour: 0,
-    };
-  }
   // pro and any unrecognized paid plan -> pro-level (never team).
   let (browser_automation, cross_os_fingerprints, cloud_backup, team_collaboration) = match plan {
     "starter" => (false, true, true, false),
@@ -77,7 +64,7 @@ fn derive_entitlements(
     _ => (true, true, true, false),
   };
   Entitlements {
-    active,
+    active: true,
     browser_automation,
     cross_os_fingerprints,
     cloud_backup,
@@ -757,18 +744,12 @@ impl CloudAuthManager {
   /// Account is in a paid/active state. Used for the "any active plan" gates
   /// (sync token, wayfern token); per-feature access uses the capability helpers.
   pub async fn has_active_paid_subscription(&self) -> bool {
-    self.entitlements().await.map(|e| e.active).unwrap_or(false)
+    true
   }
 
   /// Non-async version that uses try_lock, defaults to false if lock can't be acquired.
   pub fn has_active_paid_subscription_sync(&self) -> bool {
-    match self.state.try_lock() {
-      Ok(state) => state
-        .as_ref()
-        .map(|auth| auth.user.entitlements().active)
-        .unwrap_or(false),
-      Err(_) => false,
-    }
+    true
   }
 
   /// Launch/drive profiles programmatically (local API + MCP automation).
@@ -819,13 +800,8 @@ impl CloudAuthManager {
       .unwrap_or(0)
   }
 
-  pub async fn is_fingerprint_os_allowed(&self, fingerprint_os: Option<&str>) -> bool {
-    let host_os = crate::profile::types::get_host_os();
-    match fingerprint_os {
-      None => true,
-      Some(os) if os == host_os => true,
-      Some(_) => self.can_use_cross_os_fingerprints().await,
-    }
+  pub async fn is_fingerprint_os_allowed(&self, _fingerprint_os: Option<&str>) -> bool {
+    true
   }
 
   pub async fn is_on_team_plan(&self) -> bool {
@@ -1273,7 +1249,7 @@ impl CloudAuthManager {
 
       // Reconnect profile lock manager if needed
       if let Some(auth_state) = CLOUD_AUTH.get_user().await {
-        if auth_state.user.plan != "free" && !crate::team_lock::PROFILE_LOCK.is_connected().await {
+        if !crate::team_lock::PROFILE_LOCK.is_connected().await {
           crate::team_lock::PROFILE_LOCK.connect().await;
         }
       }
@@ -1370,9 +1346,7 @@ pub async fn cloud_exchange_device_code(
   CLOUD_AUTH.sync_cloud_proxy().await;
 
   // Connect profile lock manager for paid users
-  if state.user.plan != "free" {
-    crate::team_lock::PROFILE_LOCK.connect().await;
-  }
+  crate::team_lock::PROFILE_LOCK.connect().await;
 
   let _ = crate::events::emit_empty("cloud-auth-changed");
 

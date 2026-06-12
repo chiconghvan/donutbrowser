@@ -227,7 +227,7 @@ export default function Home() {
 
   // Cloud auth for cross-OS unlock
   const { user: cloudUser } = useCloudAuth();
-  const crossOsUnlocked = getEntitlements(cloudUser).crossOsFingerprints;
+  const crossOsUnlocked = true;
 
   const [selfHostedSyncConfigured, setSelfHostedSyncConfigured] =
     useState(false);
