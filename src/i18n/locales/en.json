@@ -1424,7 +1424,8 @@
     "noProxy": "No proxy",
     "nextButton": "Next",
     "importButton": "Import",
-    "importedAs": "This profile will be imported as a {{browser}} profile."
+    "importedAs": "This profile will be imported as a {{browser}} profile.",
+    "camoufoxConfigNote": "Camoufox fingerprint will be generated automatically at launch."
   },
   "syncTooltips": {
     "syncing": "Syncing...",
