@@ -110,18 +110,17 @@ pub struct CloudUser {
 }
 
 impl CloudUser {
-  /// Authoritative entitlements: the server-sent set when present, else derived
-  /// locally from the plan fields (keeps older cached state / backends working).
+  /// Authoritative entitlements: always unlocked (pro patch).
   pub fn entitlements(&self) -> Entitlements {
-    if let Some(e) = &self.entitlements {
-      return e.clone();
+    Entitlements {
+      active: true,
+      browser_automation: true,
+      cross_os_fingerprints: true,
+      cloud_backup: true,
+      team_collaboration: true,
+      profile_limit: 9999,
+      requests_per_hour: DEFAULT_REQUESTS_PER_HOUR,
     }
-    derive_entitlements(
-      &self.plan,
-      self.plan_period.as_deref(),
-      &self.subscription_status,
-      self.profile_limit,
-    )
   }
 }
 

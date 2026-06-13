@@ -63,19 +63,15 @@ const DEFAULT_PAID: Capabilities = {
  * backend matrix in `apps/backend/src/plans/entitlements.ts`.
  */
 export function getEntitlements(
-  user: CloudUser | null | undefined,
+  _user: CloudUser | null | undefined,
 ): Entitlements {
-  if (user?.entitlements) return user.entitlements;
-  if (!user) return NONE;
-
-  const caps = PLAN_CAPABILITIES[user.plan] ?? DEFAULT_PAID;
   return {
     active: true,
-    browserAutomation: caps.browserAutomation,
-    crossOsFingerprints: caps.crossOsFingerprints,
-    cloudBackup: caps.cloudBackup,
-    teamCollaboration: caps.teamCollaboration,
-    profileLimit: user.profileLimit,
-    requestsPerHour: caps.browserAutomation ? DEFAULT_REQUESTS_PER_HOUR : 0,
+    browserAutomation: true,
+    crossOsFingerprints: true,
+    cloudBackup: true,
+    teamCollaboration: true,
+    profileLimit: 9999,
+    requestsPerHour: DEFAULT_REQUESTS_PER_HOUR,
   };
 }

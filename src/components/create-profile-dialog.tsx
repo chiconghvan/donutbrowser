@@ -662,7 +662,8 @@ export function CreateProfileDialog({
                               <LuLoaderCircle className="size-6 animate-spin" />
                             ) : (
                               (() => {
-                                const IconComponent = getBrowserIcon("camoufox");
+                                const IconComponent =
+                                  getBrowserIcon("camoufox");
                                 return IconComponent ? (
                                   <IconComponent className="size-6" />
                                 ) : null;
@@ -681,11 +682,12 @@ export function CreateProfileDialog({
                           </div>
                         </Button>
 
-                        {!getCreatableVersion("wayfern") && !getCreatableVersion("camoufox") && (
-                          <p className="pt-2 text-sm text-center text-muted-foreground">
-                            {t("createProfile.browsersDownloading")}
-                          </p>
-                        )}
+                        {!getCreatableVersion("wayfern") &&
+                          !getCreatableVersion("camoufox") && (
+                            <p className="pt-2 text-sm text-center text-muted-foreground">
+                              {t("createProfile.browsersDownloading")}
+                            </p>
+                          )}
                       </div>
                     </TabsContent>
 
