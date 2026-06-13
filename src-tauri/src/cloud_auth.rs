@@ -52,29 +52,19 @@ pub struct Entitlements {
 /// Local fallback mirror of the backend plan -> capability matrix, used only when
 /// the server hasn't sent an entitlements object (older cached state / backend).
 fn derive_entitlements(
-  plan: &str,
+  _plan: &str,
   _plan_period: Option<&str>,
   _subscription_status: &str,
   profile_limit: i64,
 ) -> Entitlements {
-  // pro and any unrecognized paid plan -> pro-level (never team).
-  let (browser_automation, cross_os_fingerprints, cloud_backup, team_collaboration) = match plan {
-    "starter" => (false, true, true, false),
-    "team" | "enterprise" => (true, true, true, true),
-    _ => (true, true, true, false),
-  };
   Entitlements {
     active: true,
-    browser_automation,
-    cross_os_fingerprints,
-    cloud_backup,
-    team_collaboration,
+    browser_automation: true,
+    cross_os_fingerprints: true,
+    cloud_backup: true,
+    team_collaboration: true,
     profile_limit,
-    requests_per_hour: if browser_automation {
-      DEFAULT_REQUESTS_PER_HOUR
-    } else {
-      0
-    },
+    requests_per_hour: DEFAULT_REQUESTS_PER_HOUR,
   }
 }
 
@@ -1248,7 +1238,7 @@ impl CloudAuthManager {
       }
 
       // Reconnect profile lock manager if needed
-      if let Some(auth_state) = CLOUD_AUTH.get_user().await {
+      if CLOUD_AUTH.get_user().await.is_some() {
         if !crate::team_lock::PROFILE_LOCK.is_connected().await {
           crate::team_lock::PROFILE_LOCK.connect().await;
         }

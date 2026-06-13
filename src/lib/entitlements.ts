@@ -68,11 +68,6 @@ export function getEntitlements(
   if (user?.entitlements) return user.entitlements;
   if (!user) return NONE;
 
-  const active =
-    user.plan !== "free" &&
-    (user.subscriptionStatus === "active" || user.planPeriod === "lifetime");
-  if (!active) return NONE;
-
   const caps = PLAN_CAPABILITIES[user.plan] ?? DEFAULT_PAID;
   return {
     active: true,
