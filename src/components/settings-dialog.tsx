@@ -2,6 +2,7 @@
 
 import { invoke } from "@tauri-apps/api/core";
 import { writeText as writeClipboardText } from "@tauri-apps/plugin-clipboard-manager";
+import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import Color from "color";
 import { useCallback, useEffect, useState } from "react";
@@ -68,6 +69,14 @@ interface AppSettings {
   api_token?: string;
   disable_auto_updates?: boolean;
   keep_decrypted_profiles_in_ram?: boolean;
+}
+
+interface DataDirSettings {
+  current_data_dir: string;
+  configured_data_dir?: string | null;
+  default_data_dir: string;
+  env_override_active: boolean;
+  portable: boolean;
 }
 
 interface CustomThemeState {
@@ -143,6 +152,10 @@ export function SettingsDialog({
     arch: string;
     portable: boolean;
   } | null>(null);
+  const [dataDirSettings, setDataDirSettings] =
+    useState<DataDirSettings | null>(null);
+  const [dataDirInput, setDataDirInput] = useState("");
+  const [originalDataDirInput, setOriginalDataDirInput] = useState("");
 
   const { t } = useTranslation();
   const { setTheme } = useTheme();
@@ -235,6 +248,12 @@ export function SettingsDialog({
       };
       setSettings(merged);
       setOriginalSettings(merged);
+
+      const dirSettings = await invoke<DataDirSettings>("get_data_dir_settings");
+      const configuredDir = dirSettings.configured_data_dir ?? "";
+      setDataDirSettings(dirSettings);
+      setDataDirInput(configuredDir);
+      setOriginalDataDirInput(configuredDir);
 
       // Initialize custom theme state
       if (merged.theme === "custom" && merged.custom_theme) {
@@ -413,6 +432,18 @@ export function SettingsDialog({
             : settings.custom_theme,
       };
 
+      const dataDirChanged = dataDirInput !== originalDataDirInput;
+      if (dataDirChanged) {
+        const updatedDataDirSettings = await invoke<DataDirSettings>(
+          "save_data_dir_settings",
+          { dataDir: dataDirInput.trim() || null },
+        );
+        const configuredDir = updatedDataDirSettings.configured_data_dir ?? "";
+        setDataDirSettings(updatedDataDirSettings);
+        setDataDirInput(configuredDir);
+        setOriginalDataDirInput(configuredDir);
+      }
+
       console.log("[settings-dialog] Saving settings:", {
         theme: settingsToSave.theme,
         hasCustomTheme: !!settingsToSave.custom_theme,
@@ -490,9 +521,19 @@ export function SettingsDialog({
       }
 
       setOriginalSettings(settingsToSave);
+      if (dataDirChanged) {
+        showSuccessToast(t("settings.advanced.dataDirRestartWarning"), {
+          description: t("settings.advanced.dataDirNoMigrationWarning"),
+          duration: 7000,
+        });
+      }
       onClose();
     } catch (error) {
       console.error("Failed to save settings:", error);
+      showErrorToast(t("settings.advanced.dataDirSaveFailed"), {
+        description:
+          error instanceof Error ? error.message : t("common.errors.unknown"),
+      });
     } finally {
       setIsSaving(false);
     }
@@ -501,9 +542,12 @@ export function SettingsDialog({
     setTheme,
     settings,
     customThemeState,
+    dataDirInput,
+    originalDataDirInput,
     selectedLanguage,
     originalLanguage,
     changeLanguage,
+    t,
   ]);
 
   const updateSetting = useCallback(
@@ -628,7 +672,8 @@ export function SettingsDialog({
     (settings.theme !== "custom" &&
       JSON.stringify(settings.custom_theme ?? {}) !==
         JSON.stringify(originalSettings.custom_theme ?? {})) ||
-    settings.disable_auto_updates !== originalSettings.disable_auto_updates;
+    settings.disable_auto_updates !== originalSettings.disable_auto_updates ||
+    dataDirInput !== originalDataDirInput;
 
   return (
     <>
@@ -1249,6 +1294,92 @@ export function SettingsDialog({
                     {t("settings.keepDecryptedProfilesInRamDescription")}
                   </p>
                 </div>
+              </div>
+
+              <div className="space-y-3 p-3 rounded-lg border">
+                <div className="space-y-1">
+                  <Label htmlFor="data-dir-input" className="text-sm font-medium">
+                    {t("settings.advanced.dataDirTitle")}
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    {t("settings.advanced.dataDirDescription")}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground">
+                    {t("settings.advanced.dataDirCurrent")}
+                  </Label>
+                  <Input
+                    value={dataDirSettings?.current_data_dir ?? ""}
+                    readOnly
+                    className="text-xs"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="data-dir-input" className="text-xs text-muted-foreground">
+                    {t("settings.advanced.dataDirCustom")}
+                  </Label>
+                  <Input
+                    id="data-dir-input"
+                    value={dataDirInput}
+                    disabled={
+                      dataDirSettings?.env_override_active || dataDirSettings?.portable
+                    }
+                    onChange={(event) => setDataDirInput(event.target.value)}
+                    placeholder={dataDirSettings?.default_data_dir ?? ""}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <RippleButton
+                    variant="outline"
+                    disabled={
+                      dataDirSettings?.env_override_active || dataDirSettings?.portable
+                    }
+                    onClick={async () => {
+                      const selected = await openDialog({
+                        directory: true,
+                        multiple: false,
+                        title: t("settings.advanced.dataDirSelectTitle"),
+                      });
+                      if (typeof selected === "string") {
+                        setDataDirInput(selected);
+                      }
+                    }}
+                  >
+                    {t("settings.advanced.dataDirBrowse")}
+                  </RippleButton>
+                  <RippleButton
+                    variant="outline"
+                    disabled={
+                      dataDirSettings?.env_override_active || dataDirSettings?.portable
+                    }
+                    onClick={() => setDataDirInput("")}
+                  >
+                    {t("settings.advanced.dataDirUseDefault")}
+                  </RippleButton>
+                </div>
+
+                {dataDirSettings?.env_override_active ? (
+                  <p className="text-xs text-warning">
+                    {t("settings.advanced.dataDirEnvOverride")}
+                  </p>
+                ) : dataDirSettings?.portable ? (
+                  <p className="text-xs text-warning">
+                    {t("settings.advanced.dataDirPortableMode")}
+                  </p>
+                ) : (
+                  <div className="space-y-1">
+                    <p className="text-xs text-warning">
+                      {t("settings.advanced.dataDirRestartWarning")}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {t("settings.advanced.dataDirNoMigrationWarning")}
+                    </p>
+                  </div>
+                )}
               </div>
 
               <LoadingButton

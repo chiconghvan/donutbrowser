@@ -1,4 +1,5 @@
 use directories::BaseDirs;
+use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::sync::OnceLock;
 
@@ -51,6 +52,37 @@ pub fn app_name() -> &'static str {
   }
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DataDirConfig {
+  pub data_dir: PathBuf,
+}
+
+pub fn default_data_dir() -> PathBuf {
+  base_dirs().data_local_dir().join(app_name())
+}
+
+pub fn data_dir_config_path() -> PathBuf {
+  default_data_dir().join("settings").join("data_dir.json")
+}
+
+pub fn configured_data_dir() -> Option<PathBuf> {
+  let content = std::fs::read_to_string(data_dir_config_path()).ok()?;
+  let config = serde_json::from_str::<DataDirConfig>(&content).ok()?;
+  if config.data_dir.as_os_str().is_empty() || !config.data_dir.is_absolute() {
+    return None;
+  }
+  Some(config.data_dir)
+}
+
+pub fn env_data_dir_override_active() -> bool {
+  std::env::var_os("DONUTBROWSER_DATA_DIR")
+    .filter(|v| !v.is_empty())
+    .is_some()
+    || std::env::var_os("DONUTBROWSER_DATA_ROOT")
+      .filter(|v| !v.is_empty())
+      .is_some()
+}
+
 pub fn data_dir() -> PathBuf {
   #[cfg(test)]
   {
@@ -71,7 +103,11 @@ pub fn data_dir() -> PathBuf {
     return dir.join("data");
   }
 
-  base_dirs().data_local_dir().join(app_name())
+  if let Some(dir) = configured_data_dir() {
+    return dir;
+  }
+
+  default_data_dir()
 }
 
 pub fn cache_dir() -> PathBuf {

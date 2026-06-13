@@ -93,10 +93,11 @@ use downloaded_browsers_registry::{
 use downloader::{cancel_download, download_browser};
 
 use settings_manager::{
-  complete_onboarding, dismiss_window_resize_warning, get_app_settings, get_onboarding_completed,
-  get_sync_settings, get_system_info, get_system_language, get_table_sorting_settings,
-  get_window_resize_warning_dismissed, open_log_directory, read_log_files, save_app_settings,
-  save_sync_settings, save_table_sorting_settings,
+  complete_onboarding, dismiss_window_resize_warning, get_app_settings, get_data_dir_settings,
+  get_onboarding_completed, get_sync_settings, get_system_info, get_system_language,
+  get_table_sorting_settings, get_window_resize_warning_dismissed, open_log_directory,
+  read_log_files, save_app_settings, save_data_dir_settings, save_sync_settings,
+  save_table_sorting_settings,
 };
 
 use sync::{
@@ -2183,6 +2184,8 @@ pub fn run() {
       rename_profile,
       get_app_settings,
       save_app_settings,
+      get_data_dir_settings,
+      save_data_dir_settings,
       read_log_files,
       open_log_directory,
       get_table_sorting_settings,

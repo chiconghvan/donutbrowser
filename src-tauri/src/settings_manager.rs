@@ -70,6 +70,19 @@ pub struct SyncSettings {
   pub sync_token: Option<String>, // Only populated when reading, not stored in JSON
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct DataDirSettings {
+  pub current_data_dir: String,
+  pub configured_data_dir: Option<String>,
+  pub default_data_dir: String,
+  pub env_override_active: bool,
+  pub portable: bool,
+}
+
+fn path_to_string(path: PathBuf) -> String {
+  path.to_string_lossy().to_string()
+}
+
 fn default_theme() -> String {
   "system".to_string()
 }
@@ -710,6 +723,56 @@ pub async fn get_app_settings(app_handle: tauri::AppHandle) -> Result<AppSetting
     .map_err(|e| format!("Failed to load MCP token: {e}"))?;
 
   Ok(settings)
+}
+
+#[tauri::command]
+pub async fn get_data_dir_settings() -> Result<DataDirSettings, String> {
+  Ok(DataDirSettings {
+    current_data_dir: path_to_string(crate::app_dirs::data_dir()),
+    configured_data_dir: crate::app_dirs::configured_data_dir().map(path_to_string),
+    default_data_dir: path_to_string(crate::app_dirs::default_data_dir()),
+    env_override_active: crate::app_dirs::env_data_dir_override_active(),
+    portable: crate::app_dirs::is_portable(),
+  })
+}
+
+#[tauri::command]
+pub async fn save_data_dir_settings(data_dir: Option<String>) -> Result<DataDirSettings, String> {
+  if crate::app_dirs::env_data_dir_override_active() {
+    return Err("Data directory is controlled by environment variables".to_string());
+  }
+
+  if crate::app_dirs::is_portable() {
+    return Err("Data directory is controlled by portable mode".to_string());
+  }
+
+  let config_path = crate::app_dirs::data_dir_config_path();
+  if let Some(parent) = config_path.parent() {
+    create_dir_all(parent).map_err(|e| format!("Failed to create settings directory: {e}"))?;
+  }
+
+  match data_dir {
+    Some(value) if !value.trim().is_empty() => {
+      let path = PathBuf::from(value.trim());
+      if !path.is_absolute() {
+        return Err("Data directory must be an absolute path".to_string());
+      }
+      create_dir_all(&path).map_err(|e| format!("Failed to create data directory: {e}"))?;
+      let config = crate::app_dirs::DataDirConfig { data_dir: path };
+      let content = serde_json::to_string_pretty(&config)
+        .map_err(|e| format!("Failed to serialize data directory config: {e}"))?;
+      fs::write(&config_path, content)
+        .map_err(|e| format!("Failed to save data directory config: {e}"))?;
+    }
+    _ => {
+      if config_path.exists() {
+        fs::remove_file(&config_path)
+          .map_err(|e| format!("Failed to clear data directory config: {e}"))?;
+      }
+    }
+  }
+
+  get_data_dir_settings().await
 }
 
 #[tauri::command]
