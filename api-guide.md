@@ -29,7 +29,7 @@ Auth: **None** — bearer token auth removed. No `Authorization` header required
 | `POST` | `/v1/profiles` | Create a new profile |
 | `PUT` | `/v1/profiles/{id}` | Update profile fields |
 | `DELETE` | `/v1/profiles/{id}` | Delete profile |
-| `POST` | `/v1/profiles/{id}/run` | Launch browser (requires cloud login + active subscription) |
+| `GET` | `/v1/profiles/{id}/run` | Launch browser (requires cloud login + active subscription) |
 | `POST` | `/v1/profiles/{id}/open-url` | Open URL in running browser (requires cloud login + active subscription) |
 | `POST` | `/v1/profiles/{id}/kill` | Kill browser process (requires cloud login + active subscription) |
 | `POST` | `/v1/profiles/{id}/cookies/import` | Import cookies into profile |
@@ -123,13 +123,19 @@ Auth: **None** — bearer token auth removed. No `Authorization` header required
 }
 ```
 
-#### `POST /v1/profiles/{id}/run`
+#### `GET /v1/profiles/{id}/run`
 
-```json
-{
-  "url": "https://example.com",
-  "headless": false
-}
+Query params:
+
+| Param | Type | Required | Description |
+| --- | --- | --- | --- |
+| `url` | string | No | URL to open after launch |
+| `headless` | boolean | No | Launch browser in headless mode |
+
+Example:
+
+```http
+GET /v1/profiles/{id}/run?url=https%3A%2F%2Fexample.com&headless=false
 ```
 
 Response:

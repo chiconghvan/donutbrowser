@@ -6,7 +6,7 @@ use crate::profile::manager::ProfileManager;
 use crate::proxy_manager::PROXY_MANAGER;
 use crate::tag_manager::TAG_MANAGER;
 use axum::{
-  extract::{Path, State},
+  extract::{Path, Query, State},
   http::StatusCode,
   middleware::{self, Next},
   response::{Json, Response},
@@ -223,6 +223,62 @@ struct RunProfileResponse {
 struct RunProfileRequest {
   url: Option<String>,
   headless: Option<bool>,
+}
+
+async fn get_debug_ws_url(port: u16) -> Option<String> {
+  let client = reqwest::Client::new();
+  let endpoints = ["json/version", "json/list", "json"];
+
+  for attempt in 0..15 {
+    if attempt > 0 {
+      tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+    }
+
+    for endpoint in endpoints {
+      let url = format!("http://127.0.0.1:{port}/{endpoint}");
+      let Ok(resp) = client
+        .get(&url)
+        .timeout(std::time::Duration::from_secs(3))
+        .send()
+        .await
+      else {
+        continue;
+      };
+
+      if !resp.status().is_success() {
+        continue;
+      }
+
+      let Ok(value) = resp.json::<serde_json::Value>().await else {
+        continue;
+      };
+
+      if let Some(ws_url) = value
+        .get("webSocketDebuggerUrl")
+        .and_then(|v| v.as_str())
+      {
+        return Some(ws_url.to_string());
+      }
+
+      if let Some(targets) = value.as_array() {
+        if let Some(ws_url) = targets
+          .iter()
+          .find(|t| t.get("type").and_then(|v| v.as_str()) == Some("page"))
+          .and_then(|t| t.get("webSocketDebuggerUrl"))
+          .and_then(|v| v.as_str())
+          .or_else(|| {
+            targets
+              .iter()
+              .find_map(|t| t.get("webSocketDebuggerUrl").and_then(|v| v.as_str()))
+          })
+        {
+          return Some(ws_url.to_string());
+        }
+      }
+    }
+  }
+
+  None
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -1713,12 +1769,13 @@ async fn delete_extension_group_api(
 
 // API Handler - Run Profile with Remote Debugging
 #[utoipa::path(
-  post,
+  get,
   path = "/v1/profiles/{id}/run",
   params(
-    ("id" = String, Path, description = "Profile ID")
+    ("id" = String, Path, description = "Profile ID"),
+    ("url" = Option<String>, Query, description = "URL to open after launch"),
+    ("headless" = Option<bool>, Query, description = "Launch browser in headless mode")
   ),
-  request_body = RunProfileRequest,
   responses(
     (status = 200, description = "Profile launched successfully", body = RunProfileResponse),
     (status = 400, description = "Cannot launch cross-OS profile"),
@@ -1734,7 +1791,7 @@ async fn delete_extension_group_api(
 async fn run_profile(
   Path(id): Path<String>,
   State(state): State<ApiServerState>,
-  Json(request): Json<RunProfileRequest>,
+  Query(request): Query<RunProfileRequest>,
 ) -> Result<Json<RunProfileResponse>, StatusCode> {
   if !crate::cloud_auth::CLOUD_AUTH
     .can_use_browser_automation()
@@ -1789,11 +1846,13 @@ async fn run_profile(
   )
   .await
   {
-    Ok(updated_profile) => Ok(Json(RunProfileResponse {
-      profile_id: updated_profile.id.to_string(),
-      remote_debugging_port,
-      headless,
-    })),
+    Ok(updated_profile) => {
+      Ok(Json(RunProfileResponse {
+        profile_id: updated_profile.id.to_string(),
+        remote_debugging_port,
+        headless,
+      }))
+    }
     Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
   }
 }

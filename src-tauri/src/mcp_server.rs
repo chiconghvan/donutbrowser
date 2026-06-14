@@ -530,7 +530,7 @@ impl McpServer {
       },
       McpTool {
         name: "run_profile".to_string(),
-        description: "Launch a browser profile with an optional URL. Requires an active Pro subscription.".to_string(),
+        description: "Launch a browser profile with an optional URL. Camoufox launches return CDP port in the JSON response. Requires an active Pro subscription.".to_string(),
         input_schema: serde_json::json!({
           "type": "object",
           "properties": {
@@ -1971,7 +1971,7 @@ impl McpServer {
 
     // Launch a fresh instance, honoring the requested headless mode. The CDP
     // port is self-allocated and discovered later via get_cdp_port_for_profile.
-    crate::browser_runner::launch_browser_profile_impl(
+    let launched_profile = crate::browser_runner::launch_browser_profile_impl(
       app_handle.clone(),
       profile.clone(),
       url.map(|s| s.to_string()),
@@ -1985,10 +1985,25 @@ impl McpServer {
       message: format!("Failed to launch browser: {e}"),
     })?;
 
+    let mut response = serde_json::json!({
+      "success": true,
+      "message": format!("Browser profile '{}' launched successfully", launched_profile.name),
+      "profile_id": launched_profile.id.to_string(),
+      "profile_name": launched_profile.name.clone(),
+      "browser": launched_profile.browser.clone(),
+    });
+
+    if launched_profile.browser == "camoufox" {
+      let cdp_port = self.get_cdp_port_for_profile(&launched_profile).await?;
+      if let Some(obj) = response.as_object_mut() {
+        obj.insert("cdp_port".to_string(), serde_json::json!(cdp_port));
+      }
+    }
+
     Ok(serde_json::json!({
       "content": [{
         "type": "text",
-        "text": format!("Browser profile '{}' launched successfully", profile.name)
+        "text": response.to_string()
       }]
     }))
   }
@@ -3812,8 +3827,8 @@ impl McpServer {
   }
 
   async fn get_cdp_ws_url(&self, port: u16) -> Result<String, McpError> {
-    let url = format!("http://127.0.0.1:{port}/json");
     let client = reqwest::Client::new();
+    let endpoints = ["json/version", "json/list", "json"];
 
     // Retry connecting to CDP endpoint (browser may still be starting up)
     let max_attempts = 15;
@@ -3822,30 +3837,56 @@ impl McpServer {
       if attempt > 0 {
         tokio::time::sleep(std::time::Duration::from_secs(1)).await;
       }
-      match client
-        .get(&url)
-        .timeout(std::time::Duration::from_secs(3))
-        .send()
-        .await
-      {
-        Ok(resp) => match resp.json::<Vec<serde_json::Value>>().await {
-          Ok(targets) => {
-            if let Some(ws_url) = targets
-              .iter()
-              .find(|t| t.get("type").and_then(|v| v.as_str()) == Some("page"))
-              .and_then(|t| t.get("webSocketDebuggerUrl"))
-              .and_then(|v| v.as_str())
-            {
-              return Ok(ws_url.to_string());
+
+      for endpoint in endpoints {
+        let url = format!("http://127.0.0.1:{port}/{endpoint}");
+        match client
+          .get(&url)
+          .timeout(std::time::Duration::from_secs(3))
+          .send()
+          .await
+        {
+          Ok(resp) => {
+            if !resp.status().is_success() {
+              last_err = format!("CDP endpoint {url} returned HTTP {}", resp.status());
+              continue;
             }
-            last_err = "No page target found in browser".to_string();
+
+            match resp.json::<serde_json::Value>().await {
+              Ok(value) => {
+                if let Some(ws_url) = value
+                  .get("webSocketDebuggerUrl")
+                  .and_then(|v| v.as_str())
+                {
+                  return Ok(ws_url.to_string());
+                }
+
+                if let Some(targets) = value.as_array() {
+                  if let Some(ws_url) = targets
+                    .iter()
+                    .find(|t| t.get("type").and_then(|v| v.as_str()) == Some("page"))
+                    .and_then(|t| t.get("webSocketDebuggerUrl"))
+                    .and_then(|v| v.as_str())
+                    .or_else(|| {
+                      targets
+                        .iter()
+                        .find_map(|t| t.get("webSocketDebuggerUrl").and_then(|v| v.as_str()))
+                    })
+                  {
+                    return Ok(ws_url.to_string());
+                  }
+                }
+
+                last_err = format!("No webSocketDebuggerUrl found in {url}: {value}");
+              }
+              Err(e) => {
+                last_err = format!("Failed to parse CDP response from {url}: {e}");
+              }
+            }
           }
           Err(e) => {
-            last_err = format!("Failed to parse CDP targets: {e}");
+            last_err = format!("Failed to connect to CDP endpoint {url}: {e}");
           }
-        },
-        Err(e) => {
-          last_err = format!("Failed to connect to browser CDP endpoint: {e}");
         }
       }
     }

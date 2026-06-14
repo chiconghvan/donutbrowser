@@ -1,4 +1,4 @@
-&lt;#
+<#
 .SYNOPSIS
     Build Donut Browser portable EXE only — fastest build.
 .DESCRIPTION
@@ -36,15 +36,24 @@ if (-not $SkipProxyPrebuild) {
         Pop-Location
     }
 } else {
-    Write-Host "[2/4] Skipping proxy prebuild (using existing binary)" -ForegroundColor Green
+    Write-Host "[2/4] Skipping proxy prebuild" -ForegroundColor Green
 }
 
 # Step 3: Build Tauri — portable EXE only
 Write-Host "[3/4] Building Tauri (portable EXE only)..." -ForegroundColor Yellow
 
-# --bundles app overrides tauri.conf.json targets to build only the .exe
+# Stop release donut-proxy sidecars before Tauri copies externalBin to target\release.
+# If target\release\donut-proxy.exe is running, Windows denies overwrite with code 5.
+$releaseProxyPath = Join-Path $tauriDir "target\release\donut-proxy.exe"
+$lockedProxies = Get-Process donut-proxy -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $releaseProxyPath }
+if ($lockedProxies) {
+    Write-Host "Stopping locked donut-proxy process(es): $($lockedProxies.Id -join ', ')" -ForegroundColor Yellow
+    $lockedProxies | Stop-Process -Force -Confirm:$false
+}
+
+# --no-bundle builds the release executable without installers.
 # Chạy từ project root (không cd src-tauri) — đúng theo skill
-pnpm --prefix $rootDir exec tauri build --bundles app 2>&1
+pnpm --prefix $rootDir exec tauri build --no-bundle 2>&1
 if ($LASTEXITCODE -ne 0) { throw "Tauri build failed" }
 
 # Step 4: Show output

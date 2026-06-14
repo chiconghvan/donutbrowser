@@ -1,4 +1,4 @@
-&lt;#
+<#
 .SYNOPSIS
     Build Donut Browser with NSIS installer + portable EXE.
 .DESCRIPTION
@@ -37,15 +37,24 @@ if (-not $SkipProxyPrebuild) {
         Pop-Location
     }
 } else {
-    Write-Host "[2/4] Skipping proxy prebuild (using existing binary)" -ForegroundColor Green
+    Write-Host "[2/4] Skipping proxy prebuild" -ForegroundColor Green
 }
 
 # Step 3: Build Tauri — NSIS installer + EXE
 Write-Host "[3/4] Building Tauri (NSIS installer + EXE)..." -ForegroundColor Yellow
 
-# --bundles app,nsis builds only .exe + NSIS setup, skips DEB/RPM/AppImage/DMG
+# Stop release donut-proxy sidecars before Tauri copies externalBin to target\release.
+# If target\release\donut-proxy.exe is running, Windows denies overwrite with code 5.
+$releaseProxyPath = Join-Path $tauriDir "target\release\donut-proxy.exe"
+$lockedProxies = Get-Process donut-proxy -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $releaseProxyPath }
+if ($lockedProxies) {
+    Write-Host "Stopping locked donut-proxy process(es): $($lockedProxies.Id -join ', ')" -ForegroundColor Yellow
+    $lockedProxies | Stop-Process -Force -Confirm:$false
+}
+
+# --bundles nsis builds EXE + NSIS setup. Tauri v2 on Windows accepts msi/nsis only.
 # Chạy từ project root (không cd src-tauri) — đúng theo skill
-pnpm --prefix $rootDir exec tauri build --bundles app,nsis 2>&1
+pnpm --prefix $rootDir exec tauri build --bundles nsis 2>&1
 if ($LASTEXITCODE -ne 0) { throw "Tauri build failed" }
 
 # Step 4: Show output

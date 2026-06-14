@@ -256,6 +256,7 @@ impl CamoufoxManager {
       None => Self::find_free_port().await?,
     };
     args.push(format!("--remote-debugging-port={cdp_port}"));
+    args.push("--remote-debugging-address=127.0.0.1".to_string());
 
     // Add URL if provided
     if let Some(url) = url {
