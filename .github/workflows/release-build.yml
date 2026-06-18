@@ -63,7 +63,7 @@ jobs:
         run: pnpm tauri build -- --verbose
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@0b7f8d9b5d34e5ed8e2d0d0f8f1c3d3e8d44a7f0 #v4.4.3
+        uses: actions/upload-artifact@v4
         with:
           name: release-build-${{ github.ref_name }}
           path: |
