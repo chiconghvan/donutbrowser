@@ -49,9 +49,9 @@ fn main() {
   println!("cargo:rerun-if-changed=src/proxy_runner.rs");
   println!("cargo:rerun-if-changed=src/proxy_storage.rs");
 
-  // Tell Cargo to rebuild when binaries directory contents change
-  // This ensures tauri_build is re-run after sidecar binaries are copied
-  println!("cargo:rerun-if-changed=binaries");
+  // NOTE: Removed `cargo:rerun-if-changed=binaries` — it caused infinite rebuild loops
+  // when copy-proxy-binary.mjs copies the sidecar exe into binaries/ during dev.
+  // tauri_build::build() bundles sidecars at build time regardless of this directive.
 
   // Only run tauri_build if all external binaries exist
   // This allows building donut-proxy sidecar without the other binaries present
@@ -153,6 +153,14 @@ fn generate_tray_icons() {
   let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap();
   let icons_dir = PathBuf::from(&manifest_dir).join("icons");
   let svg_path = icons_dir.join("tray-icon.svg");
+
+  // Skip regeneration if all output PNGs already exist to avoid infinite rebuild loop
+  // (writing PNGs into icons/ triggers cargo's file-change detection → rebuild → loop)
+  let outputs = ["tray-icon-22.png", "tray-icon-44.png", "tray-icon-win-44.png"];
+  if outputs.iter().all(|f| icons_dir.join(f).exists()) {
+    println!("cargo:warning=Tray icons already exist, skipping generation");
+    return;
+  }
 
   println!("cargo:rerun-if-changed=icons/tray-icon.svg");
 

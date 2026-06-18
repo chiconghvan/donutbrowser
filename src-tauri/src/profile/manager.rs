@@ -1131,6 +1131,19 @@ impl ProfileManager {
       );
     }
 
+    // Re-read latest profile state in case status check cleared stale process_id on disk.
+    let profiles = self
+      .list_profiles()
+      .map_err(|e| -> Box<dyn std::error::Error + Send + Sync> {
+        format!("Failed to list profiles after status check: {e}").into()
+      })?;
+    profile = profiles
+      .into_iter()
+      .find(|p| p.id == profile_uuid)
+      .ok_or_else(|| -> Box<dyn std::error::Error + Send + Sync> {
+        format!("Profile with ID '{profile_id}' not found after status check").into()
+      })?;
+
     // Update the Camoufox configuration
     profile.camoufox_config = Some(config);
 

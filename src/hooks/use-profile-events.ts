@@ -130,15 +130,23 @@ export function useProfileEvents(): UseProfileEventsReturn {
   // users with hundreds of profiles).
   useEffect(() => {
     setRunningProfiles((prev) => {
-      const next = new Set(prev);
+      const next = new Set<string>();
+
+      // Keep state aligned with latest profile records.
       for (const p of profiles) {
-        if (p.process_id != null) next.add(p.id);
+        if (p.process_id != null) {
+          next.add(p.id);
+        }
       }
-      // Drop ids for profiles that no longer exist
-      const valid = new Set(profiles.map((p) => p.id));
-      for (const id of next) {
-        if (!valid.has(id)) next.delete(id);
+
+      // Preserve ids that are still present in the latest list and marked running.
+      // Removed profiles are dropped automatically because we rebuild from scratch.
+      for (const id of prev) {
+        if (profiles.some((p) => p.id === id && p.process_id != null)) {
+          next.add(id);
+        }
       }
+
       return next;
     });
   }, [profiles]);

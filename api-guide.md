@@ -105,6 +105,51 @@ Auth: **None** — bearer token auth removed. No `Authorization` header required
 
 ### Request / Response Shapes
 
+#### `GET /v1/profiles`
+
+Response:
+```json
+{
+  "profiles": [
+    {
+      "id": "uuid",
+      "name": "My Profile",
+      "browser": "camoufox",
+      "version": "135.0.1-beta.24",
+      "group_id": "group-uuid",
+      "proxy_id": "proxy-uuid",
+      "tags": ["social", "us"],
+      "is_running": false
+    }
+  ]
+}
+```
+
+#### `GET /v1/profiles/{id}`
+
+Response:
+```json
+{
+  "profile": {
+    "id": "uuid",
+    "name": "My Profile",
+    "browser": "camoufox",
+    "version": "135.0.1-beta.24",
+    "proxy_id": null,
+    "vpn_id": null,
+    "launch_hook": null,
+    "process_id": null,
+    "last_launch": null,
+    "release_type": "stable",
+    "camoufox_config": null,
+    "group_id": null,
+    "tags": ["social", "us"],
+    "is_running": false,
+    "proxy_bypass_rules": []
+  }
+}
+```
+
 #### `POST /v1/profiles`
 
 ```json
@@ -120,6 +165,54 @@ Auth: **None** — bearer token auth removed. No `Authorization` header required
   "wayfern_config": null,
   "group_id": null,
   "tags": ["social", "us"]
+}
+```
+
+Response:
+```json
+{
+  "profile": {
+    "id": "uuid",
+    "name": "My Profile",
+    "browser": "camoufox",
+    "version": "135.0.1-beta.24",
+    "group_id": null,
+    "proxy_id": null,
+    "tags": ["social", "us"]
+  }
+}
+```
+
+#### `PUT /v1/profiles/{id}`
+
+Partial update — only included fields are changed:
+```json
+{
+  "name": "Renamed",
+  "version": "136.0.0",
+  "proxy_id": "new-proxy-uuid",
+  "vpn_id": "",
+  "launch_hook": "",
+  "camoufox_config": { ... },
+  "group_id": "group-uuid",
+  "tags": ["new-tag"],
+  "extension_group_id": "ext-group-uuid",
+  "proxy_bypass_rules": ["*.local"],
+  "sync_mode": "Regular"
+}
+```
+
+Response:
+```json
+{
+  "profile": {
+    "id": "uuid",
+    "name": "Renamed",
+    "version": "136.0.0",
+    "group_id": "group-uuid",
+    "proxy_id": "new-proxy-uuid",
+    "tags": ["new-tag"]
+  }
 }
 ```
 
@@ -147,24 +240,201 @@ Response:
 }
 ```
 
-#### `PUT /v1/profiles/{id}`
+#### `POST /v1/profiles/{id}/kill`
 
-Partial update — only included fields are changed:
+Response:
 ```json
 {
-  "name": "Renamed",
-  "version": "136.0.0",
-  "proxy_id": "new-proxy-uuid",
-  "vpn_id": "",
-  "launch_hook": "",
-  "camoufox_config": { ... },
-  "group_id": "group-uuid",
-  "tags": ["new-tag"],
-  "extension_group_id": "ext-group-uuid",
-  "proxy_bypass_rules": ["*.local"],
-  "sync_mode": "Regular"
+  "profile_id": "uuid",
+  "killed": true
 }
 ```
+
+#### `GET /v1/profiles/{id}/status`
+
+Response:
+```json
+{
+  "profile_id": "uuid",
+  "is_running": true,
+  "process_id": 12345
+}
+```
+
+#### `DELETE /v1/profiles/{id}`
+
+Response: `204 No Content`
+
+#### `POST /v1/profiles/{id}/cookies/import`
+
+```json
+{
+  "content": "[{\"name\": \"session\", \"value\": \"abc\", \"domain\": \".example.com\"}]"
+}
+```
+
+Response:
+```json
+{
+  "cookies_imported": 5,
+  "cookies_replaced": 0,
+  "errors": []
+}
+```
+
+#### `GET /v1/groups`
+
+Response:
+```json
+{
+  "groups": [
+    {
+      "id": "group-uuid",
+      "name": "Shopping",
+      "profile_count": 4
+    }
+  ]
+}
+```
+
+#### `GET /v1/groups/{id}`
+
+Response:
+```json
+{
+  "group": {
+    "id": "group-uuid",
+    "name": "Shopping",
+    "profile_count": 4
+  }
+}
+```
+
+#### `POST /v1/groups`
+
+```json
+{
+  "name": "Shopping"
+}
+```
+
+Response:
+```json
+{
+  "group": {
+    "id": "group-uuid",
+    "name": "Shopping"
+  }
+}
+```
+
+#### `PUT /v1/groups/{id}`
+
+```json
+{
+  "name": "New Group Name"
+}
+```
+
+Response:
+```json
+{
+  "group": {
+    "id": "group-uuid",
+    "name": "New Group Name"
+  }
+}
+```
+
+#### `DELETE /v1/groups/{id}`
+
+Response: `204 No Content`
+
+#### `GET /v1/proxies`
+
+Response:
+```json
+{
+  "proxies": [
+    {
+      "id": "proxy-uuid",
+      "name": "US Proxy",
+      "type": "socks5",
+      "host": "127.0.0.1",
+      "port": 1080,
+      "username": "user",
+      "password": "***"
+    }
+  ]
+}
+```
+
+#### `GET /v1/proxies/{id}`
+
+Response:
+```json
+{
+  "proxy": {
+    "id": "proxy-uuid",
+    "name": "US Proxy",
+    "type": "socks5",
+    "host": "127.0.0.1",
+    "port": 1080,
+    "username": "user",
+    "password": "***"
+  }
+}
+```
+
+#### `POST /v1/proxies`
+
+```json
+{
+  "name": "US Proxy",
+  "type": "socks5",
+  "host": "127.0.0.1",
+  "port": 1080,
+  "username": "user",
+  "password": "pass"
+}
+```
+
+Response:
+```json
+{
+  "proxy": {
+    "id": "proxy-uuid",
+    "name": "US Proxy"
+  }
+}
+```
+
+#### `PUT /v1/proxies/{id}`
+
+```json
+{
+  "name": "Updated Proxy",
+  "type": "socks5",
+  "host": "127.0.0.1",
+  "port": 1081,
+  "username": "user2",
+  "password": "new-pass"
+}
+```
+
+Response:
+```json
+{
+  "proxy": {
+    "id": "proxy-uuid",
+    "name": "Updated Proxy"
+  }
+}
+```
+
+#### `DELETE /v1/proxies/{id}`
+
+Response: `204 No Content`
 
 #### `POST /v1/vpns/import`
 

@@ -62,3 +62,23 @@ nodecar/nodecar-bin
 
 # claude
 .claude/
+
+# local-only Rust config and scratch
+.cargo/
+plans/
+
+# generated artifacts
+scripts/test-playwright-rust/target/
+scripts/threads-camoufox-screenshot.png
+
+# local test/control scripts
+scripts/test-*.py
+scripts/test-*.ps1
+scripts/test-*.mjs
+scripts/control-*.py
+
+# local docs
+docs/mcp-*.md
+
+# local test project
+scripts/test-playwright-rust/
