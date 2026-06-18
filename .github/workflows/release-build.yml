@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   build:
-    if: github.repository == 'zhom/donutbrowser'
+    if: github.repository == 'chiconghvan/donutbrowser'
     runs-on: ubuntu-22.04
     timeout-minutes: 90
 
