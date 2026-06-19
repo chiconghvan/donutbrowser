@@ -27,15 +27,13 @@ use aes_gcm::{
 use rand::RngExt;
 
 /// Derive a 256-bit profile key from a password and salt using HKDF-SHA256.
-pub fn derive_profile_key(
-  password: &str,
-  salt: &str,
-) -> Result<[u8; 32], PasswordError> {
+pub fn derive_profile_key(password: &str, salt: &str) -> Result<[u8; 32], PasswordError> {
   let salt_obj = ring::hkdf::Salt::new(ring::hkdf::HKDF_SHA256, salt.as_bytes());
   let prk = salt_obj.extract(password.as_bytes());
   let info = b"donut-profile-key-v1";
   let mut output = [0u8; 32];
-  prk.expand(&[info.as_ref()], ring::hkdf::HKDF_SHA256)
+  prk
+    .expand(&[info.as_ref()], ring::hkdf::HKDF_SHA256)
     .map_err(|_| PasswordError::Encryption("HKDF expand failed".into()))?
     .fill(&mut output)
     .map_err(|_| PasswordError::Encryption("HKDF fill failed".into()))?;
@@ -50,12 +48,8 @@ pub fn generate_salt() -> String {
 }
 
 /// Encrypt bytes using AES-256-GCM with a random 12-byte nonce prepended.
-pub fn encrypt_bytes(
-  key: &[u8; 32],
-  plaintext: &[u8],
-) -> Result<Vec<u8>, String> {
-  let cipher =
-    Aes256Gcm::new_from_slice(key).map_err(|e| format!("AES-GCM key error: {e}"))?;
+pub fn encrypt_bytes(key: &[u8; 32], plaintext: &[u8]) -> Result<Vec<u8>, String> {
+  let cipher = Aes256Gcm::new_from_slice(key).map_err(|e| format!("AES-GCM key error: {e}"))?;
   let mut nonce_bytes = [0u8; 12];
   rand::rng().fill(&mut nonce_bytes);
   let nonce = Nonce::from_slice(&nonce_bytes);
@@ -71,16 +65,12 @@ pub fn encrypt_bytes(
 }
 
 /// Decrypt bytes using AES-256-GCM (nonce is the first 12 bytes).
-pub fn decrypt_bytes(
-  key: &[u8; 32],
-  ciphertext: &[u8],
-) -> Result<Vec<u8>, String> {
+pub fn decrypt_bytes(key: &[u8; 32], ciphertext: &[u8]) -> Result<Vec<u8>, String> {
   if ciphertext.len() < 12 {
     return Err("ciphertext too short".into());
   }
 
-  let cipher =
-    Aes256Gcm::new_from_slice(key).map_err(|e| format!("AES-GCM key error: {e}"))?;
+  let cipher = Aes256Gcm::new_from_slice(key).map_err(|e| format!("AES-GCM key error: {e}"))?;
   let nonce = Nonce::from_slice(&ciphertext[..12]);
 
   cipher

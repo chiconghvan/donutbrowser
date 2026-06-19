@@ -1,7 +1,7 @@
 "use client";
 
 import { invoke } from "@tauri-apps/api/core";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { LoadingButton } from "@/components/loading-button";
 import {
@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { translateBackendError } from "@/lib/backend-errors";
 import type { BrowserProfile } from "@/types";
 import { RippleButton } from "./ui/ripple";
 
@@ -37,12 +38,26 @@ export function ProxyAssignmentDialog({
   const [isAssigning, setIsAssigning] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const selectedProfilesRef = useRef(selectedProfiles);
+  const profilesRef = useRef(profiles);
+  const onAssignmentCompleteRef = useRef(onAssignmentComplete);
+  const onCloseRef = useRef(onClose);
+  selectedProfilesRef.current = selectedProfiles;
+  profilesRef.current = profiles;
+  onAssignmentCompleteRef.current = onAssignmentComplete;
+  onCloseRef.current = onClose;
+
+  const parsedProxyLines = proxyString
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+
   const handleAssign = useCallback(async () => {
     setIsAssigning(true);
     setError(null);
     try {
-      const validProfiles = selectedProfiles.filter((profileId) => {
-        const profile = profiles.find((p) => p.id === profileId);
+      const validProfiles = selectedProfilesRef.current.filter((profileId) => {
+        const profile = profilesRef.current.find((p) => p.id === profileId);
         return profile && profile.browser !== "tor-browser";
       });
 
@@ -52,35 +67,24 @@ export function ProxyAssignmentDialog({
         return;
       }
 
-      const proxyValue = proxyString.trim() || null;
-
-      for (const profileId of validProfiles) {
+      for (let i = 0; i < validProfiles.length; i += 1) {
+        const profileId = validProfiles[i];
+        const proxyValue = parsedProxyLines[i] ?? null;
         await invoke("update_profile_proxy", {
           profileId,
           proxyId: proxyValue,
         });
       }
 
-      onAssignmentComplete();
-      onClose();
+      onAssignmentCompleteRef.current();
+      onCloseRef.current();
     } catch (err) {
       console.error("Failed to assign proxies:", err);
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : t("proxyAssignment.failedFallback");
-      setError(errorMessage);
+      setError(translateBackendError(t, err));
     } finally {
       setIsAssigning(false);
     }
-  }, [
-    selectedProfiles,
-    proxyString,
-    profiles,
-    onAssignmentComplete,
-    onClose,
-    t,
-  ]);
+  }, [parsedProxyLines, t]);
 
   useEffect(() => {
     if (isOpen) {
@@ -114,10 +118,16 @@ export function ProxyAssignmentDialog({
                 if (error) setError(null);
               }}
               placeholder={t("proxyAssignment.proxyPlaceholder")}
-              className="min-h-[80px] font-mono text-sm"
+              rows={8}
+              className="font-mono text-sm"
             />
             <p className="text-xs text-muted-foreground">
               {t("proxyAssignment.proxyHelper")}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {t("proxyAssignment.proxyLineInfo", {
+                count: parsedProxyLines.length,
+              })}
             </p>
           </div>
 

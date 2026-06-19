@@ -684,9 +684,7 @@ async fn create_profile(
 
   // Reject a dead/unreachable proxy before creating the profile. A 402
   // (expired proxy subscription) maps to 402; anything else is a 400.
-  if let Err(err) =
-    crate::validate_profile_network(request.proxy.as_deref()).await
-  {
+  if let Err(err) = crate::validate_profile_network(request.proxy.as_deref()).await {
     return Err(if err.contains("PROXY_PAYMENT_REQUIRED") {
       StatusCode::PAYMENT_REQUIRED
     } else {
@@ -1522,13 +1520,11 @@ async fn import_profile_cookies(
   )
   .await
   {
-    Ok(result) => {
-      Ok(Json(ImportCookiesResponse {
-        cookies_imported: result.cookies_imported,
-        cookies_replaced: result.cookies_replaced,
-        errors: result.errors,
-      }))
-    }
+    Ok(result) => Ok(Json(ImportCookiesResponse {
+      cookies_imported: result.cookies_imported,
+      cookies_replaced: result.cookies_replaced,
+      errors: result.errors,
+    })),
     Err(e) => {
       let msg = e.to_lowercase();
       if msg.contains("running") {

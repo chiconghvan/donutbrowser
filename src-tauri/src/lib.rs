@@ -57,7 +57,6 @@ mod tag_manager;
 mod team_lock;
 mod version_updater;
 
-
 use browser_runner::{
   check_browser_exists, kill_browser_profile, launch_browser_profile, open_url_with_profile,
 };
@@ -90,10 +89,9 @@ use downloader::{cancel_download, download_browser};
 
 use settings_manager::{
   complete_onboarding, dismiss_window_resize_warning, get_app_settings, get_data_dir_settings,
-  get_onboarding_completed, get_system_info, get_system_language,
-  get_table_sorting_settings, get_window_resize_warning_dismissed, open_log_directory,
-  read_log_files, save_app_settings, save_data_dir_settings,
-  save_table_sorting_settings,
+  get_onboarding_completed, get_system_info, get_system_language, get_table_sorting_settings,
+  get_window_resize_warning_dismissed, open_log_directory, read_log_files, save_app_settings,
+  save_data_dir_settings, save_table_sorting_settings,
 };
 
 use tag_manager::get_all_tags;
@@ -309,8 +307,6 @@ fn has_acknowledged_trial_expiration(app_handle: tauri::AppHandle) -> Result<boo
   commercial_license::CommercialLicenseManager::instance().has_acknowledged(&app_handle)
 }
 
-
-
 #[tauri::command]
 async fn is_geoip_database_available() -> Result<bool, String> {
   Ok(GeoIPDownloader::is_geoip_database_available())
@@ -362,9 +358,7 @@ async fn download_geoip_database(app_handle: tauri::AppHandle) -> Result<(), Str
 /// dead/unreachable proxy fails creation identically everywhere. Returns
 /// structured `{ "code": ... }` error strings the frontend translates via
 /// backend-errors.ts.
-pub async fn validate_profile_network(
-  proxy: Option<&str>,
-) -> Result<(), String> {
+pub async fn validate_profile_network(proxy: Option<&str>) -> Result<(), String> {
   if let Some(proxy) = proxy.filter(|s| !s.is_empty()) {
     let settings = crate::proxy_manager::parse_profile_proxy_string(proxy)
       .map_err(|_| serde_json::json!({ "code": "INVALID_PROXY_FORMAT" }).to_string())?;
@@ -638,7 +632,9 @@ pub fn run() {
     .plugin(tauri_plugin_clipboard_manager::init())
     .plugin(
       WindowStateBuilder::default()
-        .with_state_flags(StateFlags::all().difference(StateFlags::VISIBLE | StateFlags::FULLSCREEN))
+        .with_state_flags(
+          StateFlags::all().difference(StateFlags::VISIBLE | StateFlags::FULLSCREEN),
+        )
         .build(),
     )
     .setup(|app| {
@@ -1125,8 +1121,7 @@ pub fn run() {
                   // the previous snapshot (issue: encrypted profiles not
                   // syncing fresh data).
                   if !is_running && profile.password_protected {
-                    crate::profile::password::complete_after_quit_and_wait(&profile)
-                      .await;
+                    crate::profile::password::complete_after_quit_and_wait(&profile).await;
                   }
 
                   last_running_states.insert(profile_id, is_running);

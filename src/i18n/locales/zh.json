@@ -1869,15 +1869,13 @@
   },
   "proxyAssignment": {
     "title": "分配代理",
-    "description_one": "为{{count}}个选中的配置文件分配代理。",
-    "description_other": "为{{count}}个选中的配置文件分配代理。",
-    "proxyInputLabel": "代理",
-    "proxyPlaceholder": "socks5://user:pass@host:port",
-    "proxyHelper": "留空以移除代理。格式: protocol://user:pass@host:port",
+    "description": "按顺序为每个已选配置文件分配 1 个代理。多余的代理会被忽略。多余的配置文件不会分配代理。",
+    "proxyInputLabel": "代理列表",
+    "proxyPlaceholder": "address:port:user:pass\nnull\naddress:port:user:pass",
+    "proxyHelper": "每行输入 1 个代理。没有代理的配置文件请使用 null。多余行会被忽略。",
+    "proxyLineInfo": "检测到 {{count}} 行代理",
     "assignButton": "分配",
-    "success": "已成功为{{count}}个配置文件分配代理",
-    "failedFallback": "分配代理失败",
-    "noValidProfiles": "未选择有效的配置文件。",
-    "selectedProfilesLabel": "选中的配置文件:"
+    "noValidProfiles": "未选择有效配置文件",
+    "failedFallback": "分配代理失败"
   }
 }

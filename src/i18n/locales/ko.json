@@ -1869,15 +1869,13 @@
   },
   "proxyAssignment": {
     "title": "프록시 할당",
-    "description_one": "{{count}}개의 선택된 프로필에 프록시를 할당합니다.",
-    "description_other": "{{count}}개의 선택된 프로필에 프록시를 할당합니다.",
-    "proxyInputLabel": "프록시",
-    "proxyPlaceholder": "socks5://user:pass@host:port",
-    "proxyHelper": "비워두면 프록시가 제거됩니다. 형식: protocol://user:pass@host:port",
+    "description": "선택한 각 프로필에 순서대로 프록시 1개씩 할당합니다. 남는 프록시는 무시됩니다. 남는 프로필은 프록시 없이 유지됩니다.",
+    "proxyInputLabel": "프록시 목록",
+    "proxyPlaceholder": "address:port:user:pass\nnull\naddress:port:user:pass",
+    "proxyHelper": "한 줄에 프록시 1개를 입력하세요. 프록시가 없는 프로필은 null 을 사용하세요. 추가 줄은 무시됩니다.",
+    "proxyLineInfo": "프록시 줄 {{count}}개 감지됨",
     "assignButton": "할당",
-    "success": "{{count}}개의 프로필에 프록시를 성공적으로 할당했습니다",
-    "failedFallback": "프록시 할당에 실패했습니다",
-    "noValidProfiles": "유효한 프로필이 선택되지 않았습니다.",
-    "selectedProfilesLabel": "선택된 프로필:"
+    "noValidProfiles": "선택된 유효한 프로필이 없습니다",
+    "failedFallback": "프록시 할당에 실패했습니다"
   }
 }

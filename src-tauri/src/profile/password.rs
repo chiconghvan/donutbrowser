@@ -7,12 +7,12 @@
 //! codes is documented at `BackendErrorCode` in TypeScript; keep them in sync.
 
 use crate::events;
+use crate::profile::encryption::derive_profile_key;
 use crate::profile::encryption::{
   cache_key, decrypt_profile_dir, drop_cached_key, encrypt_profile_dir, fresh_salt, get_cached_key,
   has_cached_key, rekey_profile_dir, unlock as unlock_dir, verify_key_against_dir,
 };
 use crate::profile::ProfileManager;
-use crate::profile::encryption::derive_profile_key;
 use serde_json::json;
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
@@ -265,8 +265,7 @@ pub async fn set_profile_password(profile_id: String, password: String) -> Resul
     let _ = std::fs::remove_dir_all(&staging);
   }
   // TODO: re-add sync manifest exclude patterns when sync module is restored
-  encrypt_profile_dir(&key, &plaintext_dir, &staging, &[])
-    .map_err(err_internal)?;
+  encrypt_profile_dir(&key, &plaintext_dir, &staging, &[]).map_err(err_internal)?;
 
   // Move plaintext aside, swap in encrypted, then delete plaintext.
   let backup = plaintext_dir.with_extension("plaintext-backup");
@@ -642,13 +641,7 @@ pub fn complete_after_quit_blocking(
   let key = get_cached_key(&id)?;
 
   // TODO: re-add sync manifest exclude patterns when sync module is restored
-  let result = match reencrypt_changed_files(
-    &key,
-    &ephemeral,
-    &encrypted,
-    &[],
-    &snapshot,
-  ) {
+  let result = match reencrypt_changed_files(&key, &ephemeral, &encrypted, &[], &snapshot) {
     Ok(n) => {
       log::info!("Re-encrypted {n} changed file(s) for profile {id}");
       Some(n)

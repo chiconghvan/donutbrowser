@@ -1,6 +1,31 @@
 # Changelog
 
 
+## v0.27.5 (2026-06-19)
+
+### Maintenance
+
+- chore: version bump to 0.27.5
+
+
+## v0.27.3 (2026-06-19)
+
+### Features
+
+- upgrade proxy assignment to multi-line multi-proxy support
+- add proxy line count indicator in assignment dialog
+- use refs for stable callback references in proxy dialog
+
+### Refactoring
+
+- run cargo fmt across Rust codebase (api_server, lib, encryption, manager, settings_manager)
+- clean up extra blank lines in profile manager
+- improve proxy assignment dialog UX with multi-line textarea
+
+### Maintenance
+
+- chore: version bump to 0.27.3
+
 ## v0.27.2 (2026-06-19)
 
 ### Features

@@ -854,8 +854,6 @@ impl ProfileManager {
 
     self.save_profile(&profile)?;
 
-
-
     if let Err(e) = events::emit_empty("profiles-changed") {
       log::warn!("Warning: Failed to emit profiles-changed event: {e}");
     }
@@ -880,8 +878,6 @@ impl ProfileManager {
     profile.updated_at = Some(crate::proxy_manager::now_secs());
 
     self.save_profile(&profile)?;
-
-
 
     if let Err(e) = events::emit_empty("profiles-changed") {
       log::warn!("Warning: Failed to emit profiles-changed event: {e}");
@@ -1108,8 +1104,6 @@ impl ProfileManager {
         format!("Failed to save profile: {e}").into()
       })?;
 
-
-
     log::info!(
       "Camoufox configuration updated for profile '{}' (ID: {}).",
       profile.name,
@@ -1170,8 +1164,6 @@ impl ProfileManager {
         format!("Failed to save profile: {e}").into()
       })?;
 
-
-
     log::info!(
       "Wayfern configuration updated for profile '{}' (ID: {}).",
       profile.name,
@@ -1212,8 +1204,11 @@ impl ProfileManager {
       })?;
 
     if let Some(ref proxy_str) = proxy {
-      crate::proxy_manager::parse_profile_proxy_string(proxy_str)
-        .map_err(|e| -> Box<dyn std::error::Error + Send + Sync> { e.into() })?;
+      let proxy_str = proxy_str.trim();
+      if !proxy_str.eq_ignore_ascii_case("null") {
+        crate::proxy_manager::parse_profile_proxy_string(proxy_str)
+          .map_err(|e| -> Box<dyn std::error::Error + Send + Sync> { e.into() })?;
+      }
     }
 
     profile.proxy = proxy.clone();
@@ -1225,8 +1220,6 @@ impl ProfileManager {
       .map_err(|e| -> Box<dyn std::error::Error + Send + Sync> {
         format!("Failed to save profile: {e}").into()
       })?;
-
-
 
     if let Err(e) = events::emit("profile-updated", &profile) {
       log::warn!("Warning: Failed to emit profile update event: {e}");
@@ -1303,8 +1296,6 @@ impl ProfileManager {
     profile.extension_group_id = extension_group_id.clone();
     profile.updated_at = Some(crate::proxy_manager::now_secs());
     self.save_profile(&profile)?;
-
-
 
     if let Err(e) = events::emit("profile-updated", &profile) {
       log::warn!("Failed to emit profile update event: {e}");
@@ -2410,6 +2401,11 @@ pub async fn create_browser_profiles_bulk(
 ) -> Result<Vec<BrowserProfile>, String> {
   let profile_manager = ProfileManager::instance();
   let mut results = Vec::with_capacity(profiles.len());
+  let existing_profiles = profile_manager.list_profiles().map_err(|e| e.to_string())?;
+  let mut existing_names: std::collections::HashSet<String> = existing_profiles
+    .iter()
+    .map(|profile| profile.name.to_lowercase())
+    .collect();
 
   for entry in profiles {
     if let Some(ref proxy) = entry.proxy {
@@ -2419,10 +2415,23 @@ pub async fn create_browser_profiles_bulk(
       }
     }
 
+    let mut name = entry.name.clone();
+    if existing_names.contains(&name.to_lowercase()) {
+      let mut suffix = 1;
+      loop {
+        let candidate = format!("{}-{}", entry.name, suffix);
+        if !existing_names.contains(&candidate.to_lowercase()) {
+          name = candidate;
+          break;
+        }
+        suffix += 1;
+      }
+    }
+
     let profile = profile_manager
       .create_profile_with_group(
         &app_handle,
-        &entry.name,
+        &name,
         &browser_str,
         &version,
         &release_type,
@@ -2436,8 +2445,9 @@ pub async fn create_browser_profiles_bulk(
         None,
       )
       .await
-      .map_err(|e| format!("Failed to create profile '{}': {e}", entry.name))?;
+      .map_err(|e| format!("Failed to create profile '{}': {e}", name))?;
 
+    existing_names.insert(name.to_lowercase());
     results.push(profile);
   }
 

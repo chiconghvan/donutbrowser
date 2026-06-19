@@ -1868,16 +1868,14 @@
     "proxyCountInfo": "{{proxyCount}} proxy line(s) for {{profileCount}} profile(s). Extra proxies ignored, missing proxies left unset."
   },
   "proxyAssignment": {
-    "title": "Atribuir Proxy",
-    "description_one": "Atribuir um proxy a {{count}} perfil selecionado.",
-    "description_other": "Atribuir um proxy a {{count}} perfis selecionados.",
-    "proxyInputLabel": "Proxy",
-    "proxyPlaceholder": "socks5://user:pass@host:port",
-    "proxyHelper": "Deixe vazio para remover o proxy. Formato: protocolo://usuário:senha@host:porta",
+    "title": "Atribuir proxies",
+    "description": "Atribua um proxy por perfil selecionado, na ordem. Proxies extras são ignorados. Perfis extras ficam sem proxy.",
+    "proxyInputLabel": "Lista de proxies",
+    "proxyPlaceholder": "address:port:user:pass\nnull\naddress:port:user:pass",
+    "proxyHelper": "Digite um proxy por linha. Use null para um perfil sem proxy. Linhas extras serão ignoradas.",
+    "proxyLineInfo": "{{count}} linha(s) de proxy detectada(s)",
     "assignButton": "Atribuir",
-    "success": "Proxy atribuído com sucesso a {{count}} perfil(is)",
-    "failedFallback": "Falha ao atribuir proxy",
-    "noValidProfiles": "Nenhum perfil válido selecionado.",
-    "selectedProfilesLabel": "Perfis selecionados:"
+    "noValidProfiles": "Nenhum perfil válido selecionado",
+    "failedFallback": "Falha ao atribuir proxy"
   }
 }

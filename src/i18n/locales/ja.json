@@ -1869,15 +1869,13 @@
   },
   "proxyAssignment": {
     "title": "プロキシを割り当て",
-    "description_one": "{{count}}件の選択されたプロファイルにプロキシを割り当てます。",
-    "description_other": "{{count}}件の選択されたプロファイルにプロキシを割り当てます。",
-    "proxyInputLabel": "プロキシ",
-    "proxyPlaceholder": "socks5://user:pass@host:port",
-    "proxyHelper": "空にするとプロキシが削除されます。形式: protocol://user:pass@host:port",
+    "description": "選択した各プロファイルに、順番どおり1行ずつプロキシを割り当てます。余ったプロキシは無視されます。余ったプロファイルにはプロキシを割り当てません。",
+    "proxyInputLabel": "プロキシ一覧",
+    "proxyPlaceholder": "address:port:user:pass\nnull\naddress:port:user:pass",
+    "proxyHelper": "1行につき1つのプロキシを入力してください。プロキシなしのプロファイルは null を使ってください。余分な行は無視されます。",
+    "proxyLineInfo": "{{count}} 行のプロキシを検出しました",
     "assignButton": "割り当て",
-    "success": "{{count}}件のプロファイルにプロキシを正常に割り当てました",
-    "failedFallback": "プロキシの割り当てに失敗しました",
-    "noValidProfiles": "有効なプロファイルが選択されていません。",
-    "selectedProfilesLabel": "選択されたプロファイル:"
+    "noValidProfiles": "有効なプロファイルが選択されていません",
+    "failedFallback": "プロキシの割り当てに失敗しました"
   }
 }

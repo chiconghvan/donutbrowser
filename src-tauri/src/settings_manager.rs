@@ -251,11 +251,7 @@ pub async fn save_app_settings(
   log::info!(
     "[settings] Saving settings: theme={}, custom_theme_keys={}",
     settings.theme,
-    settings
-      .custom_theme
-      .as_ref()
-      .map(|t| t.len())
-      .unwrap_or(0)
+    settings.custom_theme.as_ref().map(|t| t.len()).unwrap_or(0)
   );
 
   manager
@@ -379,7 +375,6 @@ pub async fn save_table_sorting_settings(sorting: TableSortingSettings) -> Resul
     .save_table_sorting(&sorting)
     .map_err(|e| format!("Failed to save table sorting settings: {e}"))
 }
-
 
 #[tauri::command]
 pub async fn dismiss_window_resize_warning() -> Result<(), String> {
