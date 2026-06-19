@@ -1866,5 +1866,18 @@
     "namePattern": "Names: {{prefix}}.01 through {{prefix}}.{{count}}",
     "proxyCountMatch": "{{count}} proxy line(s) — matches {{count}} profile(s).",
     "proxyCountInfo": "{{proxyCount}} proxy line(s) for {{profileCount}} profile(s). Extra proxies ignored, missing proxies left unset."
+  },
+  "proxyAssignment": {
+    "title": "Asignar Proxy",
+    "description_one": "Asignar un proxy a {{count}} perfil seleccionado.",
+    "description_other": "Asignar un proxy a {{count}} perfiles seleccionados.",
+    "proxyInputLabel": "Proxy",
+    "proxyPlaceholder": "socks5://user:pass@host:port",
+    "proxyHelper": "Dejar vacío para eliminar el proxy. Formato: protocolo://usuario:contraseña@host:puerto",
+    "assignButton": "Asignar",
+    "success": "Proxy asignado exitosamente a {{count}} perfil(es)",
+    "failedFallback": "Error al asignar proxy",
+    "noValidProfiles": "No hay perfiles válidos seleccionados.",
+    "selectedProfilesLabel": "Perfiles seleccionados:"
   }
 }

@@ -23,6 +23,7 @@ import {
   LuChevronUp,
   LuCookie,
   LuCopy,
+  LuGlobe,
   LuInfo,
   LuList,
   LuLock,
@@ -2471,7 +2472,7 @@ export function ProfilesDataTable({
                       meta.setRenameError(null);
                     }
                   }}
-                  className="w-30 h-6 px-2 py-1 text-sm font-medium leading-none border-0 shadow-none focus-visible:ring-0"
+                  className="select-text w-30 h-6 px-2 py-1 text-sm font-medium leading-none border-0 shadow-none focus-visible:ring-0"
                 />
               </div>
             );
@@ -2872,7 +2873,7 @@ export function ProfilesDataTable({
       <div className="relative flex-1 min-h-0 flex flex-col">
         <div
           ref={scrollParentRef}
-          className="overflow-auto relative flex-1 min-h-0 scroll-fade"
+          className="overflow-auto relative flex-1 min-h-0 scroll-fade select-none"
           style={
             {
               // Sticky table header is 32px tall (h-8); shift the top
@@ -3070,7 +3071,7 @@ export function ProfilesDataTable({
             onClick={onBulkProxyAssignment}
             size="icon"
           >
-            <FiWifi />
+            <LuGlobe />
           </DataTableActionBarAction>
         )}
         {onBulkProxyPasteAssignment && (

@@ -1866,5 +1866,18 @@
     "namePattern": "Names: {{prefix}}.01 through {{prefix}}.{{count}}",
     "proxyCountMatch": "{{count}} proxy line(s) — matches {{count}} profile(s).",
     "proxyCountInfo": "{{proxyCount}} proxy line(s) for {{profileCount}} profile(s). Extra proxies ignored, missing proxies left unset."
+  },
+  "proxyAssignment": {
+    "title": "프록시 할당",
+    "description_one": "{{count}}개의 선택된 프로필에 프록시를 할당합니다.",
+    "description_other": "{{count}}개의 선택된 프로필에 프록시를 할당합니다.",
+    "proxyInputLabel": "프록시",
+    "proxyPlaceholder": "socks5://user:pass@host:port",
+    "proxyHelper": "비워두면 프록시가 제거됩니다. 형식: protocol://user:pass@host:port",
+    "assignButton": "할당",
+    "success": "{{count}}개의 프로필에 프록시를 성공적으로 할당했습니다",
+    "failedFallback": "프록시 할당에 실패했습니다",
+    "noValidProfiles": "유효한 프로필이 선택되지 않았습니다.",
+    "selectedProfilesLabel": "선택된 프로필:"
   }
 }

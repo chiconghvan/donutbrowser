@@ -1866,5 +1866,18 @@
     "namePattern": "Names: {{prefix}}.01 through {{prefix}}.{{count}}",
     "proxyCountMatch": "{{count}} proxy line(s) — matches {{count}} profile(s).",
     "proxyCountInfo": "{{proxyCount}} proxy line(s) for {{profileCount}} profile(s). Extra proxies ignored, missing proxies left unset."
+  },
+  "proxyAssignment": {
+    "title": "Gán Proxy",
+    "description_one": "Gán proxy cho {{count}} profile đã chọn.",
+    "description_other": "Gán proxy cho {{count}} profile đã chọn.",
+    "proxyInputLabel": "Proxy",
+    "proxyPlaceholder": "socks5://user:pass@host:port",
+    "proxyHelper": "Để trống để xóa proxy. Định dạng: protocol://user:pass@host:port",
+    "assignButton": "Gán",
+    "success": "Đã gán proxy thành công cho {{count}} profile",
+    "failedFallback": "Không thể gán proxy",
+    "noValidProfiles": "Không có profile hợp lệ nào được chọn.",
+    "selectedProfilesLabel": "Các profile đã chọn:"
   }
 }

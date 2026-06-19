@@ -31,6 +31,7 @@ import {
   ProfilePasswordDialog,
 } from "@/components/profile-password-dialog";
 import { ProfileSelectorDialog } from "@/components/profile-selector-dialog";
+import { ProxyAssignmentDialog } from "@/components/proxy-assignment-dialog";
 import { type AppPage, RailNav } from "@/components/rail-nav";
 import { SettingsDialog } from "@/components/settings-dialog";
 import { ShortcutsPage } from "@/components/shortcuts-page";
@@ -205,6 +206,11 @@ export default function Home() {
     useState(false);
   const [groupAssignmentDialogOpen, setGroupAssignmentDialogOpen] =
     useState(false);
+  const [proxyAssignmentDialogOpen, setProxyAssignmentDialogOpen] =
+    useState(false);
+  const [selectedProfilesForProxy, setSelectedProfilesForProxy] = useState<
+    string[]
+  >([]);
   const [
     extensionGroupAssignmentDialogOpen,
     setExtensionGroupAssignmentDialogOpen,
@@ -950,6 +956,22 @@ export default function Home() {
     setSelectedProfiles([]);
   }, [selectedProfiles, handleAssignProfilesToGroup]);
 
+  const handleAssignProfilesToProxy = useCallback((profileIds: string[]) => {
+    setSelectedProfilesForProxy(profileIds);
+    setProxyAssignmentDialogOpen(true);
+  }, []);
+
+  const handleBulkProxyAssignment = useCallback(() => {
+    if (selectedProfiles.length === 0) return;
+    handleAssignProfilesToProxy(selectedProfiles);
+    setSelectedProfiles([]);
+  }, [selectedProfiles, handleAssignProfilesToProxy]);
+
+  const handleProxyAssignmentComplete = useCallback(() => {
+    setProxyAssignmentDialogOpen(false);
+    setSelectedProfilesForProxy([]);
+  }, []);
+
   const handleAssignExtensionGroup = useCallback((profileIds: string[]) => {
     setSelectedProfilesForExtensionGroup(profileIds);
     setExtensionGroupAssignmentDialogOpen(true);
@@ -1122,7 +1144,7 @@ export default function Home() {
           label: t("common.buttons.learnMore"),
           onClick: () => {
             const event = new CustomEvent("url-open-request", {
-              detail: "https://github.com/zhom/donutbrowser/discussions",
+              detail: "https://github.com/chiconghvan/donutbrowser/discussions",
             });
             window.dispatchEvent(event);
           },
@@ -1249,6 +1271,7 @@ export default function Home() {
                 onSelectedProfilesChange={setSelectedProfiles}
                 onBulkDelete={handleBulkDelete}
                 onBulkGroupAssignment={handleBulkGroupAssignment}
+                onBulkProxyAssignment={handleBulkProxyAssignment}
                 onBulkCopySelectedNames={handleBulkCopySelectedNames}
                 onBulkCopyCookies={handleBulkCopyCookies}
                 onBulkExtensionGroupAssignment={
@@ -1456,6 +1479,16 @@ export default function Home() {
         }}
         selectedProfiles={selectedProfilesForGroup}
         onAssignmentComplete={handleGroupAssignmentComplete}
+      />
+
+      <ProxyAssignmentDialog
+        isOpen={proxyAssignmentDialogOpen}
+        onClose={() => {
+          setProxyAssignmentDialogOpen(false);
+        }}
+        selectedProfiles={selectedProfilesForProxy}
+        onAssignmentComplete={handleProxyAssignmentComplete}
+        profiles={profiles}
       />
 
       <ExtensionGroupAssignmentDialog

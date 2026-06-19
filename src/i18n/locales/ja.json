@@ -1866,5 +1866,18 @@
     "namePattern": "Names: {{prefix}}.01 through {{prefix}}.{{count}}",
     "proxyCountMatch": "{{count}} proxy line(s) — matches {{count}} profile(s).",
     "proxyCountInfo": "{{proxyCount}} proxy line(s) for {{profileCount}} profile(s). Extra proxies ignored, missing proxies left unset."
+  },
+  "proxyAssignment": {
+    "title": "プロキシを割り当て",
+    "description_one": "{{count}}件の選択されたプロファイルにプロキシを割り当てます。",
+    "description_other": "{{count}}件の選択されたプロファイルにプロキシを割り当てます。",
+    "proxyInputLabel": "プロキシ",
+    "proxyPlaceholder": "socks5://user:pass@host:port",
+    "proxyHelper": "空にするとプロキシが削除されます。形式: protocol://user:pass@host:port",
+    "assignButton": "割り当て",
+    "success": "{{count}}件のプロファイルにプロキシを正常に割り当てました",
+    "failedFallback": "プロキシの割り当てに失敗しました",
+    "noValidProfiles": "有効なプロファイルが選択されていません。",
+    "selectedProfilesLabel": "選択されたプロファイル:"
   }
 }

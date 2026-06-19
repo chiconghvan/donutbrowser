@@ -1,6 +1,24 @@
 # Changelog
 
 
+## v0.27.2 (2026-06-19)
+
+### Features
+
+- restore ProxyAssignmentDialog with full state management
+- add proxyAssignment i18n keys for all 9 languages
+- add proxy globe icon and assign-proxy action in profile data table
+- add bulk proxy assignment handler in page.tsx
+
+### Refactoring
+
+- make profile name selectable, table body non-selectable
+- improve profile-data-table CSS for better UX
+
+### Maintenance
+
+- chore: version bump to 0.27.2
+
 ## v0.27.1 (2026-06-19)
 
 ### Features

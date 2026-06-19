@@ -58,7 +58,7 @@ export function CamoufoxDeprecationDialog({
             variant="outline"
             onClick={() => {
               void openUrl(
-                "https://github.com/zhom/donutbrowser/discussions/426",
+                "https://github.com/chiconghvan/donutbrowser/discussions/426",
               );
             }}
           >

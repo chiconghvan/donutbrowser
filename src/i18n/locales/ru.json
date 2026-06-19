@@ -1866,5 +1866,18 @@
     "namePattern": "Names: {{prefix}}.01 through {{prefix}}.{{count}}",
     "proxyCountMatch": "{{count}} proxy line(s) — matches {{count}} profile(s).",
     "proxyCountInfo": "{{proxyCount}} proxy line(s) for {{profileCount}} profile(s). Extra proxies ignored, missing proxies left unset."
+  },
+  "proxyAssignment": {
+    "title": "Назначить прокси",
+    "description_one": "Назначить прокси для {{count}} выбранного профиля.",
+    "description_other": "Назначить прокси для {{count}} выбранных профилей.",
+    "proxyInputLabel": "Прокси",
+    "proxyPlaceholder": "socks5://user:pass@host:port",
+    "proxyHelper": "Оставьте пустым для удаления прокси. Формат: протокол://пользователь:пароль@хост:порт",
+    "assignButton": "Назначить",
+    "success": "Прокси успешно назначен для {{count}} профиля(лей)",
+    "failedFallback": "Не удалось назначить прокси",
+    "noValidProfiles": "Не выбрано допустимых профилей.",
+    "selectedProfilesLabel": "Выбранные профили:"
   }
 }
