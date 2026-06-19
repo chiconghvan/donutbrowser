@@ -1,6 +1,5 @@
 use crate::browser::ProxySettings;
 use crate::camoufox_manager::{CamoufoxConfig, CamoufoxManager};
-use crate::cloud_auth::CLOUD_AUTH;
 use crate::downloaded_browsers_registry::DownloadedBrowsersRegistry;
 use crate::events;
 use crate::platform_browser;
@@ -59,29 +58,18 @@ impl BrowserRunner {
     Ok(Some(path.to_string_lossy().to_string()))
   }
 
-  /// Refresh cloud proxy credentials if the profile uses a cloud or cloud-derived proxy,
-  /// then resolve the proxy settings with profile-specific sid for sticky sessions.
+  /// Resolve inline proxy string from profile into launch settings.
   async fn resolve_proxy_with_refresh(
     &self,
     proxy_id: Option<&String>,
-    profile_id: Option<&str>,
+    _profile_id: Option<&str>,
   ) -> Result<Option<ProxySettings>, String> {
-    let proxy_id = match proxy_id {
-      Some(id) => id,
-      None => return Ok(None),
+    let Some(proxy) = proxy_id else {
+      return Ok(None);
     };
 
-    if PROXY_MANAGER.is_cloud_or_derived(proxy_id) {
-      log::info!("Refreshing cloud proxy credentials before launch for proxy {proxy_id}");
-      CLOUD_AUTH.sync_cloud_proxy().await;
-    }
-    // For cloud-derived proxies, inject profile-specific sid for sticky sessions
-    if let Some(pid) = profile_id {
-      if PROXY_MANAGER.is_cloud_or_derived(proxy_id) {
-        return Ok(PROXY_MANAGER.resolve_proxy_for_profile(proxy_id, pid));
-      }
-    }
-    Ok(PROXY_MANAGER.get_proxy_settings_by_id(proxy_id))
+    let settings = crate::proxy_manager::parse_profile_proxy_string(proxy)?;
+    Ok(Some(settings))
   }
 
   fn fire_launch_hook(profile: &BrowserProfile) {
@@ -153,7 +141,7 @@ impl BrowserRunner {
     Self::fire_launch_hook(profile);
 
     self
-      .resolve_proxy_with_refresh(profile.proxy_id.as_ref(), Some(&profile.id.to_string()))
+      .resolve_proxy_with_refresh(profile.proxy.as_ref(), Some(&profile.id.to_string()))
       .await
   }
 

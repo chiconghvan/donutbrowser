@@ -226,7 +226,8 @@
     "newProfile": "New",
     "donutLogo": "Donut Browser logo",
     "scrollGroupsLeft": "Scroll groups left",
-    "scrollGroupsRight": "Scroll groups right"
+    "scrollGroupsRight": "Scroll groups right",
+    "bulkNewProfile": "Bulk New"
   },
   "profiles": {
     "title": "Profiles",
@@ -315,7 +316,11 @@
       "assignToGroup": "Assign to Group",
       "assignProxy": "Assign Proxy",
       "assignExtensionGroup": "Assign Extension Group",
-      "copyCookies": "Copy Cookies"
+      "copySelectedNames": "Copy Selected Names",
+      "copySelectedNamesSuccess": "Selected profile names copied",
+      "copySelectedNamesFailed": "Failed to copy selected profile names",
+      "copyCookies": "Copy Cookies",
+      "assignProxyBulk": "Assign Proxies (Bulk Paste)"
     },
     "passwordProtectedBadge": "Password Protected",
     "launchHook": {
@@ -1491,6 +1496,20 @@
     "vpnGroupHeading": "VPNs",
     "failedFallback": "Failed to assign proxy/VPN to profiles"
   },
+  "bulkProxyAssignment": {
+    "title": "Bulk Proxy Assignment",
+    "description": "Paste one proxy per line. Line 1 → first selected profile, line 2 → second, etc.",
+    "selectedProfilesLabel": "Selected profiles:",
+    "textareaLabel": "Proxies (one per line)",
+    "textareaPlaceholder": "address:port:user:pass",
+    "helperText": "One proxy per line, in the same order as the selected profiles above.",
+    "applyButton": "Apply to All",
+    "countMismatch": "Mismatch: {{proxyCount}} proxy lines but {{profileCount}} profiles selected.",
+    "invalidLineFormat": "Invalid proxy format: \"{{line}}\". Expected: address:port:user:pass",
+    "invalidPort": "Invalid port in \"{{line}}\". Port must be 1–65535.",
+    "success": "Successfully assigned proxies to {{count}} profile(s).",
+    "failed": "Failed to assign proxies."
+  },
   "groupAssignment": {
     "title": "Assign Group",
     "description_one": "Assign a group to {{count}} selected profile.",
@@ -2062,5 +2081,21 @@
     "title": "Camoufox support is ending",
     "description": "Support for Camoufox profiles is ending on July 8, 2026. You have one or more Camoufox profiles. Please migrate them to Wayfern before then — after that date, Camoufox profiles may stop working.",
     "acknowledge": "Got it"
+  },
+  "bulkCreateProfile": {
+    "title": "Bulk Create Profiles",
+    "configureTitle": "Configure {{browser}}",
+    "countLabel": "Number of profiles",
+    "countPlaceholder": "Enter count...",
+    "proxyLabel": "Proxies (one per line)",
+    "proxyPlaceholder": "address:port:user:pass",
+    "proxyHelper": "One proxy per line. Line 1 → profile 1, etc.",
+    "countMismatch": "Mismatch: {{proxyCount}} proxy lines but {{profileCount}} requested.",
+    "invalidProxy": "Invalid proxy format: {{line}}",
+    "createButton": "Create {{count}} Profiles",
+    "success": "Created {{count}} profiles successfully.",
+    "failed": "Failed to create profiles.",
+    "namePattern": "Names: {{prefix}}.01 through {{prefix}}.{{count}}",
+    "proxyCountMatch": "{{count}} proxy line(s) — matches {{count}} profile(s)."
   }
 }

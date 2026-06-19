@@ -17,7 +17,6 @@ use tokio::net::TcpListener;
 use tokio::sync::Mutex as AsyncMutex;
 use uuid::Uuid;
 
-use crate::browser::ProxySettings;
 use crate::cloud_auth::CLOUD_AUTH;
 use crate::group_manager::GROUP_MANAGER;
 use crate::profile::{BrowserProfile, ProfileManager};
@@ -579,9 +578,9 @@ impl McpServer {
               "enum": ["wayfern", "camoufox"],
               "description": "Browser engine to use"
             },
-            "proxy_id": {
+            "proxy": {
               "type": "string",
-              "description": "Optional proxy UUID to assign"
+              "description": "Optional inline proxy string: address:port:user:pass"
             },
             "launch_hook": {
               "type": "string",
@@ -614,9 +613,9 @@ impl McpServer {
               "type": "string",
               "description": "New name for the profile"
             },
-            "proxy_id": {
+            "proxy": {
               "type": "string",
-              "description": "Proxy UUID to assign (empty string to remove)"
+              "description": "Inline proxy string address:port:user:pass (empty string to remove)"
             },
             "launch_hook": {
               "type": "string",
@@ -661,15 +660,6 @@ impl McpServer {
       McpTool {
         name: "list_tags".to_string(),
         description: "List all tags used across profiles".to_string(),
-        input_schema: serde_json::json!({
-          "type": "object",
-          "properties": {},
-          "required": []
-        }),
-      },
-      McpTool {
-        name: "list_proxies".to_string(),
-        description: "List all configured proxies".to_string(),
         input_schema: serde_json::json!({
           "type": "object",
           "properties": {},
@@ -779,147 +769,7 @@ impl McpServer {
           "required": ["profile_ids"]
         }),
       },
-      // Full proxy management tools
-      McpTool {
-        name: "get_proxy".to_string(),
-        description: "Get details of a specific proxy".to_string(),
-        input_schema: serde_json::json!({
-          "type": "object",
-          "properties": {
-            "proxy_id": {
-              "type": "string",
-              "description": "The UUID of the proxy to retrieve"
-            }
-          },
-          "required": ["proxy_id"]
-        }),
-      },
-      McpTool {
-        name: "create_proxy".to_string(),
-        description: "Create a new proxy configuration.".to_string(),
-        input_schema: serde_json::json!({
-          "type": "object",
-          "properties": {
-            "name": {
-              "type": "string",
-              "description": "The name for the new proxy"
-            },
-            "proxy_type": {
-              "type": "string",
-              "enum": ["http", "https", "socks4", "socks5"],
-              "description": "The type of proxy (for regular proxies)"
-            },
-            "host": {
-              "type": "string",
-              "description": "The proxy host address (for regular proxies)"
-            },
-            "port": {
-              "type": "integer",
-              "description": "The proxy port number (for regular proxies)"
-            },
-            "username": {
-              "type": "string",
-              "description": "Optional username for authentication (for regular proxies)"
-            },
-            "password": {
-              "type": "string",
-              "description": "Optional password for authentication (for regular proxies)"
-            }
-          },
-          "required": ["name", "proxy_type", "host", "port"]
-        }),
-      },
-      McpTool {
-        name: "update_proxy".to_string(),
-        description: "Update an existing proxy configuration".to_string(),
-        input_schema: serde_json::json!({
-          "type": "object",
-          "properties": {
-            "proxy_id": {
-              "type": "string",
-              "description": "The UUID of the proxy to update"
-            },
-            "name": {
-              "type": "string",
-              "description": "New name for the proxy"
-            },
-            "proxy_type": {
-              "type": "string",
-              "enum": ["http", "https", "socks4", "socks5"],
-              "description": "The type of proxy (for regular proxies)"
-            },
-            "host": {
-              "type": "string",
-              "description": "The proxy host address (for regular proxies)"
-            },
-            "port": {
-              "type": "integer",
-              "description": "The proxy port number (for regular proxies)"
-            },
-            "username": {
-              "type": "string",
-              "description": "Optional username for authentication (for regular proxies)"
-            },
-            "password": {
-              "type": "string",
-              "description": "Optional password for authentication (for regular proxies)"
-            }
-          },
-          "required": ["proxy_id"]
-        }),
-      },
-      McpTool {
-        name: "delete_proxy".to_string(),
-        description: "Delete a proxy configuration".to_string(),
-        input_schema: serde_json::json!({
-          "type": "object",
-          "properties": {
-            "proxy_id": {
-              "type": "string",
-              "description": "The UUID of the proxy to delete"
-            }
-          },
-          "required": ["proxy_id"]
-        }),
-      },
-      McpTool {
-        name: "export_proxies".to_string(),
-        description: "Export all proxy configurations".to_string(),
-        input_schema: serde_json::json!({
-          "type": "object",
-          "properties": {
-            "format": {
-              "type": "string",
-              "enum": ["json", "txt"],
-              "description": "Export format (json for structured data, txt for URL format)"
-            }
-          },
-          "required": ["format"]
-        }),
-      },
-      McpTool {
-        name: "import_proxies".to_string(),
-        description: "Import proxy configurations from JSON or TXT content".to_string(),
-        input_schema: serde_json::json!({
-          "type": "object",
-          "properties": {
-            "content": {
-              "type": "string",
-              "description": "The proxy configuration content to import"
-            },
-            "format": {
-              "type": "string",
-              "enum": ["json", "txt"],
-              "description": "Import format (json or txt)"
-            },
-            "name_prefix": {
-              "type": "string",
-              "description": "Optional prefix for imported proxy names (default: 'Imported')"
-            }
-          },
-          "required": ["content", "format"]
-        }),
-      },
+      // Stored proxy management tools removed — profile proxy lives inline in profile metadata.
       // VPN management tools
       McpTool {
         name: "import_vpn".to_string(),
@@ -1689,14 +1539,7 @@ impl McpServer {
       "update_group" => self.handle_update_group(arguments).await,
       "delete_group" => self.handle_delete_group(arguments).await,
       "assign_profiles_to_group" => self.handle_assign_profiles_to_group(arguments).await,
-      // Full proxy management
-      "get_proxy" => self.handle_get_proxy(arguments).await,
-      "create_proxy" => self.handle_create_proxy(arguments).await,
-      "update_proxy" => self.handle_update_proxy(arguments).await,
-      "delete_proxy" => self.handle_delete_proxy(arguments).await,
-      // Proxy import/export
-      "export_proxies" => self.handle_export_proxies(arguments).await,
-      "import_proxies" => self.handle_import_proxies(arguments).await,
+      // Stored proxy management removed.
       // VPN management
       "import_vpn" => self.handle_import_vpn(arguments).await,
       "list_vpn_configs" => self.handle_list_vpn_configs().await,
@@ -2103,8 +1946,9 @@ impl McpServer {
       });
     }
 
-    let proxy_id = arguments
-      .get("proxy_id")
+    let proxy = arguments
+      .get("proxy")
+      .or_else(|| arguments.get("proxy_id"))
       .and_then(|v| v.as_str())
       .map(|s| s.to_string());
     let launch_hook = arguments
@@ -2145,7 +1989,7 @@ impl McpServer {
         browser,
         version,
         "stable",
-        proxy_id,
+        proxy,
         None,
         None,
         None,
@@ -2206,13 +2050,17 @@ impl McpServer {
         })?;
     }
 
-    if let Some(proxy_id) = arguments.get("proxy_id").and_then(|v| v.as_str()) {
-      let pid = if proxy_id.is_empty() {
+    if let Some(proxy) = arguments
+      .get("proxy")
+      .or_else(|| arguments.get("proxy_id"))
+      .and_then(|v| v.as_str())
+    {
+      let value = if proxy.is_empty() {
         None
       } else {
-        Some(proxy_id.to_string())
+        Some(proxy.to_string())
       };
-      pm.update_profile_proxy(app_handle.clone(), profile_id, pid)
+      pm.update_profile_proxy(app_handle.clone(), profile_id, value)
         .await
         .map_err(|e| McpError {
           code: -32000,
@@ -2640,366 +2488,66 @@ impl McpServer {
   }
 
   // Full proxy management handlers
+  /// Stored proxy management removed — profiles carry proxy inline.
   async fn handle_get_proxy(
     &self,
-    arguments: &serde_json::Value,
+    _arguments: &serde_json::Value,
   ) -> Result<serde_json::Value, McpError> {
-    let proxy_id = arguments
-      .get("proxy_id")
-      .and_then(|v| v.as_str())
-      .ok_or_else(|| McpError {
-        code: -32602,
-        message: "Missing proxy_id".to_string(),
-      })?;
-
-    let proxies = PROXY_MANAGER.get_stored_proxies();
-    let proxy = proxies
-      .iter()
-      .find(|p| p.id == proxy_id)
-      .ok_or_else(|| McpError {
-        code: -32000,
-        message: format!("Proxy not found: {proxy_id}"),
-      })?;
-
-    Ok(serde_json::json!({
-      "content": [{
-        "type": "text",
-        "text": serde_json::to_string_pretty(&proxy).unwrap_or_default()
-      }]
-    }))
+    Err(McpError {
+      code: -32000,
+      message: "Stored proxy management removed. Set proxy inline in profile metadata.".to_string(),
+    })
   }
 
   async fn handle_create_proxy(
     &self,
-    arguments: &serde_json::Value,
+    _arguments: &serde_json::Value,
   ) -> Result<serde_json::Value, McpError> {
-    let name = arguments
-      .get("name")
-      .and_then(|v| v.as_str())
-      .ok_or_else(|| McpError {
-        code: -32602,
-        message: "Missing name".to_string(),
-      })?;
-
-    let inner = self.inner.lock().await;
-    let app_handle = inner.app_handle.as_ref().ok_or_else(|| McpError {
+    Err(McpError {
       code: -32000,
-      message: "MCP server not properly initialized".to_string(),
-    })?;
-
-    let proxy_type = arguments
-      .get("proxy_type")
-      .and_then(|v| v.as_str())
-      .ok_or_else(|| McpError {
-        code: -32602,
-        message: "Missing proxy_type".to_string(),
-      })?;
-
-    // The tool schema declares an enum, but JSON-Schema enums are advisory only;
-    // enforce it here so a bad value can't produce a non-functional proxy.
-    if !matches!(proxy_type, "http" | "https" | "socks4" | "socks5") {
-      return Err(McpError {
-        code: -32602,
-        message: "proxy_type must be one of: http, https, socks4, socks5".to_string(),
-      });
-    }
-
-    let host = arguments
-      .get("host")
-      .and_then(|v| v.as_str())
-      .ok_or_else(|| McpError {
-        code: -32602,
-        message: "Missing host".to_string(),
-      })?;
-
-    let port = arguments
-      .get("port")
-      .and_then(|v| v.as_u64())
-      .ok_or_else(|| McpError {
-        code: -32602,
-        message: "Missing port".to_string(),
-      })? as u16;
-
-    let username = arguments
-      .get("username")
-      .and_then(|v| v.as_str())
-      .map(|s| s.to_string());
-    let password = arguments
-      .get("password")
-      .and_then(|v| v.as_str())
-      .map(|s| s.to_string());
-
-    let proxy_settings = ProxySettings {
-      proxy_type: proxy_type.to_string(),
-      host: host.to_string(),
-      port,
-      username,
-      password,
-    };
-
-    let proxy = PROXY_MANAGER
-      .create_stored_proxy(app_handle, name.to_string(), proxy_settings)
-      .map_err(|e| McpError {
-        code: -32000,
-        message: format!("Failed to create proxy: {e}"),
-      })?;
-
-    Ok(serde_json::json!({
-      "content": [{
-        "type": "text",
-        "text": format!("Proxy '{}' created successfully with ID: {}", proxy.name, proxy.id)
-      }]
-    }))
+      message: "Stored proxy management removed. Set proxy inline in profile metadata.".to_string(),
+    })
   }
 
   async fn handle_update_proxy(
     &self,
-    arguments: &serde_json::Value,
+    _arguments: &serde_json::Value,
   ) -> Result<serde_json::Value, McpError> {
-    let proxy_id = arguments
-      .get("proxy_id")
-      .and_then(|v| v.as_str())
-      .ok_or_else(|| McpError {
-        code: -32602,
-        message: "Missing proxy_id".to_string(),
-      })?;
-
-    let name = arguments
-      .get("name")
-      .and_then(|v| v.as_str())
-      .map(|s| s.to_string());
-
-    // Build proxy_settings if any settings fields are provided
-    let has_settings = arguments.get("proxy_type").is_some()
-      || arguments.get("host").is_some()
-      || arguments.get("port").is_some();
-
-    let proxy_settings = if has_settings {
-      // Get existing proxy to use as defaults
-      let proxies = PROXY_MANAGER.get_stored_proxies();
-      let existing = proxies
-        .iter()
-        .find(|p| p.id == proxy_id)
-        .ok_or_else(|| McpError {
-          code: -32000,
-          message: format!("Proxy not found: {proxy_id}"),
-        })?;
-
-      let proxy_type = arguments
-        .get("proxy_type")
-        .and_then(|v| v.as_str())
-        .map(|s| s.to_string())
-        .unwrap_or_else(|| existing.proxy_settings.proxy_type.clone());
-
-      let host = arguments
-        .get("host")
-        .and_then(|v| v.as_str())
-        .map(|s| s.to_string())
-        .unwrap_or_else(|| existing.proxy_settings.host.clone());
-
-      let port = arguments
-        .get("port")
-        .and_then(|v| v.as_u64())
-        .map(|p| p as u16)
-        .unwrap_or(existing.proxy_settings.port);
-
-      let username = arguments
-        .get("username")
-        .and_then(|v| v.as_str())
-        .map(|s| s.to_string())
-        .or_else(|| existing.proxy_settings.username.clone());
-
-      let password = arguments
-        .get("password")
-        .and_then(|v| v.as_str())
-        .map(|s| s.to_string())
-        .or_else(|| existing.proxy_settings.password.clone());
-
-      Some(ProxySettings {
-        proxy_type,
-        host,
-        port,
-        username,
-        password,
-      })
-    } else {
-      None
-    };
-
-    let inner = self.inner.lock().await;
-    let app_handle = inner.app_handle.as_ref().ok_or_else(|| McpError {
+    Err(McpError {
       code: -32000,
-      message: "MCP server not properly initialized".to_string(),
-    })?;
-
-    let proxy = PROXY_MANAGER
-      .update_stored_proxy(app_handle, proxy_id, name, proxy_settings)
-      .map_err(|e| McpError {
-        code: -32000,
-        message: format!("Failed to update proxy: {e}"),
-      })?;
-
-    Ok(serde_json::json!({
-      "content": [{
-        "type": "text",
-        "text": format!("Proxy '{}' updated successfully", proxy.name)
-      }]
-    }))
+      message: "Stored proxy management removed. Set proxy inline in profile metadata.".to_string(),
+    })
   }
 
   async fn handle_delete_proxy(
     &self,
-    arguments: &serde_json::Value,
+    _arguments: &serde_json::Value,
   ) -> Result<serde_json::Value, McpError> {
-    let proxy_id = arguments
-      .get("proxy_id")
-      .and_then(|v| v.as_str())
-      .ok_or_else(|| McpError {
-        code: -32602,
-        message: "Missing proxy_id".to_string(),
-      })?;
-
-    let inner = self.inner.lock().await;
-    let app_handle = inner.app_handle.as_ref().ok_or_else(|| McpError {
+    Err(McpError {
       code: -32000,
-      message: "MCP server not properly initialized".to_string(),
-    })?;
-
-    PROXY_MANAGER
-      .delete_stored_proxy(app_handle, proxy_id)
-      .map_err(|e| McpError {
-        code: -32000,
-        message: format!("Failed to delete proxy: {e}"),
-      })?;
-
-    Ok(serde_json::json!({
-      "content": [{
-        "type": "text",
-        "text": format!("Proxy '{}' deleted successfully", proxy_id)
-      }]
-    }))
+      message: "Stored proxy management removed. Set proxy inline in profile metadata.".to_string(),
+    })
   }
 
   async fn handle_export_proxies(
     &self,
-    arguments: &serde_json::Value,
+    _arguments: &serde_json::Value,
   ) -> Result<serde_json::Value, McpError> {
-    let format = arguments
-      .get("format")
-      .and_then(|v| v.as_str())
-      .ok_or_else(|| McpError {
-        code: -32602,
-        message: "Missing format".to_string(),
-      })?;
-
-    let content = match format {
-      "json" => PROXY_MANAGER.export_proxies_json().map_err(|e| McpError {
-        code: -32000,
-        message: format!("Failed to export proxies: {e}"),
-      })?,
-      "txt" => PROXY_MANAGER.export_proxies_txt(),
-      _ => {
-        return Err(McpError {
-          code: -32602,
-          message: format!("Invalid format '{}', must be 'json' or 'txt'", format),
-        })
-      }
-    };
-
-    Ok(serde_json::json!({
-      "content": [{
-        "type": "text",
-        "text": content
-      }]
-    }))
+    Err(McpError {
+      code: -32000,
+      message: "Stored proxy management removed. Export not supported.".to_string(),
+    })
   }
 
   async fn handle_import_proxies(
     &self,
-    arguments: &serde_json::Value,
+    _arguments: &serde_json::Value,
   ) -> Result<serde_json::Value, McpError> {
-    let content = arguments
-      .get("content")
-      .and_then(|v| v.as_str())
-      .ok_or_else(|| McpError {
-        code: -32602,
-        message: "Missing content".to_string(),
-      })?;
-
-    let format = arguments
-      .get("format")
-      .and_then(|v| v.as_str())
-      .ok_or_else(|| McpError {
-        code: -32602,
-        message: "Missing format".to_string(),
-      })?;
-
-    let name_prefix = arguments
-      .get("name_prefix")
-      .and_then(|v| v.as_str())
-      .map(|s| s.to_string());
-
-    let inner = self.inner.lock().await;
-    let app_handle = inner.app_handle.as_ref().ok_or_else(|| McpError {
+    Err(McpError {
       code: -32000,
-      message: "MCP server not properly initialized".to_string(),
-    })?;
-
-    let result = match format {
-      "json" => PROXY_MANAGER
-        .import_proxies_json(app_handle, content)
-        .map_err(|e| McpError {
-          code: -32000,
-          message: format!("Failed to import proxies: {e}"),
-        })?,
-      "txt" => {
-        use crate::proxy_manager::{ProxyManager, ProxyParseResult};
-
-        let parse_results = ProxyManager::parse_txt_proxies(content);
-        let parsed: Vec<_> = parse_results
-          .into_iter()
-          .filter_map(|r| {
-            if let ProxyParseResult::Parsed(p) = r {
-              Some(p)
-            } else {
-              None
-            }
-          })
-          .collect();
-
-        if parsed.is_empty() {
-          return Err(McpError {
-            code: -32000,
-            message: "No valid proxies found in content".to_string(),
-          });
-        }
-
-        PROXY_MANAGER
-          .import_proxies_from_parsed(app_handle, parsed, name_prefix)
-          .map_err(|e| McpError {
-            code: -32000,
-            message: format!("Failed to import proxies: {e}"),
-          })?
-      }
-      _ => {
-        return Err(McpError {
-          code: -32602,
-          message: format!("Invalid format '{}', must be 'json' or 'txt'", format),
-        })
-      }
-    };
-
-    Ok(serde_json::json!({
-      "content": [{
-        "type": "text",
-        "text": format!(
-          "Import complete: {} imported, {} skipped, {} errors",
-          result.imported_count,
-          result.skipped_count,
-          result.errors.len()
-        )
-      }]
-    }))
+      message: "Stored proxy management removed. Set proxy inline in profile metadata instead."
+        .to_string(),
+    })
   }
 
   // Cookie management handlers
@@ -3854,10 +3402,7 @@ impl McpServer {
 
             match resp.json::<serde_json::Value>().await {
               Ok(value) => {
-                if let Some(ws_url) = value
-                  .get("webSocketDebuggerUrl")
-                  .and_then(|v| v.as_str())
-                {
+                if let Some(ws_url) = value.get("webSocketDebuggerUrl").and_then(|v| v.as_str()) {
                   return Ok(ws_url.to_string());
                 }
 
@@ -5182,15 +4727,8 @@ mod tests {
     assert!(tool_names.contains(&"update_group"));
     assert!(tool_names.contains(&"delete_group"));
     assert!(tool_names.contains(&"assign_profiles_to_group"));
-    // Proxy tools
+    // Proxy tools (stored proxy management removed; profiles carry proxy inline)
     assert!(tool_names.contains(&"list_proxies"));
-    assert!(tool_names.contains(&"get_proxy"));
-    assert!(tool_names.contains(&"create_proxy"));
-    assert!(tool_names.contains(&"update_proxy"));
-    assert!(tool_names.contains(&"delete_proxy"));
-    // Proxy import/export tools
-    assert!(tool_names.contains(&"export_proxies"));
-    assert!(tool_names.contains(&"import_proxies"));
     // VPN tools
     assert!(tool_names.contains(&"import_vpn"));
     assert!(tool_names.contains(&"list_vpn_configs"));

@@ -703,10 +703,7 @@ impl SyncEngine {
     // Sync completed successfully — clean up resume state
     SyncResumeState::delete(&profile_dir);
 
-    // Sync associated proxy, group, and VPN
-    if let Some(proxy_id) = &profile.proxy_id {
-      let _ = self.sync_proxy(proxy_id, Some(app_handle)).await;
-    }
+    // Sync associated group and VPN. Proxy is inline profile metadata now.
     if let Some(group_id) = &profile.group_id {
       let _ = self.sync_group(group_id, Some(app_handle)).await;
     }
@@ -722,7 +719,7 @@ impl SyncEngine {
       updated_profile.name = remote_meta.name;
       updated_profile.tags = remote_meta.tags;
       updated_profile.note = remote_meta.note;
-      updated_profile.proxy_id = remote_meta.proxy_id;
+      updated_profile.proxy = remote_meta.proxy;
       updated_profile.vpn_id = remote_meta.vpn_id;
       updated_profile.group_id = remote_meta.group_id;
       updated_profile.last_sync = Some(
@@ -869,7 +866,7 @@ impl SyncEngine {
       updated.name = remote_meta.name;
       updated.tags = remote_meta.tags;
       updated.note = remote_meta.note;
-      updated.proxy_id = remote_meta.proxy_id;
+      updated.proxy = remote_meta.proxy;
       updated.vpn_id = remote_meta.vpn_id;
       updated.group_id = remote_meta.group_id;
       updated.last_sync = Some(
@@ -881,10 +878,7 @@ impl SyncEngine {
       let _ = profile_manager.save_profile(&updated);
     }
 
-    // Sync associated entities
-    if let Some(proxy_id) = &profile.proxy_id {
-      let _ = self.sync_proxy(proxy_id, Some(app_handle)).await;
-    }
+    // Sync associated entities. Proxy is inline profile metadata now.
     if let Some(group_id) = &profile.group_id {
       let _ = self.sync_group(group_id, Some(app_handle)).await;
     }
@@ -2898,16 +2892,10 @@ impl SyncEngine {
   }
 }
 
-/// Check if proxy is used by any synced profile
-pub fn is_proxy_used_by_synced_profile(proxy_id: &str) -> bool {
-  let profile_manager = ProfileManager::instance();
-  if let Ok(profiles) = profile_manager.list_profiles() {
-    profiles
-      .iter()
-      .any(|p| p.is_sync_enabled() && p.proxy_id.as_deref() == Some(proxy_id))
-  } else {
-    false
-  }
+/// Stored proxies are no longer referenced by synced profiles; profile proxy
+/// settings live inline in profile metadata.
+pub fn is_proxy_used_by_synced_profile(_proxy_id: &str) -> bool {
+  false
 }
 
 /// Check if group is used by any synced profile
@@ -2922,21 +2910,8 @@ pub fn is_group_used_by_synced_profile(group_id: &str) -> bool {
   }
 }
 
-/// Enable sync for proxy if not already enabled
-pub async fn enable_proxy_sync_if_needed(proxy_id: &str) -> Result<(), String> {
-  let proxy_manager = &crate::proxy_manager::PROXY_MANAGER;
-  let proxies = proxy_manager.get_stored_proxies();
-  let proxy = proxies
-    .iter()
-    .find(|p| p.id == proxy_id)
-    .ok_or_else(|| format!("Proxy with ID '{proxy_id}' not found"))?;
-
-  if !proxy.sync_enabled {
-    proxy_manager.set_stored_proxy_sync_state(proxy_id, true, proxy.last_sync)?;
-    let _ = events::emit("stored-proxies-changed", ());
-    log::info!("Auto-enabled sync for proxy {}", proxy_id);
-  }
-
+/// Stored proxy sync is deprecated — no-op.
+pub async fn enable_proxy_sync_if_needed(_proxy_id: &str) -> Result<(), String> {
   Ok(())
 }
 
@@ -3211,14 +3186,6 @@ pub async fn set_profile_sync_mode(
       scheduler
         .queue_profile_sync_immediate(profile_id.clone())
         .await;
-
-      if let Some(ref proxy_id) = profile.proxy_id {
-        if let Err(e) = enable_proxy_sync_if_needed(proxy_id).await {
-          log::warn!("Failed to enable sync for proxy {}: {}", proxy_id, e);
-        } else {
-          scheduler.queue_proxy_sync(proxy_id.clone()).await;
-        }
-      }
       if let Some(ref group_id) = profile.group_id {
         if let Err(e) = enable_group_sync_if_needed(group_id).await {
           log::warn!("Failed to enable sync for group {}: {}", group_id, e);
@@ -3396,65 +3363,19 @@ pub async fn trigger_sync_for_profile(
   Ok(())
 }
 
+/// Stored proxy sync is deprecated — profile proxy lives inline in metadata.
+/// This command is kept as a no-op for backwards compatibility with the frontend
+/// but always succeeds without persisting state.
 #[tauri::command]
 pub async fn set_proxy_sync_enabled(
-  app_handle: tauri::AppHandle,
+  _app_handle: tauri::AppHandle,
   proxy_id: String,
-  enabled: bool,
+  _enabled: bool,
 ) -> Result<(), String> {
-  let proxy_manager = &crate::proxy_manager::PROXY_MANAGER;
-  let proxies = proxy_manager.get_stored_proxies();
-  let proxy = proxies
-    .iter()
-    .find(|p| p.id == proxy_id)
-    .ok_or_else(|| serde_json::json!({ "code": "PROXY_NOT_FOUND" }).to_string())?;
-
-  // Block modifying sync for cloud-managed proxies
-  if proxy.is_cloud_managed {
-    return Err(serde_json::json!({ "code": "CANNOT_MODIFY_CLOUD_MANAGED_PROXY" }).to_string());
-  }
-
-  // If disabling, check if proxy is used by any synced profile
-  if !enabled && is_proxy_used_by_synced_profile(&proxy_id) {
-    return Err(serde_json::json!({ "code": "SYNC_LOCKED_BY_PROFILE" }).to_string());
-  }
-
-  // If enabling, check that sync settings are configured
-  if enabled {
-    ensure_sync_configured(&app_handle).await?;
-  }
-
-  let new_last_sync = if enabled { proxy.last_sync } else { None };
-  proxy_manager
-    .set_stored_proxy_sync_state(&proxy_id, enabled, new_last_sync)
-    .map_err(|e| {
-      serde_json::json!({ "code": "INTERNAL_ERROR", "params": { "detail": e } }).to_string()
-    })?;
-
-  let _ = events::emit("stored-proxies-changed", ());
-
-  if enabled {
-    let _ = events::emit(
-      "proxy-sync-status",
-      serde_json::json!({
-        "id": proxy_id,
-        "status": "syncing"
-      }),
-    );
-
-    if let Some(scheduler) = super::get_global_scheduler() {
-      scheduler.queue_proxy_sync(proxy_id).await;
-    }
-  } else {
-    let _ = events::emit(
-      "proxy-sync-status",
-      serde_json::json!({
-        "id": proxy_id,
-        "status": "disabled"
-      }),
-    );
-  }
-
+  log::warn!(
+    "set_proxy_sync_enabled called for deprecated stored proxy {}: no-op",
+    proxy_id
+  );
   Ok(())
 }
 
@@ -3528,9 +3449,10 @@ pub async fn set_group_sync_enabled(
   Ok(())
 }
 
+/// Stored proxy sync is deprecated — always returns false.
 #[tauri::command]
-pub fn is_proxy_in_use_by_synced_profile(proxy_id: String) -> bool {
-  is_proxy_used_by_synced_profile(&proxy_id)
+pub fn is_proxy_in_use_by_synced_profile(_proxy_id: String) -> bool {
+  false
 }
 
 #[tauri::command]
@@ -3616,13 +3538,8 @@ pub struct UnsyncedEntityCounts {
 
 #[tauri::command]
 pub fn get_unsynced_entity_counts() -> Result<UnsyncedEntityCounts, String> {
-  let proxy_count = {
-    let proxies = crate::proxy_manager::PROXY_MANAGER.get_stored_proxies();
-    proxies
-      .iter()
-      .filter(|p| !p.sync_enabled && !p.is_cloud_managed)
-      .count()
-  };
+  // Stored proxy sync is deprecated — always 0.
+  let proxy_count = 0;
 
   let group_count = {
     let gm = crate::group_manager::GROUP_MANAGER.lock().unwrap();
@@ -3672,17 +3589,8 @@ pub async fn enable_sync_for_all_entities(app_handle: tauri::AppHandle) -> Resul
   // an opt-in. Profile sync stays under explicit per-profile control via
   // set_profile_sync_mode. This command only touches metadata-sized entities.
 
-  // Enable sync for all unsynced proxies
-  {
-    let proxies = crate::proxy_manager::PROXY_MANAGER.get_stored_proxies();
-    for proxy in &proxies {
-      if !proxy.sync_enabled && !proxy.is_cloud_managed {
-        if let Err(e) = set_proxy_sync_enabled(app_handle.clone(), proxy.id.clone(), true).await {
-          log::warn!("Failed to enable sync for proxy {}: {e}", proxy.id);
-        }
-      }
-    }
-  }
+  // Stored proxy sync is deprecated — profiles carry proxy inline.
+  // Skipping proxy sync block.
 
   // Enable sync for all unsynced groups
   {
@@ -3898,14 +3806,10 @@ pub async fn rollover_encryption_for_all_entities(
   // defer their re-upload (changing their files mid-session would cause the
   // running browser to see a different proxy/extension config than what it
   // launched with).
-  let mut deferred_proxy_ids: std::collections::HashSet<String> = std::collections::HashSet::new();
   let mut deferred_vpn_ids: std::collections::HashSet<String> = std::collections::HashSet::new();
   let mut deferred_group_ids: std::collections::HashSet<String> = std::collections::HashSet::new();
   for p in &profiles {
     if running_profile_ids.contains(&p.id) {
-      if let Some(id) = &p.proxy_id {
-        deferred_proxy_ids.insert(id.clone());
-      }
       if let Some(id) = &p.vpn_id {
         deferred_vpn_ids.insert(id.clone());
       }
@@ -3915,21 +3819,11 @@ pub async fn rollover_encryption_for_all_entities(
     }
   }
 
-  let proxies = crate::proxy_manager::PROXY_MANAGER.get_stored_proxies();
-  let synced_proxies: Vec<_> = proxies.iter().filter(|p| p.sync_enabled).collect();
-  let total_proxies = synced_proxies.len();
-  let mut deferred = Vec::new();
-  for (i, proxy) in synced_proxies.iter().enumerate() {
-    if deferred_proxy_ids.contains(&proxy.id) {
-      deferred.push(proxy.id.clone());
-    } else if let Some(scheduler) = super::get_global_scheduler() {
-      scheduler.queue_proxy_sync(proxy.id.clone()).await;
-    }
-    let _ = events::emit(
-      "e2e-rollover-progress",
-      serde_json::json!({"stage": "proxies", "done": i + 1, "total": total_proxies}),
-    );
-  }
+  // Stored proxy sync is deprecated — skip proxy rollover.
+  let _ = events::emit(
+    "e2e-rollover-progress",
+    serde_json::json!({"stage": "proxies", "done": 0, "total": 0}),
+  );
 
   let groups = {
     let gm = crate::group_manager::GROUP_MANAGER.lock().unwrap();
@@ -4006,13 +3900,10 @@ pub async fn rollover_encryption_for_all_entities(
     );
   }
 
-  if !deferred.is_empty() || !deferred_groups.is_empty() || !deferred_vpns.is_empty() {
+  if !deferred_groups.is_empty() || !deferred_vpns.is_empty() {
     tauri::async_runtime::spawn(async move {
       tokio::time::sleep(std::time::Duration::from_secs(5)).await;
       if let Some(scheduler) = super::get_global_scheduler() {
-        for id in deferred {
-          scheduler.queue_proxy_sync(id).await;
-        }
         for id in deferred_groups {
           scheduler.queue_group_sync(id).await;
         }

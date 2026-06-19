@@ -3,7 +3,7 @@ use crate::camoufox_manager::CamoufoxConfig;
 use crate::events;
 use crate::group_manager::GROUP_MANAGER;
 use crate::profile::manager::ProfileManager;
-use crate::proxy_manager::PROXY_MANAGER;
+// PROXY_MANAGER import removed — stored proxy API routes are deprecated no-ops.
 use crate::tag_manager::TAG_MANAGER;
 use axum::{
   extract::{Path, Query, State},
@@ -29,7 +29,7 @@ pub struct ApiProfile {
   pub name: String,
   pub browser: String,
   pub version: String,
-  pub proxy_id: Option<String>,
+  pub proxy: Option<String>,
   pub launch_hook: Option<String>,
   pub process_id: Option<u32>,
   pub last_launch: Option<u64>,
@@ -63,7 +63,7 @@ pub struct CreateProfileRequest {
   /// downloaded; the create path does not fetch new versions.
   #[serde(default)]
   pub version: Option<String>,
-  pub proxy_id: Option<String>,
+  pub proxy: Option<String>,
   pub vpn_id: Option<String>,
   pub launch_hook: Option<String>,
   pub release_type: Option<String>,
@@ -90,7 +90,7 @@ pub struct UpdateProfileRequest {
   // would invalidate the generated fingerprint and on-disk profile dir).
   // Accepting it here only to silently ignore it misled API clients.
   pub version: Option<String>,
-  pub proxy_id: Option<String>,
+  pub proxy: Option<String>,
   pub vpn_id: Option<String>,
   pub launch_hook: Option<String>,
   pub release_type: Option<String>,
@@ -126,6 +126,7 @@ struct UpdateGroupRequest {
   name: String,
 }
 
+// Stored proxy structs kept for OpenAPI schema compatibility — all handlers return empty/deprecated.
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 struct ApiProxyResponse {
   id: String,
@@ -135,6 +136,7 @@ struct ApiProxyResponse {
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
+#[allow(dead_code)]
 struct CreateProxyRequest {
   name: String,
   #[schema(value_type = Object)]
@@ -142,6 +144,7 @@ struct CreateProxyRequest {
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
+#[allow(dead_code)]
 struct UpdateProxyRequest {
   name: Option<String>,
   #[schema(value_type = Object)]
@@ -223,62 +226,6 @@ struct RunProfileResponse {
 struct RunProfileRequest {
   url: Option<String>,
   headless: Option<bool>,
-}
-
-async fn get_debug_ws_url(port: u16) -> Option<String> {
-  let client = reqwest::Client::new();
-  let endpoints = ["json/version", "json/list", "json"];
-
-  for attempt in 0..15 {
-    if attempt > 0 {
-      tokio::time::sleep(std::time::Duration::from_secs(1)).await;
-    }
-
-    for endpoint in endpoints {
-      let url = format!("http://127.0.0.1:{port}/{endpoint}");
-      let Ok(resp) = client
-        .get(&url)
-        .timeout(std::time::Duration::from_secs(3))
-        .send()
-        .await
-      else {
-        continue;
-      };
-
-      if !resp.status().is_success() {
-        continue;
-      }
-
-      let Ok(value) = resp.json::<serde_json::Value>().await else {
-        continue;
-      };
-
-      if let Some(ws_url) = value
-        .get("webSocketDebuggerUrl")
-        .and_then(|v| v.as_str())
-      {
-        return Some(ws_url.to_string());
-      }
-
-      if let Some(targets) = value.as_array() {
-        if let Some(ws_url) = targets
-          .iter()
-          .find(|t| t.get("type").and_then(|v| v.as_str()) == Some("page"))
-          .and_then(|t| t.get("webSocketDebuggerUrl"))
-          .and_then(|v| v.as_str())
-          .or_else(|| {
-            targets
-              .iter()
-              .find_map(|t| t.get("webSocketDebuggerUrl").and_then(|v| v.as_str()))
-          })
-        {
-          return Some(ws_url.to_string());
-        }
-      }
-    }
-  }
-
-  None
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -653,7 +600,7 @@ async fn get_profiles() -> Result<Json<ApiProfilesResponse>, StatusCode> {
           name: profile.name.clone(),
           browser: profile.browser.clone(),
           version: profile.version.clone(),
-          proxy_id: profile.proxy_id.clone(),
+          proxy: profile.proxy.clone(),
           launch_hook: profile.launch_hook.clone(),
           process_id: profile.process_id,
           last_launch: profile.last_launch,
@@ -707,7 +654,7 @@ async fn get_profile(
             name: profile.name.clone(),
             browser: profile.browser.clone(),
             version: profile.version.clone(),
-            proxy_id: profile.proxy_id.clone(),
+            proxy: profile.proxy.clone(),
             launch_hook: profile.launch_hook.clone(),
             process_id: profile.process_id,
             last_launch: profile.last_launch,
@@ -804,7 +751,7 @@ async fn create_profile(
   // Reject a dead/unreachable proxy or VPN before creating the profile. A 402
   // (expired proxy subscription) maps to 402; anything else is a 400.
   if let Err(err) =
-    crate::validate_profile_network(request.proxy_id.as_deref(), request.vpn_id.as_deref()).await
+    crate::validate_profile_network(request.proxy.as_deref(), request.vpn_id.as_deref()).await
   {
     return Err(if err.contains("PROXY_PAYMENT_REQUIRED") {
       StatusCode::PAYMENT_REQUIRED
@@ -821,7 +768,7 @@ async fn create_profile(
       &request.browser,
       &version,
       request.release_type.as_deref().unwrap_or("stable"),
-      request.proxy_id.clone(),
+      request.proxy.clone(),
       request.vpn_id.clone(),
       camoufox_config,
       wayfern_config,
@@ -857,7 +804,7 @@ async fn create_profile(
           name: profile.name,
           browser: profile.browser,
           version: profile.version,
-          proxy_id: profile.proxy_id,
+          proxy: profile.proxy,
           launch_hook: profile.launch_hook,
           process_id: profile.process_id,
           last_launch: profile.last_launch,
@@ -901,7 +848,7 @@ async fn update_profile(
 ) -> Result<Json<ApiProfileResponse>, StatusCode> {
   let profile_manager = ProfileManager::instance();
 
-  if request.proxy_id.as_deref().is_some_and(|s| !s.is_empty())
+  if request.proxy.as_deref().is_some_and(|s| !s.is_empty())
     && request.vpn_id.as_deref().is_some_and(|s| !s.is_empty())
   {
     return Err(StatusCode::BAD_REQUEST);
@@ -926,9 +873,9 @@ async fn update_profile(
     }
   }
 
-  if let Some(proxy_id) = request.proxy_id {
+  if let Some(proxy) = request.proxy {
     if profile_manager
-      .update_profile_proxy(state.app_handle.clone(), &id, Some(proxy_id))
+      .update_profile_proxy(state.app_handle.clone(), &id, Some(proxy))
       .await
       .is_err()
     {
@@ -1285,29 +1232,19 @@ async fn get_tags(State(_state): State<ApiServerState>) -> Result<Json<Vec<Strin
   get,
   path = "/v1/proxies",
   responses(
-    (status = 200, description = "List of all proxies", body = Vec<ApiProxyResponse>),
+    (status = 200, description = "Deprecated — returns empty list", body = Vec<ApiProxyResponse>),
     (status = 401, description = "Unauthorized"),
     (status = 500, description = "Internal server error")
   ),
   security(
     ("bearer_auth" = [])
   ),
-  tag = "proxies"
+  tag = "proxies",
 )]
 async fn get_proxies(
   State(_state): State<ApiServerState>,
 ) -> Result<Json<Vec<ApiProxyResponse>>, StatusCode> {
-  let proxies = PROXY_MANAGER.get_stored_proxies();
-  Ok(Json(
-    proxies
-      .into_iter()
-      .map(|p| ApiProxyResponse {
-        id: p.id,
-        name: p.name,
-        proxy_settings: p.proxy_settings,
-      })
-      .collect(),
-  ))
+  Ok(Json(vec![]))
 }
 
 #[utoipa::path(
@@ -1317,30 +1254,20 @@ async fn get_proxies(
     ("id" = String, Path, description = "Proxy ID")
   ),
   responses(
-    (status = 200, description = "Proxy details", body = ApiProxyResponse),
+    (status = 404, description = "Deprecated — always returns 404"),
     (status = 401, description = "Unauthorized"),
-    (status = 404, description = "Proxy not found"),
     (status = 500, description = "Internal server error")
   ),
   security(
     ("bearer_auth" = [])
   ),
-  tag = "proxies"
+  tag = "proxies",
 )]
 async fn get_proxy(
-  Path(id): Path<String>,
+  Path(_id): Path<String>,
   State(_state): State<ApiServerState>,
 ) -> Result<Json<ApiProxyResponse>, StatusCode> {
-  let proxies = PROXY_MANAGER.get_stored_proxies();
-  if let Some(proxy) = proxies.into_iter().find(|p| p.id == id) {
-    Ok(Json(ApiProxyResponse {
-      id: proxy.id,
-      name: proxy.name,
-      proxy_settings: proxy.proxy_settings,
-    }))
-  } else {
-    Err(StatusCode::NOT_FOUND)
-  }
+  Err(StatusCode::NOT_FOUND)
 }
 
 #[utoipa::path(
@@ -1348,34 +1275,20 @@ async fn get_proxy(
   path = "/v1/proxies",
   request_body = CreateProxyRequest,
   responses(
-    (status = 200, description = "Proxy created successfully", body = ApiProxyResponse),
-    (status = 400, description = "Bad request"),
+    (status = 410, description = "Deprecated — stored proxy creation removed"),
     (status = 401, description = "Unauthorized"),
     (status = 500, description = "Internal server error")
   ),
   security(
     ("bearer_auth" = [])
   ),
-  tag = "proxies"
+  tag = "proxies",
 )]
 async fn create_proxy(
-  State(state): State<ApiServerState>,
-  Json(request): Json<CreateProxyRequest>,
+  State(_state): State<ApiServerState>,
+  Json(_request): Json<CreateProxyRequest>,
 ) -> Result<Json<ApiProxyResponse>, StatusCode> {
-  let result = PROXY_MANAGER.create_stored_proxy(
-    &state.app_handle,
-    request.name.clone(),
-    request.proxy_settings,
-  );
-
-  match result {
-    Ok(proxy) => Ok(Json(ApiProxyResponse {
-      id: proxy.id,
-      name: proxy.name,
-      proxy_settings: proxy.proxy_settings,
-    })),
-    Err(_) => Err(StatusCode::BAD_REQUEST),
-  }
+  Err(StatusCode::GONE)
 }
 
 #[utoipa::path(
@@ -1386,33 +1299,21 @@ async fn create_proxy(
   ),
   request_body = UpdateProxyRequest,
   responses(
-    (status = 200, description = "Proxy updated successfully", body = ApiProxyResponse),
-    (status = 400, description = "Bad request"),
+    (status = 410, description = "Deprecated — stored proxy update removed"),
     (status = 401, description = "Unauthorized"),
-    (status = 404, description = "Proxy not found"),
     (status = 500, description = "Internal server error")
   ),
   security(
     ("bearer_auth" = [])
   ),
-  tag = "proxies"
+  tag = "proxies",
 )]
 async fn update_proxy(
-  Path(id): Path<String>,
-  State(state): State<ApiServerState>,
-  Json(request): Json<UpdateProxyRequest>,
+  Path(_id): Path<String>,
+  State(_state): State<ApiServerState>,
+  Json(_request): Json<UpdateProxyRequest>,
 ) -> Result<Json<ApiProxyResponse>, StatusCode> {
-  let result =
-    PROXY_MANAGER.update_stored_proxy(&state.app_handle, &id, request.name, request.proxy_settings);
-
-  match result {
-    Ok(proxy) => Ok(Json(ApiProxyResponse {
-      id: proxy.id,
-      name: proxy.name,
-      proxy_settings: proxy.proxy_settings,
-    })),
-    Err(_) => Err(StatusCode::NOT_FOUND),
-  }
+  Err(StatusCode::GONE)
 }
 
 #[utoipa::path(
@@ -1422,24 +1323,20 @@ async fn update_proxy(
     ("id" = String, Path, description = "Proxy ID")
   ),
   responses(
-    (status = 204, description = "Proxy deleted successfully"),
-    (status = 400, description = "Bad request"),
+    (status = 410, description = "Deprecated — stored proxy delete removed"),
     (status = 401, description = "Unauthorized"),
     (status = 500, description = "Internal server error")
   ),
   security(
     ("bearer_auth" = [])
   ),
-  tag = "proxies"
+  tag = "proxies",
 )]
 async fn delete_proxy(
-  Path(id): Path<String>,
-  State(state): State<ApiServerState>,
+  Path(_id): Path<String>,
+  State(_state): State<ApiServerState>,
 ) -> Result<StatusCode, StatusCode> {
-  match PROXY_MANAGER.delete_stored_proxy(&state.app_handle, &id) {
-    Ok(_) => Ok(StatusCode::NO_CONTENT),
-    Err(_) => Err(StatusCode::BAD_REQUEST),
-  }
+  Err(StatusCode::GONE)
 }
 
 // API Handlers - VPNs
@@ -1846,13 +1743,11 @@ async fn run_profile(
   )
   .await
   {
-    Ok(updated_profile) => {
-      Ok(Json(RunProfileResponse {
-        profile_id: updated_profile.id.to_string(),
-        remote_debugging_port,
-        headless,
-      }))
-    }
+    Ok(updated_profile) => Ok(Json(RunProfileResponse {
+      profile_id: updated_profile.id.to_string(),
+      remote_debugging_port,
+      headless,
+    })),
     Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
   }
 }

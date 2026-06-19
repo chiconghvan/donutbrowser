@@ -22,7 +22,9 @@ import {
   LuChevronDown,
   LuChevronUp,
   LuCookie,
+  LuCopy,
   LuInfo,
+  LuList,
   LuLock,
   LuPlay,
   LuPuzzle,
@@ -69,7 +71,6 @@ import {
 } from "@/components/ui/tooltip";
 import { useBrowserState } from "@/hooks/use-browser-state";
 import { useCloudAuth } from "@/hooks/use-cloud-auth";
-import { useProxyEvents } from "@/hooks/use-proxy-events";
 import { useScrollFade } from "@/hooks/use-scroll-fade";
 import { useTableSorting } from "@/hooks/use-table-sorting";
 import { useTeamLocks } from "@/hooks/use-team-locks";
@@ -86,9 +87,6 @@ import { cn } from "@/lib/utils";
 import type {
   BrowserProfile,
   ExtensionGroup,
-  LocationItem,
-  ProxyCheckResult,
-  StoredProxy,
   SyncSessionInfo,
   TrafficSnapshot,
   VpnConfig,
@@ -100,7 +98,7 @@ import {
   DataTableActionBarSelection,
 } from "./data-table-action-bar";
 import MultipleSelector, { type Option } from "./multiple-selector";
-import { ProxyCheckButton } from "./proxy-check-button";
+
 import { TrafficDetailsDialog } from "./traffic-details-dialog";
 import { Input } from "./ui/input";
 import { RippleButton } from "./ui/ripple";
@@ -137,17 +135,8 @@ interface TableMeta {
     React.SetStateAction<Record<string, string | null>>
   >;
 
-  // Proxy selector state
-  openProxySelectorFor: string | null;
-  setOpenProxySelectorFor: React.Dispatch<React.SetStateAction<string | null>>;
+  // Proxy display state (inline strings, no stored proxy management)
   proxyOverrides: Record<string, string | null>;
-  storedProxies: StoredProxy[];
-  handleProxySelection: (
-    profileId: string,
-    proxyId: string | null,
-  ) => void | Promise<void>;
-  checkingProfileId: string | null;
-  proxyCheckResults: Record<string, ProxyCheckResult>;
 
   // VPN selector state
   vpnConfigs: VpnConfig[];
@@ -171,6 +160,11 @@ interface TableMeta {
   handleToggleAll: (checked: boolean) => void;
   handleCheckboxChange: (id: string, checked: boolean) => void;
   handleIconClick: (id: string) => void;
+  /** Pointer-down handler to initiate drag selection from the select cell */
+  handleSelectPointerDown: (
+    e: React.PointerEvent,
+    profile: BrowserProfile,
+  ) => void;
 
   // Rename helpers
   handleRename: () => void | Promise<void>;
@@ -207,15 +201,6 @@ interface TableMeta {
   onToggleProfileSync?: (profile: BrowserProfile) => void;
   crossOsUnlocked?: boolean;
   syncUnlocked?: boolean;
-
-  // Country proxy creation (inline in proxy dropdown)
-  countries: LocationItem[];
-  canCreateLocationProxy: boolean;
-  loadCountries: () => Promise<void>;
-  handleCreateCountryProxy: (
-    profileId: string,
-    country: LocationItem,
-  ) => Promise<void>;
 
   // Team locks
   isProfileLockedByAnother: (profileId: string) => boolean;
@@ -1033,8 +1018,10 @@ interface ProfilesDataTableProps {
   onBulkDelete?: () => void;
   onBulkGroupAssignment?: () => void;
   onBulkProxyAssignment?: () => void;
+  onBulkCopySelectedNames?: () => void;
   onBulkCopyCookies?: () => void;
   onBulkExtensionGroupAssignment?: () => void;
+  onBulkProxyPasteAssignment?: () => void;
   onAssignExtensionGroup?: (profileIds: string[]) => void;
   onOpenProfileSyncDialog?: (profile: BrowserProfile) => void;
   onToggleProfileSync?: (profile: BrowserProfile) => void;
@@ -1078,6 +1065,8 @@ export function ProfilesDataTable({
   onBulkDelete,
   onBulkGroupAssignment,
   onBulkProxyAssignment,
+  onBulkProxyPasteAssignment,
+  onBulkCopySelectedNames,
   onBulkCopyCookies,
   onBulkExtensionGroupAssignment,
   onAssignExtensionGroup,
@@ -1192,7 +1181,6 @@ export function ProfilesDataTable({
     new Set(),
   );
 
-  const { storedProxies } = useProxyEvents();
   const { vpnConfigs } = useVpnEvents();
   const { user } = useCloudAuth();
   const { isProfileLocked, getLockInfo } = useTeamLocks(user?.id);
@@ -1211,15 +1199,6 @@ export function ProfilesDataTable({
   const [openTagsEditorFor, setOpenTagsEditorFor] = React.useState<
     string | null
   >(null);
-  const [openProxySelectorFor, setOpenProxySelectorFor] = React.useState<
-    string | null
-  >(null);
-  const [checkingProfileId, setCheckingProfileId] = React.useState<
-    string | null
-  >(null);
-  const [proxyCheckResults, setProxyCheckResults] = React.useState<
-    Record<string, ProxyCheckResult>
-  >({});
   const [noteOverrides, setNoteOverrides] = React.useState<
     Record<string, string | null>
   >({});
@@ -1237,12 +1216,36 @@ export function ProfilesDataTable({
     Record<string, { status: string; error?: string }>
   >({});
 
-  // Country proxy creation state (for inline proxy creation in dropdown)
-  const [countries, setCountries] = React.useState<LocationItem[]>([]);
-  const [countriesLoaded, setCountriesLoaded] = React.useState(false);
+  // ── Drag selection refs (declared early — assigned after table init) ────
+  const dragSession = React.useRef<{
+    active: boolean;
+    mode: "add" | "remove";
+    anchorIndex: number;
+    lastIndex: number;
+    didDrag: boolean;
+    startX: number;
+    startY: number;
+  }>({
+    active: false,
+    mode: "add",
+    anchorIndex: -1,
+    lastIndex: -1,
+    didDrag: false,
+    startX: 0,
+    startY: 0,
+  });
+  const autoScrollRaf = React.useRef<number | null>(null);
+  const lastPointerCoords = React.useRef<{ x: number; y: number } | null>(null);
+  const idToIndexRef = React.useRef<Record<string, number>>({});
+  const selectedProfilesRef = React.useRef<string[]>(selectedProfiles);
+  const sortedRowsRef = React.useRef<any[]>([]);
+  const scrollParentRefForDrag = React.useRef<HTMLDivElement | null>(null);
+  const suppressClickRef = React.useRef(false);
+  // Stable refs so document listeners always call latest handlers
+  const onDragMoveRef = React.useRef<(e: PointerEvent) => void>(() => {});
+  const onDragEndRef = React.useRef<(e: PointerEvent) => void>(() => {});
 
-  // Extension groups for the Ext column lookup. Refreshed when the
-  // backend emits 'extensions-changed' (group rename/create/delete).
+  // Extension groups for the Ext column lookup.
   const [extensionGroups, setExtensionGroups] = React.useState<
     ExtensionGroup[]
   >([]);
@@ -1270,48 +1273,6 @@ export function ProfilesDataTable({
       unlisten?.();
     };
   }, []);
-  const canCreateLocationProxy = false;
-
-  const loadCountries = React.useCallback(async () => {
-    if (countriesLoaded || !canCreateLocationProxy) return;
-    try {
-      const data = await invoke<LocationItem[]>("cloud_get_countries");
-      setCountries(data);
-      setCountriesLoaded(true);
-    } catch (e) {
-      console.error("Failed to load countries:", e);
-    }
-  }, [countriesLoaded]);
-
-  // Load cached check results for proxies
-  React.useEffect(() => {
-    const loadCachedResults = async () => {
-      const results: Record<string, ProxyCheckResult> = {};
-      const proxyIds = new Set<string>();
-      for (const profile of profiles) {
-        if (profile.proxy_id) {
-          proxyIds.add(profile.proxy_id);
-        }
-      }
-      for (const proxyId of proxyIds) {
-        try {
-          const cached = await invoke<ProxyCheckResult | null>(
-            "get_cached_proxy_check",
-            { proxyId },
-          );
-          if (cached) {
-            results[proxyId] = cached;
-          }
-        } catch (_error) {
-          // Ignore errors
-        }
-      }
-      setProxyCheckResults(results);
-    };
-    if (profiles.length > 0) {
-      void loadCachedResults();
-    }
-  }, [profiles]);
 
   const loadAllTags = React.useCallback(async () => {
     try {
@@ -1321,25 +1282,6 @@ export function ProfilesDataTable({
       console.error("Failed to load tags:", error);
     }
   }, []);
-
-  const handleProxySelection = React.useCallback(
-    async (profileId: string, proxyId: string | null) => {
-      try {
-        await invoke("update_profile_proxy", {
-          profileId,
-          proxyId,
-        });
-        setProxyOverrides((prev) => ({ ...prev, [profileId]: proxyId }));
-        setVpnOverrides((prev) => ({ ...prev, [profileId]: null }));
-        await emit("profile-updated");
-      } catch (error) {
-        console.error("Failed to update proxy settings:", error);
-      } finally {
-        setOpenProxySelectorFor(null);
-      }
-    },
-    [],
-  );
 
   const handleVpnSelection = React.useCallback(
     async (profileId: string, vpnId: string | null) => {
@@ -1353,43 +1295,12 @@ export function ProfilesDataTable({
         await emit("profile-updated");
       } catch (error) {
         console.error("Failed to update VPN settings:", error);
-      } finally {
-        setOpenProxySelectorFor(null);
       }
     },
     [],
   );
 
-  const handleCreateCountryProxy = React.useCallback(
-    async (profileId: string, country: LocationItem) => {
-      try {
-        await invoke("create_cloud_location_proxy", {
-          name: country.name,
-          country: country.code,
-          region: null,
-          city: null,
-          isp: null,
-        });
-        await emit("stored-proxies-changed");
-        // Wait briefly for proxy list to update, then find and assign the new proxy
-        await new Promise((r) => setTimeout(r, 200));
-        const updatedProxies =
-          await invoke<StoredProxy[]>("get_stored_proxies");
-        const newProxy = updatedProxies.find(
-          (p: StoredProxy) =>
-            p.is_cloud_derived && p.geo_country === country.code,
-        );
-        if (newProxy) {
-          await handleProxySelection(profileId, newProxy.id);
-        }
-        setOpenProxySelectorFor(null);
-      } catch (error) {
-        console.error("Failed to create country proxy:", error);
-      }
-    },
-    [handleProxySelection],
-  );
-
+  // Country proxy creation removed — profiles now use inline proxy strings.
   // Use shared browser state hook
   const browserState = useBrowserState(
     profiles,
@@ -1527,24 +1438,7 @@ export function ProfilesDataTable({
     };
   }, [browserState.isClient]);
 
-  // Keep stored proxies up-to-date by listening for changes emitted elsewhere in the app
-  React.useEffect(() => {
-    if (!browserState.isClient) return;
-    let unlisten: (() => void) | undefined;
-    void (async () => {
-      try {
-        unlisten = await listen("stored-proxies-changed", () => {
-          // Also refresh tags on profile updates
-          void loadAllTags();
-        });
-      } catch (_err) {
-        // Best-effort only
-      }
-    })();
-    return () => {
-      if (unlisten) unlisten();
-    };
-  }, [browserState.isClient, loadAllTags]);
+  // Stored proxy events removed — profiles carry proxy inline.
 
   // Automatically deselect profiles that become running, updating, launching, or stopping
   React.useEffect(() => {
@@ -1740,6 +1634,227 @@ export function ProfilesDataTable({
     ],
   );
 
+  // ── Drag selection helpers ──────────────────────────────────────────────
+  // Uses refs for sortedRows and scrollParent to avoid TDZ; these refs are
+  // synced after table init in the render section above.
+
+  const applyDragRange = React.useCallback(
+    (currentIndex: number) => {
+      const session = dragSession.current;
+      if (session.lastIndex === currentIndex) return;
+      session.lastIndex = currentIndex;
+
+      const lo = Math.min(session.anchorIndex, currentIndex);
+      const hi = Math.max(session.anchorIndex, currentIndex);
+
+      const rows = sortedRowsRef.current;
+      const ids: string[] = [];
+      for (let i = lo; i <= hi; i++) {
+        const row = rows[i];
+        if (!row) continue;
+        const profile = row.original;
+        if (browserState.canSelectProfile(profile)) {
+          ids.push(profile.id);
+        }
+      }
+
+      const currentSelected = selectedProfilesRef.current;
+      const newSet = new Set(currentSelected);
+      if (session.mode === "add") {
+        for (const id of ids) newSet.add(id);
+      } else {
+        for (const id of ids) newSet.delete(id);
+      }
+
+      const arr = Array.from(newSet);
+      if (
+        arr.length !== currentSelected.length ||
+        arr.some((id) => !currentSelected.includes(id))
+      ) {
+        setShowCheckboxes(arr.length > 0);
+        onSelectedProfilesChange(arr);
+      }
+    },
+    [onSelectedProfilesChange, browserState],
+  );
+
+  // Auto-scroll while dragging past the scroll-container edge.
+  // Uses scrollParentRefForDrag which is synced in the render section.
+  const startDragAutoScroll = React.useCallback(() => {
+    const scrollEl = scrollParentRefForDrag.current;
+    if (!scrollEl) return;
+
+    const loop = () => {
+      if (!dragSession.current.active) return;
+      autoScrollRaf.current = requestAnimationFrame(loop);
+
+      const coords = lastPointerCoords.current;
+      if (!coords) return;
+
+      const rect = scrollEl.getBoundingClientRect();
+      const edgeZone = 40;
+      const maxSpeed = 12;
+      let delta = 0;
+
+      const distTop = coords.y - rect.top;
+      const distBottom = rect.bottom - coords.y;
+
+      if (distTop < edgeZone && distTop >= 0) {
+        delta = -maxSpeed * (1 - distTop / edgeZone);
+        delta = Math.max(delta, -maxSpeed);
+      } else if (distBottom < edgeZone && distBottom >= 0) {
+        delta = maxSpeed * (1 - distBottom / edgeZone);
+        delta = Math.min(delta, maxSpeed);
+      }
+
+      if (delta !== 0) {
+        scrollEl.scrollTop += delta;
+        const el = document.elementFromPoint(coords.x, coords.y);
+        if (el) {
+          const rowEl = el.closest("[data-profile-id]");
+          if (rowEl) {
+            const id = rowEl.getAttribute("data-profile-id");
+            if (id) {
+              const idx = idToIndexRef.current[id];
+              if (idx >= 0) {
+                applyDragRange(idx);
+              }
+            }
+          }
+        }
+      }
+    };
+    autoScrollRaf.current = requestAnimationFrame(loop);
+  }, [applyDragRange]);
+
+  const stopDragAutoScroll = React.useCallback(() => {
+    if (autoScrollRaf.current !== null) {
+      cancelAnimationFrame(autoScrollRaf.current);
+      autoScrollRaf.current = null;
+    }
+  }, []);
+
+  // ── Drag pointer event handlers ─────────────────────────────────────────
+
+  const handleSelectPointerDown = React.useCallback(
+    (e: React.PointerEvent, profile: BrowserProfile) => {
+      if (e.button !== 0) return;
+      if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+      if (!browserState.canSelectProfile(profile)) return;
+
+      const idx = idToIndexRef.current[profile.id];
+      if (idx < 0) return;
+
+      suppressClickRef.current = false;
+
+      const isSelected = selectedProfiles.includes(profile.id);
+      if (!isSelected) {
+        const newSet = new Set(selectedProfiles);
+        newSet.add(profile.id);
+        setShowCheckboxes(true);
+        onSelectedProfilesChange(Array.from(newSet));
+      } else {
+        setShowCheckboxes(true);
+      }
+
+      const session = dragSession.current;
+      session.active = true;
+      session.didDrag = false;
+      session.anchorIndex = idx;
+      session.lastIndex = idx;
+      session.mode = isSelected ? "remove" : "add";
+      session.startX = e.clientX;
+      session.startY = e.clientY;
+
+      lastPointerCoords.current = { x: e.clientX, y: e.clientY };
+    },
+    [browserState, selectedProfiles, onSelectedProfilesChange],
+  );
+
+  // These are called by stable document listeners (wired via onDragMoveRef /
+  // onDragEndRef) so they must avoid stale closures by reading from refs.
+  const endDrag = React.useCallback(() => {
+    const session = dragSession.current;
+    if (!session.active) return;
+    if (session.didDrag) {
+      suppressClickRef.current = true;
+      // Schedule clear of the suppress flag after the click has been
+      // consumed (or on the next animation frame if no click fires).
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          suppressClickRef.current = false;
+        });
+      });
+    }
+    session.active = false;
+    stopDragAutoScroll();
+  }, [stopDragAutoScroll]);
+
+  const onDragPointerMove = React.useCallback(
+    (e: PointerEvent) => {
+      const session = dragSession.current;
+      if (!session.active) return;
+
+      lastPointerCoords.current = { x: e.clientX, y: e.clientY };
+
+      // Movement threshold before drag activates (4px)
+      if (!session.didDrag) {
+        const dx = e.clientX - session.startX;
+        const dy = e.clientY - session.startY;
+        if (Math.abs(dx) < 4 && Math.abs(dy) < 4) return;
+
+        session.didDrag = true;
+        startDragAutoScroll();
+
+        // Apply the anchor row as well — in case the user started on
+        // a selected row (remove mode) the anchor also becomes part of
+        // the range.
+        applyDragRange(session.anchorIndex);
+      }
+
+      // Resolve row from pointer position
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      if (el) {
+        const rowEl = el.closest("[data-profile-id]");
+        if (rowEl) {
+          const id = rowEl.getAttribute("data-profile-id");
+          if (id) {
+            const idx = idToIndexRef.current[id];
+            if (idx >= 0) {
+              applyDragRange(idx);
+            }
+          }
+        }
+      }
+    },
+    [startDragAutoScroll, applyDragRange],
+  );
+
+  // Stable refs keep current selection for drag math.
+  React.useEffect(() => {
+    selectedProfilesRef.current = selectedProfiles;
+  });
+
+  // Stable document-level listeners for pointer move/up during drag.
+  React.useEffect(() => {
+    const onMove = (e: PointerEvent) => {
+      e.preventDefault();
+      onDragMoveRef.current(e);
+    };
+    const onEnd = (e: PointerEvent) => {
+      e.preventDefault();
+      onDragEndRef.current(e);
+    };
+    document.addEventListener("pointermove", onMove, { passive: false });
+    document.addEventListener("pointerup", onEnd, { passive: false });
+    document.addEventListener("pointercancel", onEnd, { passive: false });
+    return () => {
+      document.removeEventListener("pointermove", onMove);
+      document.removeEventListener("pointerup", onEnd);
+      document.removeEventListener("pointercancel", onEnd);
+    };
+  }, []);
+
   // Memoize selectableProfiles calculation
   const selectableProfiles = React.useMemo(() => {
     return profiles.filter((profile) => {
@@ -1785,14 +1900,8 @@ export function ProfilesDataTable({
       setOpenNoteEditorFor,
       setNoteOverrides,
 
-      // Proxy selector state
-      openProxySelectorFor,
-      setOpenProxySelectorFor,
+      // Proxy overrides for optimistic UI
       proxyOverrides,
-      storedProxies,
-      handleProxySelection,
-      checkingProfileId,
-      proxyCheckResults,
 
       // VPN selector state
       vpnConfigs,
@@ -1809,6 +1918,7 @@ export function ProfilesDataTable({
       handleToggleAll,
       handleCheckboxChange,
       handleIconClick,
+      handleSelectPointerDown,
 
       // Rename helpers
       handleRename,
@@ -1851,12 +1961,6 @@ export function ProfilesDataTable({
       crossOsUnlocked,
       syncUnlocked,
 
-      // Country proxy creation
-      countries,
-      canCreateLocationProxy,
-      loadCountries,
-      handleCreateCountryProxy,
-
       // Team locks
       isProfileLockedByAnother: isProfileLocked,
       getProfileLockEmail: (profileId: string) =>
@@ -1886,12 +1990,7 @@ export function ProfilesDataTable({
       openTagsEditorFor,
       noteOverrides,
       openNoteEditorFor,
-      openProxySelectorFor,
       proxyOverrides,
-      storedProxies,
-      handleProxySelection,
-      checkingProfileId,
-      proxyCheckResults,
       vpnConfigs,
       vpnOverrides,
       handleVpnSelection,
@@ -1900,6 +1999,7 @@ export function ProfilesDataTable({
       handleToggleAll,
       handleCheckboxChange,
       handleIconClick,
+      handleSelectPointerDown,
       handleRename,
       profileToRename,
       newProfileName,
@@ -1919,9 +2019,6 @@ export function ProfilesDataTable({
       onToggleProfileSync,
       crossOsUnlocked,
       syncUnlocked,
-      countries,
-      loadCountries,
-      handleCreateCountryProxy,
       isProfileLocked,
       getLockInfo,
       getProfileSyncInfo,
@@ -1984,11 +2081,20 @@ export function ProfilesDataTable({
             return (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className="flex justify-center items-center size-4">
+                  <span
+                    className="flex justify-center items-center size-4"
+                    onPointerDown={(e) => {
+                      meta.handleSelectPointerDown(e, profile);
+                    }}
+                  >
                     <button
                       type="button"
                       className="flex justify-center items-center p-0 border-none cursor-pointer"
                       onClick={() => {
+                        if (suppressClickRef.current) {
+                          suppressClickRef.current = false;
+                          return;
+                        }
                         meta.handleIconClick(profile.id);
                       }}
                       aria-label={t("common.aria.selectProfile")}
@@ -2023,10 +2129,19 @@ export function ProfilesDataTable({
                 sideOffset={4}
                 horizontalOffset={8}
               >
-                <span className="flex justify-center items-center size-4">
+                <span
+                  className="flex justify-center items-center size-4"
+                  onPointerDown={(e) => {
+                    meta.handleSelectPointerDown(e, profile);
+                  }}
+                >
                   <Checkbox
                     checked={isSelected}
                     onCheckedChange={(value) => {
+                      if (suppressClickRef.current) {
+                        suppressClickRef.current = false;
+                        return;
+                      }
                       meta.handleCheckboxChange(profile.id, !!value);
                     }}
                     aria-label={t("common.aria.selectRow")}
@@ -2071,10 +2186,19 @@ export function ProfilesDataTable({
                 sideOffset={4}
                 horizontalOffset={8}
               >
-                <span className="flex justify-center items-center size-4">
+                <span
+                  className="flex justify-center items-center size-4"
+                  onPointerDown={(e) => {
+                    meta.handleSelectPointerDown(e, profile);
+                  }}
+                >
                   <Checkbox
                     checked={isSelected}
                     onCheckedChange={(value) => {
+                      if (suppressClickRef.current) {
+                        suppressClickRef.current = false;
+                        return;
+                      }
                       meta.handleCheckboxChange(profile.id, !!value);
                     }}
                     aria-label={t("common.aria.selectRow")}
@@ -2091,11 +2215,20 @@ export function ProfilesDataTable({
               sideOffset={4}
               horizontalOffset={8}
             >
-              <span className="flex relative justify-center items-center size-4">
+              <span
+                className="flex relative justify-center items-center size-4"
+                onPointerDown={(e) => {
+                  meta.handleSelectPointerDown(e, profile);
+                }}
+              >
                 <button
                   type="button"
                   className="flex justify-center items-center p-0 border-none cursor-pointer"
                   onClick={() => {
+                    if (suppressClickRef.current) {
+                      suppressClickRef.current = false;
+                      return;
+                    }
                     meta.handleIconClick(profile.id);
                   }}
                   aria-label={t("common.aria.selectProfile")}
@@ -2507,11 +2640,7 @@ export function ProfilesDataTable({
           );
           const effectiveProxyId = hasProxyOverride
             ? meta.proxyOverrides[profile.id]
-            : (profile.proxy_id ?? null);
-          const effectiveProxy = effectiveProxyId
-            ? (meta.storedProxies.find((p) => p.id === effectiveProxyId) ??
-              null)
-            : null;
+            : (profile.proxy ?? null);
 
           const hasVpnOverride = Object.hasOwn(meta.vpnOverrides, profile.id);
           const effectiveVpnId = hasVpnOverride
@@ -2521,17 +2650,14 @@ export function ProfilesDataTable({
             ? (meta.vpnConfigs.find((v) => v.id === effectiveVpnId) ?? null)
             : null;
 
-          const hasAssignment = Boolean(effectiveProxy || effectiveVpn);
+          const hasAssignment = Boolean(effectiveProxyId || effectiveVpn);
           const displayName = effectiveVpn
             ? effectiveVpn.name
-            : effectiveProxy
-              ? effectiveProxy.name
+            : effectiveProxyId
+              ? effectiveProxyId
               : meta.t("profiles.table.notSelected");
           const vpnBadge = effectiveVpn ? "WG" : null;
           const tooltipText = hasAssignment ? displayName : null;
-          const isSelectorOpen = meta.openProxySelectorFor === profile.id;
-          const selectedId = effectiveVpnId ?? effectiveProxyId ?? null;
-
           // When profile is running, show bandwidth chart instead of proxy selector
           if (isRunning && meta.trafficSnapshots) {
             const snapshot = meta.trafficSnapshots[profile.id];
@@ -2556,207 +2682,32 @@ export function ProfilesDataTable({
 
           return (
             <div className="flex overflow-hidden gap-2 items-center min-w-0">
-              <Popover
-                open={isSelectorOpen}
-                onOpenChange={(open) => {
-                  meta.setOpenProxySelectorFor(open ? profile.id : null);
-                }}
-              >
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <PopoverTrigger asChild>
-                      <span
-                        className={cn(
-                          "flex gap-2 items-center px-2 py-1 rounded",
-                          isDisabled
-                            ? "opacity-60 cursor-not-allowed pointer-events-none"
-                            : "cursor-pointer hover:bg-accent/50",
-                        )}
-                      >
-                        {vpnBadge && (
-                          <Badge
-                            variant="outline"
-                            className="text-[10px] px-1 py-0 leading-tight"
-                          >
-                            {vpnBadge}
-                          </Badge>
-                        )}
-                        <span
-                          className={cn(
-                            "text-sm",
-                            !hasAssignment && "text-muted-foreground",
-                          )}
-                        >
-                          {hasAssignment
-                            ? trimName(displayName, 10)
-                            : displayName}
-                        </span>
-                      </span>
-                    </PopoverTrigger>
-                  </TooltipTrigger>
-                  {tooltipText && (
-                    <TooltipContent>{tooltipText}</TooltipContent>
-                  )}
-                </Tooltip>
-
-                {!isDisabled && (
-                  <PopoverContent
-                    className="w-[240px] p-0"
-                    align="end"
-                    sideOffset={8}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span
+                    className={cn(
+                      "flex gap-2 items-center px-2 py-1 rounded text-sm",
+                      isDisabled
+                        ? "opacity-60 cursor-not-allowed pointer-events-none"
+                        : "",
+                      !hasAssignment && "text-muted-foreground",
+                    )}
                   >
-                    <Command>
-                      <CommandInput
-                        placeholder={
-                          meta.canCreateLocationProxy
-                            ? t("createProfile.proxy.searchWithCountries")
-                            : t("createProfile.proxy.search")
-                        }
-                        onFocus={() => {
-                          if (meta.canCreateLocationProxy)
-                            void meta.loadCountries();
-                        }}
-                      />
-                      <CommandList>
-                        <CommandEmpty>
-                          {t("createProfile.proxy.notFound")}
-                        </CommandEmpty>
-                        <CommandGroup>
-                          <CommandItem
-                            value="__none__"
-                            onSelect={() =>
-                              void meta.handleProxySelection(profile.id, null)
-                            }
-                          >
-                            <LuCheck
-                              className={cn(
-                                "mr-2 size-4",
-                                selectedId === null
-                                  ? "opacity-100"
-                                  : "opacity-0",
-                              )}
-                            />
-                            {t("common.labels.none")}
-                          </CommandItem>
-                          {meta.storedProxies
-                            .filter(
-                              (proxy: StoredProxy) =>
-                                !proxy.is_cloud_managed &&
-                                !proxy.is_cloud_derived,
-                            )
-                            .map((proxy: StoredProxy) => (
-                              <CommandItem
-                                key={proxy.id}
-                                value={proxy.name}
-                                onSelect={() =>
-                                  void meta.handleProxySelection(
-                                    profile.id,
-                                    proxy.id,
-                                  )
-                                }
-                              >
-                                <LuCheck
-                                  className={cn(
-                                    "mr-2 size-4",
-                                    effectiveProxyId === proxy.id &&
-                                      !effectiveVpn
-                                      ? "opacity-100"
-                                      : "opacity-0",
-                                  )}
-                                />
-                                {proxy.name}
-                              </CommandItem>
-                            ))}
-                        </CommandGroup>
-                        {meta.vpnConfigs.length > 0 && (
-                          <CommandGroup heading={t("profileTable.vpnsHeading")}>
-                            {meta.vpnConfigs.map((vpn) => (
-                              <CommandItem
-                                key={vpn.id}
-                                value={`vpn-${vpn.name}`}
-                                onSelect={() =>
-                                  void meta.handleVpnSelection(
-                                    profile.id,
-                                    vpn.id,
-                                  )
-                                }
-                              >
-                                <LuCheck
-                                  className={cn(
-                                    "mr-2 size-4",
-                                    effectiveVpnId === vpn.id
-                                      ? "opacity-100"
-                                      : "opacity-0",
-                                  )}
-                                />
-                                <Badge
-                                  variant="outline"
-                                  className="text-[10px] px-1 py-0 leading-tight mr-1"
-                                >
-                                  WG
-                                </Badge>
-                                {vpn.name}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        )}
-                        {meta.canCreateLocationProxy &&
-                          meta.countries.length > 0 && (
-                            <CommandGroup
-                              heading={t("profileTable.createByCountryHeading")}
-                            >
-                              {meta.countries
-                                .filter(
-                                  (c) =>
-                                    !meta.storedProxies.some(
-                                      (p) =>
-                                        p.is_cloud_derived &&
-                                        p.geo_country === c.code,
-                                    ),
-                                )
-                                .map((country) => (
-                                  <CommandItem
-                                    key={`country-${country.code}`}
-                                    value={`create-${country.name}`}
-                                    onSelect={() =>
-                                      void meta.handleCreateCountryProxy(
-                                        profile.id,
-                                        country,
-                                      )
-                                    }
-                                  >
-                                    <span className="mr-2 size-4" />+{" "}
-                                    {country.name}
-                                  </CommandItem>
-                                ))}
-                            </CommandGroup>
-                          )}
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                )}
-              </Popover>
-              {effectiveProxy && !effectiveVpn && !isDisabled && (
-                <ProxyCheckButton
-                  proxy={effectiveProxy}
-                  profileId={profile.id}
-                  checkingProfileId={meta.checkingProfileId}
-                  cachedResult={meta.proxyCheckResults[effectiveProxy.id]}
-                  setCheckingProfileId={setCheckingProfileId}
-                  onCheckComplete={(result) => {
-                    setProxyCheckResults((prev) => ({
-                      ...prev,
-                      [effectiveProxy.id]: result,
-                    }));
-                  }}
-                  onCheckFailed={(result) => {
-                    setProxyCheckResults((prev) => ({
-                      ...prev,
-                      [effectiveProxy.id]: result,
-                    }));
-                  }}
-                />
-              )}
+                    {vpnBadge && (
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] px-1 py-0 leading-tight"
+                      >
+                        {vpnBadge}
+                      </Badge>
+                    )}
+                    <span>
+                      {hasAssignment ? trimName(displayName, 16) : displayName}
+                    </span>
+                  </span>
+                </TooltipTrigger>
+                {tooltipText && <TooltipContent>{tooltipText}</TooltipContent>}
+              </Tooltip>
             </div>
           );
         },
@@ -2888,6 +2839,18 @@ export function ProfilesDataTable({
   const sortedRows = table.getRowModel().rows;
   useScrollFade(scrollParentRef);
 
+  React.useEffect(() => {
+    const map: Record<string, number> = {};
+    for (let i = 0; i < sortedRows.length; i++) {
+      map[sortedRows[i].id] = i;
+    }
+    idToIndexRef.current = map;
+    sortedRowsRef.current = sortedRows;
+    scrollParentRefForDrag.current = scrollParentRef.current;
+    onDragMoveRef.current = onDragPointerMove;
+    onDragEndRef.current = endDrag;
+  }, [sortedRows, onDragPointerMove, endDrag]);
+
   // Compact 36px row from the redesign spec; estimateSize must match the
   // actual rendered row height or virtualizer placement drifts under scroll.
   const ROW_HEIGHT = 36;
@@ -2984,6 +2947,7 @@ export function ProfilesDataTable({
                     return (
                       <TableRow
                         key={row.id}
+                        data-profile-id={row.id}
                         data-state={row.getIsSelected() && "selected"}
                         title={crossOsTitle}
                         style={{ height: `${ROW_HEIGHT}px` }}
@@ -3054,7 +3018,7 @@ export function ProfilesDataTable({
                 setProfileForInfoDialog(null);
               }}
               profile={infoProfile}
-              storedProxies={storedProxies}
+              storedProxies={[]}
               vpnConfigs={vpnConfigs}
               onOpenTrafficDialog={(profileId) => {
                 const profile = profiles.find((p) => p.id === profileId);
@@ -3110,6 +3074,24 @@ export function ProfilesDataTable({
             size="icon"
           >
             <FiWifi />
+          </DataTableActionBarAction>
+        )}
+        {onBulkProxyPasteAssignment && (
+          <DataTableActionBarAction
+            tooltip={t("profiles.actionBar.assignProxyBulk")}
+            onClick={onBulkProxyPasteAssignment}
+            size="icon"
+          >
+            <LuList />
+          </DataTableActionBarAction>
+        )}
+        {onBulkCopySelectedNames && (
+          <DataTableActionBarAction
+            tooltip={t("profiles.actionBar.copySelectedNames")}
+            onClick={onBulkCopySelectedNames}
+            size="icon"
+          >
+            <LuCopy />
           </DataTableActionBarAction>
         )}
         {onBulkExtensionGroupAssignment && (

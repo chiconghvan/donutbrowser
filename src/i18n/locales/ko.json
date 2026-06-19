@@ -226,7 +226,8 @@
     "newProfile": "새로 만들기",
     "donutLogo": "Donut Browser 로고",
     "scrollGroupsLeft": "그룹 왼쪽으로 스크롤",
-    "scrollGroupsRight": "그룹 오른쪽으로 스크롤"
+    "scrollGroupsRight": "그룹 오른쪽으로 스크롤",
+    "bulkNewProfile": "Bulk New"
   },
   "profiles": {
     "title": "프로필",
@@ -315,7 +316,11 @@
       "assignToGroup": "그룹에 할당",
       "assignProxy": "프록시 할당",
       "assignExtensionGroup": "확장 프로그램 그룹 할당",
-      "copyCookies": "쿠키 복사"
+      "copySelectedNames": "선택한 이름 복사",
+      "copySelectedNamesSuccess": "선택한 프로필 이름을 복사했습니다",
+      "copySelectedNamesFailed": "선택한 프로필 이름 복사 실패",
+      "copyCookies": "쿠키 복사",
+      "assignProxyBulk": "프록시 일괄 할당(붙여넣기)"
     },
     "passwordProtectedBadge": "비밀번호 보호됨",
     "launchHook": {
@@ -1490,6 +1495,20 @@
     "vpnGroupHeading": "VPN",
     "failedFallback": "프로필에 프록시/VPN 할당 실패"
   },
+  "bulkProxyAssignment": {
+    "title": "프록시 일괄 할당",
+    "description": "줄당 하나의 프록시를 붙여넣으세요. 1번 줄 → 첫 번째 선택 프로필, 2번 줄 → 두 번째 등.",
+    "selectedProfilesLabel": "선택된 프로필:",
+    "textareaLabel": "프록시 (줄당 하나)",
+    "textareaPlaceholder": "address:port:user:pass",
+    "helperText": "위에 표시된 선택 프로필과 같은 순서로 줄당 하나의 프록시를 입력하세요.",
+    "applyButton": "모두에 적용",
+    "countMismatch": "불일치: {{proxyCount}}개 프록시 줄但对 {{profileCount}}개 프로필이 선택됨.",
+    "invalidLineFormat": "잘못된 프록시 형식: \"{{line}}\". 예상 형식: address:port:user:pass",
+    "invalidPort": "\"{{line}}\"의 포트가 잘못되었습니다. 포트는 1–65535여야 합니다.",
+    "success": "{{count}}개 프로필에 프록시를 할당했습니다.",
+    "failed": "프록시 할당에 실패했습니다."
+  },
   "groupAssignment": {
     "title": "그룹 할당",
     "description_one": "선택한 {{count}}개 프로필에 그룹을 할당합니다.",
@@ -2061,5 +2080,21 @@
     "title": "Camoufox 지원이 종료됩니다",
     "description": "Camoufox 프로필 지원이 2026년 7월 8일에 종료됩니다. Camoufox 프로필이 하나 이상 있습니다. 그 전에 Wayfern으로 이전하세요. 이후에는 Camoufox 프로필이 작동하지 않을 수 있습니다.",
     "acknowledge": "확인"
+  },
+  "bulkCreateProfile": {
+    "title": "Bulk Create Profiles",
+    "configureTitle": "Configure {{browser}}",
+    "countLabel": "Number of profiles",
+    "countPlaceholder": "Enter count...",
+    "proxyLabel": "Proxies (one per line)",
+    "proxyPlaceholder": "address:port:user:pass",
+    "proxyHelper": "One proxy per line. Line 1 → profile 1, etc.",
+    "countMismatch": "Mismatch: {{proxyCount}} proxy lines but {{profileCount}} requested.",
+    "invalidProxy": "Invalid proxy format: {{line}}",
+    "createButton": "Create {{count}} Profiles",
+    "success": "Created {{count}} profiles successfully.",
+    "failed": "Failed to create profiles.",
+    "namePattern": "Names: {{prefix}}.01 through {{prefix}}.{{count}}",
+    "proxyCountMatch": "{{count}} proxy line(s) — matches {{count}} profile(s)."
   }
 }

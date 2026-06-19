@@ -5,6 +5,7 @@ use std::sync::Mutex;
 use tauri::{Emitter, Manager, Runtime, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 use tauri_plugin_deep_link::DeepLinkExt;
 use tauri_plugin_log::{Target, TargetKind};
+use tauri_plugin_window_state::{Builder as WindowStateBuilder, StateFlags};
 
 // Store pending URLs that need to be handled when the window is ready
 static PENDING_URLS: Mutex<Vec<String>> = Mutex::new(Vec::new());
@@ -67,10 +68,10 @@ use browser_runner::{
 };
 
 use profile::manager::{
-  check_browser_status, clone_profile, create_browser_profile_new, delete_profile,
-  list_browser_profiles, rename_profile, update_camoufox_config, update_profile_dns_blocklist,
-  update_profile_launch_hook, update_profile_note, update_profile_proxy,
-  update_profile_proxy_bypass_rules, update_profile_tags, update_profile_vpn,
+  check_browser_status, clone_profile, create_browser_profile_new, create_browser_profiles_bulk,
+  delete_profile, list_browser_profiles, rename_profile, update_camoufox_config,
+  update_profile_dns_blocklist, update_profile_launch_hook, update_profile_note,
+  update_profile_proxy, update_profile_proxy_bypass_rules, update_profile_tags, update_profile_vpn,
   update_wayfern_config,
 };
 
@@ -102,11 +103,10 @@ use settings_manager::{
 
 use sync::{
   cancel_profile_sync, check_has_e2e_password, delete_e2e_password, enable_sync_for_all_entities,
-  get_unsynced_entity_counts, is_group_in_use_by_synced_profile, is_proxy_in_use_by_synced_profile,
-  is_vpn_in_use_by_synced_profile, request_profile_sync, rollover_encryption_for_all_entities,
-  set_e2e_password, set_extension_group_sync_enabled, set_extension_sync_enabled,
-  set_group_sync_enabled, set_profile_sync_mode, set_proxy_sync_enabled, set_vpn_sync_enabled,
-  verify_e2e_password,
+  get_unsynced_entity_counts, is_group_in_use_by_synced_profile, is_vpn_in_use_by_synced_profile,
+  request_profile_sync, rollover_encryption_for_all_entities, set_e2e_password,
+  set_extension_group_sync_enabled, set_extension_sync_enabled, set_group_sync_enabled,
+  set_profile_sync_mode, set_vpn_sync_enabled, verify_e2e_password,
 };
 
 use tag_manager::get_all_tags;
@@ -151,6 +151,9 @@ use api_server::{get_api_server_status, start_api_server, stop_api_server};
 pub trait WindowExt {
   #[cfg(target_os = "macos")]
   fn set_transparent_titlebar(&self, transparent: bool) -> Result<(), String>;
+
+  #[cfg(target_os = "macos")]
+  fn disable_native_fullscreen(&self) -> Result<(), String>;
 }
 
 impl<R: Runtime> WindowExt for WebviewWindow<R> {
@@ -165,7 +168,7 @@ impl<R: Runtime> WindowExt for WebviewWindow<R> {
 
       if transparent {
         // Hide the title text
-        ns_window.setTitleVisibility(NSWindowTitleVisibility(2)); // NSWindowTitleHidden
+        ns_window.setTitleVisibility(NSWindowTitleVisibility(1)); // NSWindowTitleHidden
 
         // Make titlebar transparent
         ns_window.setTitlebarAppearsTransparent(true);
@@ -186,6 +189,23 @@ impl<R: Runtime> WindowExt for WebviewWindow<R> {
         let new_mask = NSWindowStyleMask(current_mask.0 & !(1 << 15));
         ns_window.setStyleMask(new_mask);
       }
+    }
+
+    Ok(())
+  }
+
+  #[cfg(target_os = "macos")]
+  fn disable_native_fullscreen(&self) -> Result<(), String> {
+    use objc2::rc::Retained;
+    use objc2_app_kit::{NSWindow, NSWindowCollectionBehavior};
+
+    unsafe {
+      let ns_window: Retained<NSWindow> =
+        Retained::retain(self.ns_window().unwrap().cast()).unwrap();
+      let mut collection_behavior = ns_window.collectionBehavior();
+      collection_behavior.remove(NSWindowCollectionBehavior::FullScreenPrimary);
+      collection_behavior.insert(NSWindowCollectionBehavior::FullScreenNone);
+      ns_window.setCollectionBehavior(collection_behavior);
     }
 
     Ok(())
@@ -216,102 +236,6 @@ async fn handle_url_open(app: tauri::AppHandle, url: String) -> Result<(), Strin
   }
 
   Ok(())
-}
-
-#[tauri::command]
-async fn create_stored_proxy(
-  app_handle: tauri::AppHandle,
-  name: String,
-  proxy_settings: Option<crate::browser::ProxySettings>,
-) -> Result<crate::proxy_manager::StoredProxy, String> {
-  if let Some(settings) = proxy_settings {
-    crate::proxy_manager::PROXY_MANAGER
-      .create_stored_proxy(&app_handle, name, settings)
-      .map_err(|e| format!("Failed to create stored proxy: {e}"))
-  } else {
-    Err("proxy_settings is required".to_string())
-  }
-}
-
-#[tauri::command]
-async fn get_stored_proxies() -> Result<Vec<crate::proxy_manager::StoredProxy>, String> {
-  Ok(crate::proxy_manager::PROXY_MANAGER.get_stored_proxies())
-}
-
-#[tauri::command]
-async fn update_stored_proxy(
-  app_handle: tauri::AppHandle,
-  proxy_id: String,
-  name: Option<String>,
-  proxy_settings: Option<crate::browser::ProxySettings>,
-) -> Result<crate::proxy_manager::StoredProxy, String> {
-  crate::proxy_manager::PROXY_MANAGER
-    .update_stored_proxy(&app_handle, &proxy_id, name, proxy_settings)
-    .map_err(|e| format!("Failed to update stored proxy: {e}"))
-}
-
-#[tauri::command]
-async fn delete_stored_proxy(app_handle: tauri::AppHandle, proxy_id: String) -> Result<(), String> {
-  crate::proxy_manager::PROXY_MANAGER
-    .delete_stored_proxy(&app_handle, &proxy_id)
-    .map_err(|e| format!("Failed to delete stored proxy: {e}"))
-}
-
-#[tauri::command]
-async fn check_proxy_validity(
-  proxy_id: String,
-  proxy_settings: Option<crate::browser::ProxySettings>,
-) -> Result<crate::proxy_manager::ProxyCheckResult, String> {
-  let settings = if let Some(s) = proxy_settings {
-    s
-  } else {
-    crate::proxy_manager::PROXY_MANAGER
-      .get_proxy_settings_by_id(&proxy_id)
-      .ok_or_else(|| format!("Proxy '{proxy_id}' not found"))?
-  };
-  crate::proxy_manager::PROXY_MANAGER
-    .check_proxy_validity(&proxy_id, &settings)
-    .await
-}
-
-#[tauri::command]
-fn get_cached_proxy_check(proxy_id: String) -> Option<crate::proxy_manager::ProxyCheckResult> {
-  crate::proxy_manager::PROXY_MANAGER.get_cached_proxy_check(&proxy_id)
-}
-
-#[tauri::command]
-fn export_proxies(format: String) -> Result<String, String> {
-  match format.as_str() {
-    "json" => crate::proxy_manager::PROXY_MANAGER.export_proxies_json(),
-    "txt" => Ok(crate::proxy_manager::PROXY_MANAGER.export_proxies_txt()),
-    _ => Err(format!("Unsupported export format: {format}")),
-  }
-}
-
-#[tauri::command]
-async fn import_proxies_json(
-  app_handle: tauri::AppHandle,
-  content: String,
-) -> Result<crate::proxy_manager::ProxyImportResult, String> {
-  crate::proxy_manager::PROXY_MANAGER
-    .import_proxies_json(&app_handle, &content)
-    .map_err(|e| format!("Failed to import proxies: {e}"))
-}
-
-#[tauri::command]
-fn parse_txt_proxies(content: String) -> Vec<crate::proxy_manager::ProxyParseResult> {
-  crate::proxy_manager::ProxyManager::parse_txt_proxies(&content)
-}
-
-#[tauri::command]
-async fn import_proxies_from_parsed(
-  app_handle: tauri::AppHandle,
-  parsed_proxies: Vec<crate::proxy_manager::ParsedProxyLine>,
-  name_prefix: Option<String>,
-) -> Result<crate::proxy_manager::ProxyImportResult, String> {
-  crate::proxy_manager::PROXY_MANAGER
-    .import_proxies_from_parsed(&app_handle, parsed_proxies, name_prefix)
-    .map_err(|e| format!("Failed to import proxies: {e}"))
 }
 
 #[tauri::command]
@@ -1027,7 +951,7 @@ pub async fn check_vpn_validity_core(
 /// subscription) fails creation identically everywhere. Returns structured
 /// `{ "code": ... }` error strings the frontend translates via backend-errors.ts.
 pub async fn validate_profile_network(
-  proxy_id: Option<&str>,
+  proxy: Option<&str>,
   vpn_id: Option<&str>,
 ) -> Result<(), String> {
   if let Some(vpn_id) = vpn_id.filter(|s| !s.is_empty()) {
@@ -1038,18 +962,11 @@ pub async fn validate_profile_network(
     return Ok(());
   }
 
-  if let Some(proxy_id) = proxy_id.filter(|s| !s.is_empty()) {
-    // The cloud-included proxy is managed infrastructure; its only failure mode
-    // is the user hitting their usage limit, which surfaces as a 402 at request
-    // time. There's nothing to pre-validate here.
-    if proxy_id == crate::proxy_manager::CLOUD_PROXY_ID {
-      return Ok(());
-    }
-    let settings = crate::proxy_manager::PROXY_MANAGER
-      .get_proxy_settings_by_id(proxy_id)
-      .ok_or_else(|| format!("Proxy '{proxy_id}' not found"))?;
+  if let Some(proxy) = proxy.filter(|s| !s.is_empty()) {
+    let settings = crate::proxy_manager::parse_profile_proxy_string(proxy)
+      .map_err(|_| serde_json::json!({ "code": "INVALID_PROXY_FORMAT" }).to_string())?;
     match crate::proxy_manager::PROXY_MANAGER
-      .check_proxy_validity(proxy_id, &settings)
+      .check_proxy_validity(proxy, &settings)
       .await
     {
       Ok(result) if result.is_valid => {}
@@ -1153,8 +1070,8 @@ async fn generate_sample_fingerprint(
     name: "temp_fingerprint_gen".to_string(),
     browser: browser.clone(),
     version: version.clone(),
+    proxy: None,
     process_id: None,
-    proxy_id: None,
     vpn_id: None,
     launch_hook: None,
     last_launch: None,
@@ -1389,6 +1306,11 @@ pub fn run() {
     .plugin(tauri_plugin_dialog::init())
     .plugin(tauri_plugin_macos_permissions::init())
     .plugin(tauri_plugin_clipboard_manager::init())
+    .plugin(
+      WindowStateBuilder::default()
+        .with_state_flags(StateFlags::all().difference(StateFlags::VISIBLE | StateFlags::FULLSCREEN))
+        .build(),
+    )
     .setup(|app| {
       // Recover ephemeral dir mappings from RAM-backed storage (tmpfs/ramdisk)
       ephemeral_dirs::recover_ephemeral_dirs();
@@ -1404,7 +1326,8 @@ pub fn run() {
       let win_builder = WebviewWindowBuilder::new(app, "main", WebviewUrl::default())
         .title("Donut Browser")
         .inner_size(880.0, 500.0)
-        .resizable(false)
+        .min_inner_size(640.0, 400.0)
+        .resizable(true)
         .fullscreen(false)
         .center()
         .focused(true)
@@ -1447,6 +1370,9 @@ pub fn run() {
       {
         if let Err(e) = window.set_transparent_titlebar(true) {
           log::warn!("Failed to set transparent titlebar: {e}");
+        }
+        if let Err(e) = window.disable_native_fullscreen() {
+          log::warn!("Failed to disable native fullscreen: {e}");
         }
       }
 
@@ -2164,6 +2090,7 @@ pub fn run() {
       clone_profile,
       check_browser_exists,
       create_browser_profile_new,
+      create_browser_profiles_bulk,
       list_browser_profiles,
       launch_browser_profile,
       fetch_browser_versions_with_count,
@@ -2215,16 +2142,6 @@ pub fn run() {
       check_missing_geoip_database,
       ensure_all_binaries_exist,
       ensure_active_browsers_downloaded,
-      create_stored_proxy,
-      get_stored_proxies,
-      update_stored_proxy,
-      delete_stored_proxy,
-      check_proxy_validity,
-      get_cached_proxy_check,
-      export_proxies,
-      import_proxies_json,
-      parse_txt_proxies,
-      import_proxies_from_parsed,
       update_camoufox_config,
       update_wayfern_config,
       generate_sample_fingerprint,
@@ -2262,9 +2179,7 @@ pub fn run() {
       set_profile_sync_mode,
       cancel_profile_sync,
       request_profile_sync,
-      set_proxy_sync_enabled,
       set_group_sync_enabled,
-      is_proxy_in_use_by_synced_profile,
       is_group_in_use_by_synced_profile,
       set_vpn_sync_enabled,
       is_vpn_in_use_by_synced_profile,

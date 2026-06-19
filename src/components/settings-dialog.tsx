@@ -249,7 +249,9 @@ export function SettingsDialog({
       setSettings(merged);
       setOriginalSettings(merged);
 
-      const dirSettings = await invoke<DataDirSettings>("get_data_dir_settings");
+      const dirSettings = await invoke<DataDirSettings>(
+        "get_data_dir_settings",
+      );
       const configuredDir = dirSettings.configured_data_dir ?? "";
       setDataDirSettings(dirSettings);
       setDataDirInput(configuredDir);
@@ -1298,7 +1300,10 @@ export function SettingsDialog({
 
               <div className="space-y-3 p-3 rounded-lg border">
                 <div className="space-y-1">
-                  <Label htmlFor="data-dir-input" className="text-sm font-medium">
+                  <Label
+                    htmlFor="data-dir-input"
+                    className="text-sm font-medium"
+                  >
                     {t("settings.advanced.dataDirTitle")}
                   </Label>
                   <p className="text-xs text-muted-foreground">
@@ -1318,14 +1323,18 @@ export function SettingsDialog({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="data-dir-input" className="text-xs text-muted-foreground">
+                  <Label
+                    htmlFor="data-dir-input"
+                    className="text-xs text-muted-foreground"
+                  >
                     {t("settings.advanced.dataDirCustom")}
                   </Label>
                   <Input
                     id="data-dir-input"
                     value={dataDirInput}
                     disabled={
-                      dataDirSettings?.env_override_active || dataDirSettings?.portable
+                      dataDirSettings?.env_override_active ||
+                      dataDirSettings?.portable
                     }
                     onChange={(event) => setDataDirInput(event.target.value)}
                     placeholder={dataDirSettings?.default_data_dir ?? ""}
@@ -1336,7 +1345,8 @@ export function SettingsDialog({
                   <RippleButton
                     variant="outline"
                     disabled={
-                      dataDirSettings?.env_override_active || dataDirSettings?.portable
+                      dataDirSettings?.env_override_active ||
+                      dataDirSettings?.portable
                     }
                     onClick={async () => {
                       const selected = await openDialog({
@@ -1354,7 +1364,8 @@ export function SettingsDialog({
                   <RippleButton
                     variant="outline"
                     disabled={
-                      dataDirSettings?.env_override_active || dataDirSettings?.portable
+                      dataDirSettings?.env_override_active ||
+                      dataDirSettings?.portable
                     }
                     onClick={() => setDataDirInput("")}
                   >

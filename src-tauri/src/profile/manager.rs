@@ -1,7 +1,6 @@
 use crate::api_client::is_browser_version_nightly;
 use crate::browser::{create_browser, BrowserType, ProxySettings};
 use crate::camoufox_manager::CamoufoxConfig;
-use crate::cloud_auth::CLOUD_AUTH;
 use crate::downloaded_browsers_registry::DownloadedBrowsersRegistry;
 use crate::events;
 use crate::profile::types::{get_host_os, BrowserProfile, SyncMode};
@@ -78,7 +77,7 @@ impl ProfileManager {
     browser: &str,
     version: &str,
     release_type: &str,
-    proxy_id: Option<String>,
+    proxy: Option<String>,
     vpn_id: Option<String>,
     camoufox_config: Option<CamoufoxConfig>,
     wayfern_config: Option<WayfernConfig>,
@@ -87,19 +86,11 @@ impl ProfileManager {
     dns_blocklist: Option<String>,
     launch_hook: Option<String>,
   ) -> Result<BrowserProfile, Box<dyn std::error::Error>> {
-    if proxy_id.is_some() && vpn_id.is_some() {
-      return Err("Cannot set both proxy_id and vpn_id".into());
+    if proxy.is_some() && vpn_id.is_some() {
+      return Err("Cannot set both proxy and vpn_id".into());
     }
 
     let launch_hook = Self::normalize_launch_hook(launch_hook)?;
-
-    // Sync cloud proxy credentials if the profile uses a cloud or cloud-derived proxy
-    if let Some(ref pid) = proxy_id {
-      if PROXY_MANAGER.is_cloud_or_derived(pid) || pid == crate::proxy_manager::CLOUD_PROXY_ID {
-        log::info!("Syncing cloud proxy credentials before profile creation");
-        CLOUD_AUTH.sync_cloud_proxy().await;
-      }
-    }
 
     log::info!("Attempting to create profile: {name}");
 
@@ -133,35 +124,30 @@ impl ProfileManager {
       });
 
       // Pass upstream proxy information to config for fingerprint generation
-      if let Some(proxy_id_ref) = &proxy_id {
-        if let Some(proxy_settings) = PROXY_MANAGER.get_proxy_settings_by_id(proxy_id_ref) {
-          // For fingerprint generation, pass upstream proxy directly with credentials if present
+      if let Some(proxy_str) = &proxy {
+        if let Ok(proxy_settings) = crate::proxy_manager::parse_profile_proxy_string(proxy_str) {
           let proxy_url = if let (Some(username), Some(password)) =
             (&proxy_settings.username, &proxy_settings.password)
           {
             format!(
-              "{}://{}:{}@{}:{}",
-              proxy_settings.proxy_type.to_lowercase(),
-              username,
-              password,
-              proxy_settings.host,
-              proxy_settings.port
+              "http://{}:{}@{}:{}",
+              username, password, proxy_settings.host, proxy_settings.port
             )
           } else {
-            format!(
-              "{}://{}:{}",
-              proxy_settings.proxy_type.to_lowercase(),
-              proxy_settings.host,
-              proxy_settings.port
-            )
+            format!("http://{}:{}", proxy_settings.host, proxy_settings.port)
           };
           config.proxy = Some(proxy_url);
           log::info!(
-            "Using upstream proxy for Camoufox fingerprint generation: {}://{}:{}",
-            proxy_settings.proxy_type.to_lowercase(),
+            "Using upstream proxy for Camoufox fingerprint generation: {}:{}",
             proxy_settings.host,
             proxy_settings.port
           );
+        }
+      }
+
+      if let Some(proxy_str) = &proxy {
+        if crate::proxy_manager::parse_profile_proxy_string(proxy_str).is_err() {
+          return Err(format!("Invalid proxy format: {proxy_str}").into());
         }
       }
 
@@ -177,7 +163,7 @@ impl ProfileManager {
           name: name.to_string(),
           browser: browser.to_string(),
           version: version.to_string(),
-          proxy_id: proxy_id.clone(),
+          proxy: proxy.clone(),
           vpn_id: None,
           launch_hook: launch_hook.clone(),
           process_id: None,
@@ -240,34 +226,30 @@ impl ProfileManager {
 
       // Always ensure executable_path is set to the user's binary location
       // Pass upstream proxy information to config for fingerprint generation
-      if let Some(proxy_id_ref) = &proxy_id {
-        if let Some(proxy_settings) = PROXY_MANAGER.get_proxy_settings_by_id(proxy_id_ref) {
+      if let Some(proxy_str) = &proxy {
+        if let Ok(proxy_settings) = crate::proxy_manager::parse_profile_proxy_string(proxy_str) {
           let proxy_url = if let (Some(username), Some(password)) =
             (&proxy_settings.username, &proxy_settings.password)
           {
             format!(
-              "{}://{}:{}@{}:{}",
-              proxy_settings.proxy_type.to_lowercase(),
-              username,
-              password,
-              proxy_settings.host,
-              proxy_settings.port
+              "http://{}:{}@{}:{}",
+              username, password, proxy_settings.host, proxy_settings.port
             )
           } else {
-            format!(
-              "{}://{}:{}",
-              proxy_settings.proxy_type.to_lowercase(),
-              proxy_settings.host,
-              proxy_settings.port
-            )
+            format!("http://{}:{}", proxy_settings.host, proxy_settings.port)
           };
           config.proxy = Some(proxy_url);
           log::info!(
-            "Using upstream proxy for Wayfern fingerprint generation: {}://{}:{}",
-            proxy_settings.proxy_type.to_lowercase(),
+            "Using upstream proxy for Wayfern fingerprint generation: {}:{}",
             proxy_settings.host,
             proxy_settings.port
           );
+        }
+      }
+
+      if let Some(proxy_str) = &proxy {
+        if crate::proxy_manager::parse_profile_proxy_string(proxy_str).is_err() {
+          return Err(format!("Invalid proxy format: {proxy_str}").into());
         }
       }
 
@@ -281,7 +263,7 @@ impl ProfileManager {
           name: name.to_string(),
           browser: browser.to_string(),
           version: version.to_string(),
-          proxy_id: proxy_id.clone(),
+          proxy: proxy.clone(),
           vpn_id: None,
           launch_hook: launch_hook.clone(),
           process_id: None,
@@ -339,7 +321,7 @@ impl ProfileManager {
       name: name.to_string(),
       browser: browser.to_string(),
       version: version.to_string(),
-      proxy_id: proxy_id.clone(),
+      proxy: proxy.clone(),
       vpn_id: vpn_id.clone(),
       launch_hook,
       process_id: None,
@@ -392,11 +374,10 @@ impl ProfileManager {
     // a true Firefox-family target (none currently). Ephemeral profiles
     // skip regardless because their data dir is created at launch time.
     if !ephemeral && !matches!(browser, "camoufox" | "wayfern") {
-      if let Some(proxy_id_ref) = &proxy_id {
-        if let Some(proxy_settings) = PROXY_MANAGER.get_proxy_settings_by_id(proxy_id_ref) {
+      if let Some(proxy_ref) = &proxy {
+        if let Ok(proxy_settings) = crate::proxy_manager::parse_profile_proxy_string(proxy_ref) {
           self.apply_proxy_settings_to_profile(&profile_data_dir, &proxy_settings, None)?;
         } else {
-          // Proxy ID provided but not found, disable proxy
           self.disable_proxy_settings_in_profile(&profile_data_dir)?;
         }
       } else {
@@ -467,6 +448,47 @@ impl ProfileManager {
               continue;
             }
           };
+
+          // Migrate legacy `proxy_id` metadata into inline `proxy` string. The
+          // BrowserProfile serde alias maps old `proxy_id` into `proxy`; if it is
+          // not already a valid inline string, try resolving it as a stored proxy
+          // id and persist the converted value. Unresolvable legacy ids are
+          // cleared so launch does not fail on stale references.
+          if let Some(raw_proxy) = profile.proxy.clone() {
+            let raw_proxy = raw_proxy.trim().to_string();
+            let normalized = if raw_proxy.is_empty() {
+              None
+            } else if crate::proxy_manager::parse_profile_proxy_string(&raw_proxy).is_ok() {
+              Some(raw_proxy)
+            } else if let Some(settings) = PROXY_MANAGER.get_proxy_settings_by_id(&raw_proxy) {
+              match crate::proxy_manager::format_profile_proxy_string(&settings) {
+                Ok(inline) => Some(inline),
+                Err(e) => {
+                  log::warn!(
+                    "Clearing legacy proxy_id for profile {} (ID: {}): {}",
+                    profile.name,
+                    profile.id,
+                    e
+                  );
+                  None
+                }
+              }
+            } else {
+              log::warn!(
+                "Clearing unresolvable legacy proxy_id for profile {} (ID: {})",
+                profile.name,
+                profile.id
+              );
+              None
+            };
+
+            if normalized != profile.proxy {
+              profile.proxy = normalized;
+              if let Ok(json) = serde_json::to_string_pretty(&profile) {
+                let _ = atomic_write(&metadata_file, json.as_bytes());
+              }
+            }
+          }
 
           // Backfill host_os from browser config for profiles created before
           // the field existed (or synced without it).
@@ -1040,7 +1062,7 @@ impl ProfileManager {
       name: clone_name,
       browser: source.browser,
       version: source.version,
-      proxy_id: source.proxy_id,
+      proxy: source.proxy,
       vpn_id: source.vpn_id,
       launch_hook: source.launch_hook,
       process_id: None,
@@ -1132,11 +1154,12 @@ impl ProfileManager {
     }
 
     // Re-read latest profile state in case status check cleared stale process_id on disk.
-    let profiles = self
-      .list_profiles()
-      .map_err(|e| -> Box<dyn std::error::Error + Send + Sync> {
-        format!("Failed to list profiles after status check: {e}").into()
-      })?;
+    let profiles =
+      self
+        .list_profiles()
+        .map_err(|e| -> Box<dyn std::error::Error + Send + Sync> {
+          format!("Failed to list profiles after status check: {e}").into()
+        })?;
     profile = profiles
       .into_iter()
       .find(|p| p.id == profile_uuid)
@@ -1236,9 +1259,8 @@ impl ProfileManager {
     &self,
     _app_handle: tauri::AppHandle,
     profile_id: &str,
-    proxy_id: Option<String>,
+    proxy: Option<String>,
   ) -> Result<BrowserProfile, Box<dyn std::error::Error + Send + Sync>> {
-    // Find the profile by ID
     let profile_uuid = uuid::Uuid::parse_str(profile_id).map_err(
       |_| -> Box<dyn std::error::Error + Send + Sync> {
         format!("Invalid profile ID: {profile_id}").into()
@@ -1258,15 +1280,15 @@ impl ProfileManager {
         format!("Profile with ID '{profile_id}' not found").into()
       })?;
 
-    // Remember old proxy_id for cleanup (not used yet, but may be needed for cleanup)
-    let _old_proxy_id = profile.proxy_id.clone();
+    if let Some(ref proxy_str) = proxy {
+      crate::proxy_manager::parse_profile_proxy_string(proxy_str)
+        .map_err(|e| -> Box<dyn std::error::Error + Send + Sync> { e.into() })?;
+    }
 
-    // Update proxy settings and clear VPN (mutual exclusion)
-    profile.proxy_id = proxy_id.clone();
+    profile.proxy = proxy.clone();
     profile.vpn_id = None;
     profile.updated_at = Some(crate::proxy_manager::now_secs());
 
-    // Save the updated profile
     self
       .save_profile(&profile)
       .map_err(|e| -> Box<dyn std::error::Error + Send + Sync> {
@@ -1275,60 +1297,10 @@ impl ProfileManager {
 
     crate::sync::queue_profile_sync_if_eligible(&profile);
 
-    // Auto-enable sync for new proxy if profile has sync enabled
-    if profile.is_sync_enabled() {
-      if let Some(ref new_proxy_id) = proxy_id {
-        let _ = crate::sync::enable_proxy_sync_if_needed(new_proxy_id).await;
-        if let Some(scheduler) = crate::sync::get_global_scheduler() {
-          scheduler.queue_proxy_sync(new_proxy_id.clone()).await;
-        }
-      }
-    }
-
-    // Update on-disk browser profile config immediately.
-    // Both supported browser types ignore this write (Camoufox rewrites
-    // user.js at launch with the local donut-proxy host, Wayfern takes its
-    // proxy via `--proxy-pac-url=` and never reads user.js), and for
-    // Camoufox specifically writing the upstream host here would leave a
-    // stale, wrong proxy in user.js until the next launch.
-    if !matches!(profile.browser.as_str(), "camoufox" | "wayfern") {
-      if let Some(proxy_id_ref) = &proxy_id {
-        if let Some(proxy_settings) = PROXY_MANAGER.get_proxy_settings_by_id(proxy_id_ref) {
-          let profiles_dir = self.get_profiles_dir();
-          let profile_path = profiles_dir.join(profile.id.to_string()).join("profile");
-          self
-            .apply_proxy_settings_to_profile(&profile_path, &proxy_settings, None)
-            .map_err(|e| -> Box<dyn std::error::Error + Send + Sync> {
-              format!("Failed to apply proxy settings: {e}").into()
-            })?;
-        } else {
-          // Proxy ID provided but proxy not found, disable proxy
-          let profiles_dir = self.get_profiles_dir();
-          let profile_path = profiles_dir.join(profile.id.to_string()).join("profile");
-          self
-            .disable_proxy_settings_in_profile(&profile_path)
-            .map_err(|e| -> Box<dyn std::error::Error + Send + Sync> {
-              format!("Failed to disable proxy settings: {e}").into()
-            })?;
-        }
-      } else {
-        // No proxy ID provided, disable proxy
-        let profiles_dir = self.get_profiles_dir();
-        let profile_path = profiles_dir.join(profile.id.to_string()).join("profile");
-        self
-          .disable_proxy_settings_in_profile(&profile_path)
-          .map_err(|e| -> Box<dyn std::error::Error + Send + Sync> {
-            format!("Failed to disable proxy settings: {e}").into()
-          })?;
-      }
-    }
-
-    // Emit profile update event so frontend UIs can refresh immediately (e.g. proxy manager)
     if let Err(e) = events::emit("profile-updated", &profile) {
       log::warn!("Warning: Failed to emit profile update event: {e}");
     }
 
-    // Emit general profiles changed event for profile list updates
     if let Err(e) = events::emit_empty("profiles-changed") {
       log::warn!("Warning: Failed to emit profiles-changed event: {e}");
     }
@@ -1363,7 +1335,7 @@ impl ProfileManager {
 
     // Update VPN and clear proxy (mutual exclusion)
     profile.vpn_id = vpn_id.clone();
-    profile.proxy_id = None;
+    profile.proxy = None;
     profile.updated_at = Some(crate::proxy_manager::now_secs());
 
     self
@@ -2519,6 +2491,57 @@ pub async fn create_browser_profile_new(
     launch_hook,
   )
   .await
+}
+
+#[derive(Debug, Clone, serde::Deserialize)]
+pub struct BulkProfileEntry {
+  pub name: String,
+  pub proxy: Option<String>,
+}
+
+#[tauri::command]
+pub async fn create_browser_profiles_bulk(
+  app_handle: tauri::AppHandle,
+  browser_str: String,
+  version: String,
+  release_type: String,
+  profiles: Vec<BulkProfileEntry>,
+  group_id: Option<String>,
+) -> Result<Vec<BrowserProfile>, String> {
+  let profile_manager = ProfileManager::instance();
+  let mut results = Vec::with_capacity(profiles.len());
+
+  for entry in profiles {
+    if let Some(ref proxy) = entry.proxy {
+      if !proxy.is_empty() {
+        crate::proxy_manager::parse_profile_proxy_string(proxy)
+          .map_err(|e| format!("Invalid proxy format '{}': {e}", proxy))?;
+      }
+    }
+
+    let profile = profile_manager
+      .create_profile_with_group(
+        &app_handle,
+        &entry.name,
+        &browser_str,
+        &version,
+        &release_type,
+        entry.proxy.filter(|s| !s.is_empty()),
+        None,
+        None,
+        None,
+        group_id.clone(),
+        false,
+        None,
+        None,
+      )
+      .await
+      .map_err(|e| format!("Failed to create profile '{}': {e}", entry.name))?;
+
+    results.push(profile);
+  }
+
+  Ok(results)
 }
 
 #[tauri::command]

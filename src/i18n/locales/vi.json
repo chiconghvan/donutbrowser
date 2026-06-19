@@ -226,7 +226,8 @@
     "newProfile": "Mới",
     "donutLogo": "Logo Donut Browser",
     "scrollGroupsLeft": "Cuộn nhóm sang trái",
-    "scrollGroupsRight": "Cuộn nhóm sang phải"
+    "scrollGroupsRight": "Cuộn nhóm sang phải",
+    "bulkNewProfile": "Bulk New"
   },
   "profiles": {
     "title": "Hồ sơ",
@@ -315,7 +316,11 @@
       "assignToGroup": "Gán vào nhóm",
       "assignProxy": "Gán Proxy",
       "assignExtensionGroup": "Gán nhóm tiện ích",
-      "copyCookies": "Sao chép Cookie"
+      "copySelectedNames": "Sao chép tên đã chọn",
+      "copySelectedNamesSuccess": "Đã sao chép tên profile đã chọn",
+      "copySelectedNamesFailed": "Sao chép tên profile đã chọn thất bại",
+      "copyCookies": "Sao chép Cookie",
+      "assignProxyBulk": "Gán Proxy (Dán hàng loạt)"
     },
     "passwordProtectedBadge": "Được bảo vệ bằng mật khẩu",
     "launchHook": {
@@ -1490,6 +1495,20 @@
     "vpnGroupHeading": "VPN",
     "failedFallback": "Gán proxy/VPN cho profile thất bại"
   },
+  "bulkProxyAssignment": {
+    "title": "Gán Proxy Hàng Loạt",
+    "description": "Dán một proxy trên mỗi dòng. Dòng 1 → profile đầu tiên, dòng 2 → profile thứ hai, v.v.",
+    "selectedProfilesLabel": "Profile đã chọn:",
+    "textareaLabel": "Proxy (một dòng một cái)",
+    "textareaPlaceholder": "address:port:user:pass",
+    "helperText": "Một proxy mỗi dòng, theo đúng thứ tự các profile đã chọn bên trên.",
+    "applyButton": "Áp dụng cho Tất cả",
+    "countMismatch": "Không khớp: {{proxyCount}} dòng proxy nhưng có {{profileCount}} profile được chọn.",
+    "invalidLineFormat": "Định dạng proxy không hợp lệ: \"{{line}}\". Mong đợi: address:port:user:pass",
+    "invalidPort": "Cổng không hợp lệ trong \"{{line}}\". Cổng phải từ 1–65535.",
+    "success": "Đã gán proxy thành công cho {{count}} profile.",
+    "failed": "Gán proxy thất bại."
+  },
   "groupAssignment": {
     "title": "Gán nhóm",
     "description_one": "Gán nhóm cho {{count}} profile đã chọn.",
@@ -2061,5 +2080,21 @@
     "title": "Hỗ trợ Camoufox sắp kết thúc",
     "description": "Hỗ trợ cho các profile Camoufox sẽ kết thúc vào ngày 8 tháng 7 năm 2026. Bạn có một hoặc nhiều profile Camoufox. Hãy chuyển chúng sang Wayfern trước thời điểm đó — sau ngày này, các profile Camoufox có thể ngừng hoạt động.",
     "acknowledge": "Đã hiểu"
+  },
+  "bulkCreateProfile": {
+    "title": "Bulk Create Profiles",
+    "configureTitle": "Configure {{browser}}",
+    "countLabel": "Number of profiles",
+    "countPlaceholder": "Enter count...",
+    "proxyLabel": "Proxies (one per line)",
+    "proxyPlaceholder": "address:port:user:pass",
+    "proxyHelper": "One proxy per line. Line 1 → profile 1, etc.",
+    "countMismatch": "Mismatch: {{proxyCount}} proxy lines but {{profileCount}} requested.",
+    "invalidProxy": "Invalid proxy format: {{line}}",
+    "createButton": "Create {{count}} Profiles",
+    "success": "Created {{count}} profiles successfully.",
+    "failed": "Failed to create profiles.",
+    "namePattern": "Names: {{prefix}}.01 through {{prefix}}.{{count}}",
+    "proxyCountMatch": "{{count}} proxy line(s) — matches {{count}} profile(s)."
   }
 }

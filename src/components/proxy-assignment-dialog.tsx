@@ -2,21 +2,11 @@
 
 import { invoke } from "@tauri-apps/api/core";
 import { emit } from "@tauri-apps/api/event";
-import { useCallback, useEffect, useId, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { LuCheck, LuChevronsUpDown } from "react-icons/lu";
 import { toast } from "sonner";
 import { LoadingButton } from "@/components/loading-button";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
 import {
   Dialog,
   DialogContent,
@@ -25,14 +15,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
-import type { BrowserProfile, StoredProxy, VpnConfig } from "@/types";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import type { BrowserProfile, VpnConfig } from "@/types";
 import { RippleButton } from "./ui/ripple";
 
 interface ProxyAssignmentDialogProps {
@@ -41,7 +33,6 @@ interface ProxyAssignmentDialogProps {
   selectedProfiles: string[];
   onAssignmentComplete: () => void;
   profiles?: BrowserProfile[];
-  storedProxies?: StoredProxy[];
   vpnConfigs?: VpnConfig[];
 }
 
@@ -51,31 +42,16 @@ export function ProxyAssignmentDialog({
   selectedProfiles,
   onAssignmentComplete,
   profiles = [],
-  storedProxies = [],
   vpnConfigs = [],
 }: ProxyAssignmentDialogProps) {
   const { t } = useTranslation();
-  const proxyListboxId = useId();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectionType, setSelectionType] = useState<"none" | "proxy" | "vpn">(
     "none",
   );
+  const [proxyString, setProxyString] = useState<string>("");
+  const [vpnId, setVpnId] = useState<string | null>(null);
   const [isAssigning, setIsAssigning] = useState(false);
-  const [proxyPopoverOpen, setProxyPopoverOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const handleValueChange = useCallback((value: string) => {
-    if (value === "none") {
-      setSelectedId(null);
-      setSelectionType("none");
-    } else if (value.startsWith("vpn-")) {
-      setSelectedId(value.slice(4));
-      setSelectionType("vpn");
-    } else {
-      setSelectedId(value);
-      setSelectionType("proxy");
-    }
-  }, []);
 
   const handleAssign = useCallback(async () => {
     setIsAssigning(true);
@@ -92,16 +68,18 @@ export function ProxyAssignmentDialog({
         return;
       }
 
+      const inlineProxy = proxyString.trim() || null;
+
       for (const profileId of validProfiles) {
-        if (selectionType === "vpn") {
+        if (selectionType === "vpn" && vpnId) {
           await invoke("update_profile_vpn", {
             profileId,
-            vpnId: selectedId,
+            vpnId,
           });
         } else {
           await invoke("update_profile_proxy", {
             profileId,
-            proxyId: selectionType === "proxy" ? selectedId : null,
+            proxyId: selectionType === "proxy" ? inlineProxy : null,
           });
         }
       }
@@ -122,8 +100,9 @@ export function ProxyAssignmentDialog({
     }
   }, [
     selectedProfiles,
-    selectedId,
     selectionType,
+    proxyString,
+    vpnId,
     profiles,
     onAssignmentComplete,
     onClose,
@@ -132,8 +111,9 @@ export function ProxyAssignmentDialog({
 
   useEffect(() => {
     if (isOpen) {
-      setSelectedId(null);
       setSelectionType("none");
+      setProxyString("");
+      setVpnId(null);
       setError(null);
     }
   }, [isOpen]);
@@ -175,128 +155,69 @@ export function ProxyAssignmentDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="proxy-vpn-select">
-              {t("proxyAssignment.assignProxyVpnLabel")}
-            </Label>
-            <Popover open={proxyPopoverOpen} onOpenChange={setProxyPopoverOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={proxyPopoverOpen}
-                  aria-controls={proxyListboxId}
-                  className="w-full justify-between font-normal"
-                >
-                  {(() => {
-                    if (selectionType === "none")
-                      return t("proxyAssignment.noneOption");
-                    if (selectionType === "vpn") {
-                      const vpn = vpnConfigs.find((v) => v.id === selectedId);
-                      return vpn
-                        ? `WG — ${vpn.name}`
-                        : t("proxyAssignment.noneOption");
-                    }
-                    const proxy = storedProxies.find(
-                      (p) => p.id === selectedId,
-                    );
-                    return proxy ? proxy.name : t("proxyAssignment.noneOption");
-                  })()}
-                  <LuChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent
-                id={proxyListboxId}
-                className="w-[240px] p-0"
-                sideOffset={8}
-              >
-                <Command>
-                  <CommandInput
-                    placeholder={t("proxyAssignment.searchPlaceholder")}
-                  />
-                  <CommandList>
-                    <CommandEmpty>{t("proxyAssignment.notFound")}</CommandEmpty>
-                    <CommandGroup>
-                      <CommandItem
-                        value="__none__"
-                        onSelect={() => {
-                          handleValueChange("none");
-                          setProxyPopoverOpen(false);
-                        }}
+            <Label>{t("proxyAssignment.assignProxyVpnLabel")}</Label>
+            <Select
+              value={
+                selectionType === "vpn" && vpnId
+                  ? `vpn-${vpnId}`
+                  : selectionType
+              }
+              onValueChange={(v) => {
+                if (v === "none") {
+                  setSelectionType("none");
+                  setProxyString("");
+                  setVpnId(null);
+                } else if (v.startsWith("vpn-")) {
+                  setSelectionType("vpn");
+                  setVpnId(v.slice(4));
+                  setProxyString("");
+                } else {
+                  setSelectionType("proxy");
+                  setVpnId(null);
+                }
+              }}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder={t("proxyAssignment.noneOption")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">
+                  {t("proxyAssignment.noneOption")}
+                </SelectItem>
+                <SelectItem value="proxy">
+                  {t("profileInfo.fields.proxy")}
+                </SelectItem>
+                {vpnConfigs.map((vpn) => (
+                  <SelectItem key={vpn.id} value={`vpn-${vpn.id}`}>
+                    <span className="flex items-center gap-1">
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] px-1 py-0 leading-tight"
                       >
-                        <LuCheck
-                          className={cn(
-                            "mr-2 size-4",
-                            selectionType === "none"
-                              ? "opacity-100"
-                              : "opacity-0",
-                          )}
-                        />
-                        {t("proxyAssignment.noneOption")}
-                      </CommandItem>
-                      {storedProxies
-                        .filter(
-                          (proxy) =>
-                            !proxy.is_cloud_managed && !proxy.is_cloud_derived,
-                        )
-                        .map((proxy) => (
-                          <CommandItem
-                            key={proxy.id}
-                            value={proxy.name}
-                            onSelect={() => {
-                              handleValueChange(proxy.id);
-                              setProxyPopoverOpen(false);
-                            }}
-                          >
-                            <LuCheck
-                              className={cn(
-                                "mr-2 size-4",
-                                selectionType === "proxy" &&
-                                  selectedId === proxy.id
-                                  ? "opacity-100"
-                                  : "opacity-0",
-                              )}
-                            />
-                            {proxy.name}
-                          </CommandItem>
-                        ))}
-                    </CommandGroup>
-                    {vpnConfigs.length > 0 && (
-                      <CommandGroup
-                        heading={t("proxyAssignment.vpnGroupHeading")}
-                      >
-                        {vpnConfigs.map((vpn) => (
-                          <CommandItem
-                            key={vpn.id}
-                            value={`vpn-${vpn.name}`}
-                            onSelect={() => {
-                              handleValueChange(`vpn-${vpn.id}`);
-                              setProxyPopoverOpen(false);
-                            }}
-                          >
-                            <LuCheck
-                              className={cn(
-                                "mr-2 size-4",
-                                selectionType === "vpn" && selectedId === vpn.id
-                                  ? "opacity-100"
-                                  : "opacity-0",
-                              )}
-                            />
-                            <Badge
-                              variant="outline"
-                              className="text-[10px] px-1 py-0 leading-tight mr-1"
-                            >
-                              WG
-                            </Badge>
-                            {vpn.name}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    )}
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
+                        WG
+                      </Badge>
+                      {vpn.name}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
+
+          {selectionType === "proxy" && (
+            <div className="space-y-2">
+              <Label htmlFor="proxy-input">
+                {t("profileInfo.fields.proxy")}
+              </Label>
+              <Input
+                id="proxy-input"
+                value={proxyString}
+                onChange={(e) => setProxyString(e.target.value)}
+                placeholder="address:port:user:pass"
+                disabled={isAssigning}
+              />
+            </div>
+          )}
 
           {error && (
             <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">

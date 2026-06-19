@@ -1197,7 +1197,7 @@ mod tests {
       name: "test".to_string(),
       browser: "wayfern".to_string(),
       version: "1.0.0".to_string(),
-      proxy_id: None,
+      proxy: None,
       vpn_id: None,
       launch_hook: None,
       process_id: None,

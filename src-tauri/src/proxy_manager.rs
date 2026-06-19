@@ -93,6 +93,49 @@ pub struct ProxyCheckResult {
 
 pub const CLOUD_PROXY_ID: &str = "cloud-included-proxy";
 
+/// Parse profile proxy string in canonical `address:port:user:pass` format.
+pub fn parse_profile_proxy_string(proxy: &str) -> Result<ProxySettings, String> {
+  let parts: Vec<&str> = proxy.split(':').collect();
+  if parts.len() != 4 {
+    return Err("Proxy must use address:port:user:pass".to_string());
+  }
+
+  let host = parts[0].trim();
+  let port = parts[1]
+    .trim()
+    .parse::<u16>()
+    .map_err(|_| "Proxy port must be valid number".to_string())?;
+  let username = parts[2].trim();
+  let password = parts[3].trim();
+
+  if host.is_empty() || username.is_empty() || password.is_empty() {
+    return Err("Proxy must include address, port, username, and password".to_string());
+  }
+
+  Ok(ProxySettings {
+    proxy_type: "http".to_string(),
+    host: host.to_string(),
+    port,
+    username: Some(username.to_string()),
+    password: Some(password.to_string()),
+  })
+}
+
+pub fn format_profile_proxy_string(settings: &ProxySettings) -> Result<String, String> {
+  let username = settings
+    .username
+    .as_ref()
+    .ok_or_else(|| "Proxy username is required".to_string())?;
+  let password = settings
+    .password
+    .as_ref()
+    .ok_or_else(|| "Proxy password is required".to_string())?;
+  Ok(format!(
+    "{}:{}:{}:{}",
+    settings.host, settings.port, username, password
+  ))
+}
+
 // Stored proxy configuration with name and ID for reuse
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StoredProxy {
@@ -224,13 +267,22 @@ impl ProxyManager {
     Ok(path)
   }
 
-  // Get the path to a specific proxy check cache file
+  // Get the path to a specific proxy check cache file. Profile proxies are
+  // inline strings (`host:port:user:pass`), which are not safe as filenames on
+  // Windows, so hash the cache key before writing it.
   fn get_proxy_check_cache_file(
     &self,
     proxy_id: &str,
   ) -> Result<PathBuf, Box<dyn std::error::Error>> {
     let cache_dir = self.get_proxy_check_cache_dir()?;
-    Ok(cache_dir.join(format!("{proxy_id}.json")))
+    let hash = {
+      use std::collections::hash_map::DefaultHasher;
+      use std::hash::{Hash, Hasher};
+      let mut hasher = DefaultHasher::new();
+      proxy_id.hash(&mut hasher);
+      hasher.finish()
+    };
+    Ok(cache_dir.join(format!("{hash:016x}.json")))
   }
 
   // Load cached proxy check result

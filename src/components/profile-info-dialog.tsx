@@ -265,16 +265,14 @@ export function ProfileInfoDialog({
     profile.browser === "camoufox" || profile.browser === "wayfern";
   const isDeleteDisabled = isRunning;
 
-  const proxyName = profile.proxy_id
-    ? storedProxies.find((p) => p.id === profile.proxy_id)?.name
-    : null;
+  const proxyStr = profile.proxy ?? null;
   const vpnName = profile.vpn_id
     ? vpnConfigs.find((v) => v.id === profile.vpn_id)?.name
     : null;
   const networkLabel = vpnName
     ? t("profileInfo.network.vpnLabel", { name: vpnName })
-    : proxyName
-      ? t("profileInfo.network.proxyLabel", { name: proxyName })
+    : proxyStr
+      ? proxyStr
       : t("profileInfo.values.none");
 
   const syncStatus = syncStatuses[profile.id];
@@ -679,7 +677,7 @@ function ProfileInfoLayout({
       id: "network",
       icon: <LuGlobe className="size-3.5" />,
       label: t("profileInfo.sections.network"),
-      badge: profile.proxy_id || profile.vpn_id ? networkLabel : undefined,
+      badge: profile.proxy || profile.vpn_id ? networkLabel : undefined,
     },
     {
       id: "cookies",
@@ -1230,7 +1228,7 @@ function SyncSectionInline({
 
 function NetworkSectionInline({
   profile,
-  storedProxies,
+  storedProxies: _storedProxies,
   vpnConfigs,
   isDisabled,
   t,
@@ -1243,22 +1241,21 @@ function NetworkSectionInline({
 }) {
   const [isSaving, setIsSaving] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  // Track the effective selection so the dropdown reflects the last save
-  // even before the parent `profile` prop refreshes from a backend event.
-  const [proxyId, setProxyId] = React.useState<string | null>(
-    profile.proxy_id ?? null,
+  const [proxyValue, setProxyValue] = React.useState<string>(
+    profile.proxy ?? "",
   );
   const [vpnId, setVpnId] = React.useState<string | null>(
     profile.vpn_id ?? null,
   );
 
   React.useEffect(() => {
-    setProxyId(profile.proxy_id ?? null);
+    setProxyValue(profile.proxy ?? "");
     setVpnId(profile.vpn_id ?? null);
-  }, [profile.proxy_id, profile.vpn_id]);
+  }, [profile.proxy, profile.vpn_id]);
 
-  const onProxyChange = async (value: string) => {
-    const nextId = value === "__none__" ? null : value;
+  const onProxySave = async () => {
+    const trimmed = proxyValue.trim();
+    const nextId = trimmed || null;
     setIsSaving(true);
     setError(null);
     try {
@@ -1266,9 +1263,7 @@ function NetworkSectionInline({
         profileId: profile.id,
         proxyId: nextId,
       });
-      // Clearing the proxy implicitly clears any VPN binding too on the
-      // backend, but we mirror it locally for an immediate visual.
-      setProxyId(nextId);
+      setProxyValue(trimmed);
       if (nextId !== null) setVpnId(null);
     } catch (e) {
       setError(translateBackendError(t as never, e));
@@ -1287,7 +1282,7 @@ function NetworkSectionInline({
         vpnId: nextId,
       });
       setVpnId(nextId);
-      if (nextId !== null) setProxyId(null);
+      if (nextId !== null) setProxyValue("");
     } catch (e) {
       setError(translateBackendError(t as never, e));
     } finally {
@@ -1309,27 +1304,17 @@ function NetworkSectionInline({
         <span className="text-[10px] uppercase tracking-wide text-muted-foreground shrink-0 w-12">
           {t("profileInfo.fields.proxy")}
         </span>
-        <Select
-          value={proxyId ?? "__none__"}
+        <Input
+          value={proxyValue}
           disabled={isDisabled || isSaving}
-          onValueChange={(v) => {
-            void onProxyChange(v);
+          onChange={(e) => setProxyValue(e.target.value)}
+          onBlur={() => void onProxySave()}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") void onProxySave();
           }}
-        >
-          <SelectTrigger className="h-7 text-xs flex-1">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__none__">
-              {t("profileInfo.values.none")}
-            </SelectItem>
-            {storedProxies.map((p) => (
-              <SelectItem key={p.id} value={p.id}>
-                {p.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          placeholder="address:port:user:pass"
+          className="h-7 text-xs flex-1"
+        />
       </div>
 
       <div className="flex items-center gap-2">

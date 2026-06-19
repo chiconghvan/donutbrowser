@@ -7,6 +7,8 @@ import { useOnborda } from "onborda";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AccountPage } from "@/components/account-page";
+import { BulkCreateProfileDialog } from "@/components/bulk-create-profile-dialog";
+import { BulkProxyAssignmentDialog } from "@/components/bulk-proxy-assignment-dialog";
 import { CamoufoxConfigDialog } from "@/components/camoufox-config-dialog";
 import { CloneProfileDialog } from "@/components/clone-profile-dialog";
 import { CloseConfirmDialog } from "@/components/close-confirm-dialog";
@@ -34,7 +36,6 @@ import {
 import { ProfileSelectorDialog } from "@/components/profile-selector-dialog";
 import { ProfileSyncDialog } from "@/components/profile-sync-dialog";
 import { ProxyAssignmentDialog } from "@/components/proxy-assignment-dialog";
-import { ProxyManagementDialog } from "@/components/proxy-management-dialog";
 import { type AppPage, RailNav } from "@/components/rail-nav";
 import { SettingsDialog } from "@/components/settings-dialog";
 import { ShortcutsPage } from "@/components/shortcuts-page";
@@ -52,7 +53,6 @@ import { useGroupEvents } from "@/hooks/use-group-events";
 import type { PermissionType } from "@/hooks/use-permissions";
 import { usePermissions } from "@/hooks/use-permissions";
 import { useProfileEvents } from "@/hooks/use-profile-events";
-import { useProxyEvents } from "@/hooks/use-proxy-events";
 import { useSyncSessions } from "@/hooks/use-sync-session";
 import { useUpdateNotifications } from "@/hooks/use-update-notifications";
 import { useVersionUpdater } from "@/hooks/use-version-updater";
@@ -199,12 +199,6 @@ export default function Home() {
     error: groupsError,
   } = useGroupEvents();
 
-  const {
-    storedProxies,
-    isLoading: proxiesLoading,
-    error: proxiesError,
-  } = useProxyEvents();
-
   const { vpnConfigs } = useVpnEvents();
 
   // Synchronizer sessions
@@ -249,20 +243,17 @@ export default function Home() {
   const [accountDialogOpen, setAccountDialogOpen] = useState(false);
   // Tracks which tab inside the shared proxy-management page should be active.
   // The VPN rail item routes to the same page but pre-selects the VPN tab.
-  const [proxyManagementInitialTab, setProxyManagementInitialTab] = useState<
-    "proxies" | "vpns"
-  >("proxies");
   const [extensionManagementInitialTab, setExtensionManagementInitialTab] =
     useState<"extensions" | "groups">("extensions");
   const [integrationsInitialTab, setIntegrationsInitialTab] = useState<
     "api" | "mcp"
   >("api");
   const [createProfileDialogOpen, setCreateProfileDialogOpen] = useState(false);
+  const [bulkCreateProfileDialogOpen, setBulkCreateProfileDialogOpen] =
+    useState(false);
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
   const [integrationsDialogOpen, setIntegrationsDialogOpen] = useState(false);
   const [importProfileDialogOpen, setImportProfileDialogOpen] = useState(false);
-  const [proxyManagementDialogOpen, setProxyManagementDialogOpen] =
-    useState(false);
   const [camoufoxConfigDialogOpen, setCamoufoxConfigDialogOpen] =
     useState(false);
   const [groupManagementDialogOpen, setGroupManagementDialogOpen] =
@@ -298,6 +289,10 @@ export default function Home() {
   const [selectedProfilesForProxy, setSelectedProfilesForProxy] = useState<
     string[]
   >([]);
+  const [bulkProxyAssignmentDialogOpen, setBulkProxyAssignmentDialogOpen] =
+    useState(false);
+  const [selectedProfilesForBulkProxy, setSelectedProfilesForBulkProxy] =
+    useState<string[]>([]);
   const [selectedProfiles, setSelectedProfiles] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [pendingUrls, setPendingUrls] = useState<PendingUrl[]>([]);
@@ -345,7 +340,6 @@ export default function Home() {
     // so navigating from one rail item to another doesn't stack two
     // sub-pages on top of each other.
     setSettingsDialogOpen(false);
-    setProxyManagementDialogOpen(false);
     setExtensionManagementDialogOpen(false);
     setGroupManagementDialogOpen(false);
     setIntegrationsDialogOpen(false);
@@ -360,8 +354,8 @@ export default function Home() {
         setSettingsDialogOpen(true);
         break;
       case "proxies":
-        setProxyManagementInitialTab("proxies");
-        setProxyManagementDialogOpen(true);
+        // Stored proxy page removed — redirect to VPNs.
+        setCurrentPage("vpns");
         break;
       case "extensions":
         setExtensionManagementDialogOpen(true);
@@ -376,10 +370,7 @@ export default function Home() {
         setImportProfileDialogOpen(true);
         break;
       case "vpns":
-        // VPNs share the proxy management page; pre-select the VPN tab so
-        // the user lands directly on the right list.
-        setProxyManagementInitialTab("vpns");
-        setProxyManagementDialogOpen(true);
+        // Stored proxy management removed; no dialog to open.
         break;
       case "account":
         setAccountDialogOpen(true);
@@ -406,18 +397,8 @@ export default function Home() {
           handleRailNavigate("profiles");
           break;
         case "goProxies": {
-          // Mod+N: navigate first time; flip proxies↔vpns on subsequent presses.
-          // handleRailNavigate("proxies"|"vpns") already updates the dialog's
-          // initialTab, so we just pick the right destination.
-          if (currentPage === "proxies") {
-            handleRailNavigate("vpns");
-          } else if (currentPage === "vpns") {
-            handleRailNavigate("proxies");
-          } else {
-            handleRailNavigate(
-              proxyManagementInitialTab === "vpns" ? "vpns" : "proxies",
-            );
-          }
+          // Stored proxy management removed. Navigate to VPNs instead.
+          handleRailNavigate("vpns");
           break;
         }
         case "goExtensions": {
@@ -451,7 +432,7 @@ export default function Home() {
           break;
       }
     },
-    [handleRailNavigate, currentPage, proxyManagementInitialTab],
+    [handleRailNavigate, currentPage],
   );
 
   // Ordered list the digit shortcuts and palette consume. "__all__" is index 1
@@ -652,12 +633,7 @@ export default function Home() {
     }
   }, [groupsError]);
 
-  // Handle proxy errors from useProxyEvents hook
-  useEffect(() => {
-    if (proxiesError) {
-      showErrorToast(proxiesError);
-    }
-  }, [proxiesError]);
+  // useProxyEvents usage removed — proxy is inline in profiles.
 
   const checkAllPermissions = useCallback(() => {
     try {
@@ -1112,6 +1088,18 @@ export default function Home() {
     setSelectedProfiles([]);
   }, [selectedProfiles, handleAssignProfilesToProxy]);
 
+  const handleBulkProxyPasteAssignment = useCallback(() => {
+    if (selectedProfiles.length === 0) return;
+    setSelectedProfilesForBulkProxy(selectedProfiles);
+    setBulkProxyAssignmentDialogOpen(true);
+    setSelectedProfiles([]);
+  }, [selectedProfiles]);
+
+  const handleBulkProxyPasteComplete = useCallback(() => {
+    setBulkProxyAssignmentDialogOpen(false);
+    setSelectedProfilesForBulkProxy([]);
+  }, []);
+
   const handleBulkCopyCookies = useCallback(() => {
     if (selectedProfiles.length === 0) return;
     const eligibleProfiles = profiles.filter(
@@ -1126,6 +1114,31 @@ export default function Home() {
     setSelectedProfilesForCookies(eligibleProfiles.map((p) => p.id));
     setCookieCopyDialogOpen(true);
   }, [selectedProfiles, profiles, t]);
+
+  const handleBulkCopySelectedNames = useCallback(async () => {
+    if (selectedProfiles.length === 0) return;
+
+    const selectedProfileNames = selectedProfiles
+      .map(
+        (profileId) =>
+          profiles.find((profile) => profile.id === profileId)?.name,
+      )
+      .filter((name): name is string => Boolean(name))
+      .map((name) => name.replace(/[\r\n]+/g, " "));
+
+    if (selectedProfileNames.length === 0) {
+      showErrorToast(t("profiles.actionBar.copySelectedNamesFailed"));
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(selectedProfileNames.join("\n"));
+      showSuccessToast(t("profiles.actionBar.copySelectedNamesSuccess"));
+    } catch (error) {
+      console.error("Failed to copy selected profile names:", error);
+      showErrorToast(t("profiles.actionBar.copySelectedNamesFailed"));
+    }
+  }, [profiles, selectedProfiles, t]);
 
   const handleCopyCookiesToProfile = useCallback((profile: BrowserProfile) => {
     setSelectedProfilesForCookies([profile.id]);
@@ -1513,7 +1526,7 @@ export default function Home() {
   }, [profiles, selectedGroupId, searchQuery]);
 
   // Update loading states
-  const isLoading = profilesLoading || groupsLoading || proxiesLoading;
+  const isLoading = profilesLoading || groupsLoading;
 
   const subPageTitle =
     currentPage === "profiles"
@@ -1527,6 +1540,7 @@ export default function Home() {
       <CloseConfirmDialog />
       <HomeHeader
         onCreateProfileDialogOpen={setCreateProfileDialogOpen}
+        onBulkCreateProfileDialogOpen={setBulkCreateProfileDialogOpen}
         searchQuery={searchQuery}
         onSearchQueryChange={setSearchQuery}
         groups={groupsData}
@@ -1566,10 +1580,12 @@ export default function Home() {
                 onBulkDelete={handleBulkDelete}
                 onBulkGroupAssignment={handleBulkGroupAssignment}
                 onBulkProxyAssignment={handleBulkProxyAssignment}
+                onBulkCopySelectedNames={handleBulkCopySelectedNames}
                 onBulkCopyCookies={handleBulkCopyCookies}
                 onBulkExtensionGroupAssignment={
                   handleBulkExtensionGroupAssignment
                 }
+                onBulkProxyPasteAssignment={handleBulkProxyPasteAssignment}
                 onAssignExtensionGroup={handleAssignExtensionGroup}
                 onOpenProfileSyncDialog={handleOpenProfileSyncDialog}
                 onToggleProfileSync={handleToggleProfileSync}
@@ -1612,18 +1628,6 @@ export default function Home() {
               }}
               subPage={currentPage === "integrations"}
               initialTab={integrationsInitialTab}
-            />
-          )}
-
-          {proxyManagementDialogOpen && (
-            <ProxyManagementDialog
-              isOpen={proxyManagementDialogOpen}
-              onClose={() => {
-                setProxyManagementDialogOpen(false);
-                setCurrentPage("profiles");
-              }}
-              subPage={currentPage === "proxies" || currentPage === "vpns"}
-              initialTab={proxyManagementInitialTab}
             />
           )}
 
@@ -1690,6 +1694,17 @@ export default function Home() {
         onCreateProfile={handleCreateProfile}
         selectedGroupId={selectedGroupId}
         crossOsUnlocked={crossOsUnlocked}
+      />
+
+      <BulkCreateProfileDialog
+        isOpen={bulkCreateProfileDialogOpen}
+        onClose={() => {
+          setBulkCreateProfileDialogOpen(false);
+        }}
+        onCreated={() => {
+          // profiles-changed event will refresh the list automatically
+        }}
+        selectedGroupId={selectedGroupId}
       />
 
       <CommandPalette
@@ -1839,8 +1854,18 @@ export default function Home() {
         selectedProfiles={selectedProfilesForProxy}
         onAssignmentComplete={handleProxyAssignmentComplete}
         profiles={profiles}
-        storedProxies={storedProxies}
         vpnConfigs={vpnConfigs}
+      />
+
+      <BulkProxyAssignmentDialog
+        isOpen={bulkProxyAssignmentDialogOpen}
+        onClose={() => {
+          setBulkProxyAssignmentDialogOpen(false);
+          setSelectedProfilesForBulkProxy([]);
+        }}
+        selectedProfiles={selectedProfilesForBulkProxy}
+        onAssignmentComplete={handleBulkProxyPasteComplete}
+        profiles={profiles}
       />
 
       <CookieCopyDialog

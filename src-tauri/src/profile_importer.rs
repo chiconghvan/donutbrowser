@@ -8,7 +8,6 @@ use crate::camoufox_manager::CamoufoxConfig;
 use crate::downloaded_browsers_registry::DownloadedBrowsersRegistry;
 use crate::profile::types::{get_host_os, BrowserProfile, SyncMode};
 use crate::profile::ProfileManager;
-use crate::proxy_manager::PROXY_MANAGER;
 use crate::wayfern_manager::WayfernConfig;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -242,12 +241,6 @@ impl ProfileImporter {
 
     let mapped = map_browser_type(browser_type);
 
-    if let Some(ref pid) = proxy_id {
-      if PROXY_MANAGER.is_cloud_or_derived(pid) || pid == crate::proxy_manager::CLOUD_PROXY_ID {
-        crate::cloud_auth::CLOUD_AUTH.sync_cloud_proxy().await;
-      }
-    }
-
     let existing_profiles = self.profile_manager.list_profiles()?;
     if existing_profiles
       .iter()
@@ -275,8 +268,8 @@ impl ProfileImporter {
     let final_wayfern_config = if mapped == "wayfern" {
       let mut config = wayfern_config.unwrap_or_default();
 
-      if let Some(ref proxy_id_val) = proxy_id {
-        if let Some(proxy_settings) = PROXY_MANAGER.get_proxy_settings_by_id(proxy_id_val) {
+      if let Some(ref proxy_value) = proxy_id {
+        if let Ok(proxy_settings) = crate::proxy_manager::parse_profile_proxy_string(proxy_value) {
           let proxy_url = if let (Some(username), Some(password)) =
             (&proxy_settings.username, &proxy_settings.password)
           {
@@ -306,7 +299,7 @@ impl ProfileImporter {
           name: new_profile_name.to_string(),
           browser: mapped.to_string(),
           version: version.clone(),
-          proxy_id: proxy_id.clone(),
+          proxy: proxy_id.clone(),
           vpn_id: None,
           launch_hook: None,
           process_id: None,
@@ -360,7 +353,7 @@ impl ProfileImporter {
       name: new_profile_name.to_string(),
       browser: mapped.to_string(),
       version,
-      proxy_id,
+      proxy: proxy_id,
       vpn_id: None,
       launch_hook: None,
       process_id: None,

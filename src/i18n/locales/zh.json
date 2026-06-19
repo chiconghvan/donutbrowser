@@ -226,7 +226,8 @@
     "newProfile": "新建",
     "donutLogo": "Donut Browser 标识",
     "scrollGroupsLeft": "向左滚动分组",
-    "scrollGroupsRight": "向右滚动分组"
+    "scrollGroupsRight": "向右滚动分组",
+    "bulkNewProfile": "Bulk New"
   },
   "profiles": {
     "title": "配置文件",
@@ -315,7 +316,11 @@
       "assignToGroup": "分配到分组",
       "assignProxy": "分配代理",
       "assignExtensionGroup": "分配扩展分组",
-      "copyCookies": "复制 Cookie"
+      "copySelectedNames": "复制所选名称",
+      "copySelectedNamesSuccess": "已复制所选配置文件名称",
+      "copySelectedNamesFailed": "复制所选配置文件名称失败",
+      "copyCookies": "复制 Cookie",
+      "assignProxyBulk": "批量分配代理（粘贴）"
     },
     "passwordProtectedBadge": "密码保护",
     "launchHook": {
@@ -1490,6 +1495,20 @@
     "vpnGroupHeading": "VPN",
     "failedFallback": "为配置文件分配代理/VPN 失败"
   },
+  "bulkProxyAssignment": {
+    "title": "批量代理分配",
+    "description": "每行粘贴一个代理。第1行→第一个选中的配置文件，第2行→第二个，以此类推。",
+    "selectedProfilesLabel": "选中的配置文件：",
+    "textareaLabel": "代理（每行一个）",
+    "textareaPlaceholder": "address:port:user:pass",
+    "helperText": "每行一个代理，顺序与上方选中的配置文件一致。",
+    "applyButton": "全部应用",
+    "countMismatch": "不匹配：{{proxyCount}} 行代理，但选中了 {{profileCount}} 个配置文件。",
+    "invalidLineFormat": "无效的代理格式：\"{{line}}\"。期望格式：address:port:user:pass",
+    "invalidPort": "「{{line}}」中的端口无效。端口必须为 1–65535。",
+    "success": "已成功为 {{count}} 个配置文件分配代理。",
+    "failed": "分配代理失败。"
+  },
   "groupAssignment": {
     "title": "分配分组",
     "description_one": "为 {{count}} 个选定的配置文件分配分组。",
@@ -2061,5 +2080,21 @@
     "title": "Camoufox 支持即将结束",
     "description": "Camoufox 配置文件的支持将于 2026 年 7 月 8 日结束。您有一个或多个 Camoufox 配置文件。请在此之前迁移到 Wayfern——之后 Camoufox 配置文件可能会停止工作。",
     "acknowledge": "知道了"
+  },
+  "bulkCreateProfile": {
+    "title": "Bulk Create Profiles",
+    "configureTitle": "Configure {{browser}}",
+    "countLabel": "Number of profiles",
+    "countPlaceholder": "Enter count...",
+    "proxyLabel": "Proxies (one per line)",
+    "proxyPlaceholder": "address:port:user:pass",
+    "proxyHelper": "One proxy per line. Line 1 → profile 1, etc.",
+    "countMismatch": "Mismatch: {{proxyCount}} proxy lines but {{profileCount}} requested.",
+    "invalidProxy": "Invalid proxy format: {{line}}",
+    "createButton": "Create {{count}} Profiles",
+    "success": "Created {{count}} profiles successfully.",
+    "failed": "Failed to create profiles.",
+    "namePattern": "Names: {{prefix}}.01 through {{prefix}}.{{count}}",
+    "proxyCountMatch": "{{count}} proxy line(s) — matches {{count}} profile(s)."
   }
 }

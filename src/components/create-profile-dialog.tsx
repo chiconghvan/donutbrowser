@@ -1,31 +1,13 @@
 "use client";
 
 import { invoke } from "@tauri-apps/api/core";
-import {
-  useCallback,
-  useEffect,
-  useId,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { GoPlus } from "react-icons/go";
-import { LuCheck, LuChevronsUpDown, LuLoaderCircle } from "react-icons/lu";
+import { LuLoaderCircle } from "react-icons/lu";
 import { LoadingButton } from "@/components/loading-button";
-import { ProxyFormDialog } from "@/components/proxy-form-dialog";
 import { SharedCamoufoxConfigForm } from "@/components/shared-camoufox-config-form";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
 import {
   Dialog,
   DialogContent,
@@ -35,11 +17,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
@@ -51,10 +28,8 @@ import {
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { WayfernConfigForm } from "@/components/wayfern-config-form";
 import { useBrowserDownload } from "@/hooks/use-browser-download";
-import { useProxyEvents } from "@/hooks/use-proxy-events";
 import { useVpnEvents } from "@/hooks/use-vpn-events";
 import { getBrowserIcon } from "@/lib/browser-utils";
-import { cn } from "@/lib/utils";
 import type {
   BrowserReleaseTypes,
   CamoufoxConfig,
@@ -122,8 +97,6 @@ export function CreateProfileDialog({
   crossOsUnlocked = false,
 }: CreateProfileDialogProps) {
   const { t } = useTranslation();
-  const proxyListboxIdAntiDetect = useId();
-  const proxyListboxIdRegular = useId();
   const [profileName, setProfileName] = useState("");
   // Both Camoufox and Wayfern anti-detect profiles can be created.
   const [currentStep, setCurrentStep] = useState<
@@ -134,8 +107,7 @@ export function CreateProfileDialog({
   // Browser selection states. Defaults to Wayfern — the only creatable browser.
   const [selectedBrowser, setSelectedBrowser] =
     useState<BrowserTypeString>("wayfern");
-  const [selectedProxyId, setSelectedProxyId] = useState<string>();
-  const [proxyPopoverOpen, setProxyPopoverOpen] = useState(false);
+  const [proxyString, setProxyString] = useState<string>("");
   const [dnsBlocklist, setDnsBlocklist] = useState<string>("");
   const [launchHook, setLaunchHook] = useState("");
 
@@ -154,7 +126,7 @@ export function CreateProfileDialog({
   const resetForm = () => {
     setSelectedBrowser("wayfern");
     setProfileName("");
-    setSelectedProxyId(undefined);
+    setProxyString("");
     setLaunchHook("");
   };
 
@@ -176,9 +148,7 @@ export function CreateProfileDialog({
   };
 
   const [supportedBrowsers, setSupportedBrowsers] = useState<string[]>([]);
-  const { storedProxies } = useProxyEvents();
   const { vpnConfigs } = useVpnEvents();
-  const [showProxyForm, setShowProxyForm] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [ephemeral, setEphemeral] = useState(false);
   const [enablePassword, setEnablePassword] = useState(false);
@@ -387,6 +357,11 @@ export function CreateProfileDialog({
     }
   };
 
+  const getInlineProxy = () => {
+    const trimmed = proxyString.trim();
+    return trimmed || undefined;
+  };
+
   const handleCreate = async () => {
     if (!profileName.trim()) return;
 
@@ -406,10 +381,10 @@ export function CreateProfileDialog({
 
     setIsCreating(true);
 
-    const isVpnSelection = selectedProxyId?.startsWith("vpn-") ?? false;
-    const resolvedProxyId = isVpnSelection ? undefined : selectedProxyId;
+    const isVpnSelection = proxyString?.startsWith("vpn-") ?? false;
+    const resolvedProxyId = getInlineProxy();
     const resolvedVpnId =
-      isVpnSelection && selectedProxyId ? selectedProxyId.slice(4) : undefined;
+      isVpnSelection && proxyString ? proxyString.slice(4) : undefined;
 
     const passwordToSet =
       enablePassword && !ephemeral && password.length >= PASSWORD_MIN_LEN
@@ -492,7 +467,7 @@ export function CreateProfileDialog({
           browserStr: selectedBrowser,
           version: bestVersion.version,
           releaseType: bestVersion.releaseType,
-          proxyId: selectedProxyId,
+          proxyId: getInlineProxy(),
           groupId:
             selectedGroupId && selectedGroupId !== "__all__"
               ? selectedGroupId
@@ -520,7 +495,7 @@ export function CreateProfileDialog({
     setCurrentStep("browser-selection");
     setActiveTab("anti-detect");
     setSelectedBrowser("wayfern");
-    setSelectedProxyId(undefined);
+    setProxyString("");
     setLaunchHook("");
     setReleaseTypes({});
     setIsLoadingReleaseTypes(false);
@@ -1243,154 +1218,18 @@ export function CreateProfileDialog({
                           </div>
                         )}
 
-                        {/* Proxy / VPN Selection - Always visible */}
-                        <div className="space-y-3">
-                          <div className="flex justify-between items-center">
-                            <Label>{t("createProfile.proxy.title")}</Label>
-                            <RippleButton
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setShowProxyForm(true);
-                              }}
-                              className="px-2 h-7 text-xs"
-                            >
-                              <GoPlus className="mr-1 size-3" />{" "}
-                              {t("createProfile.proxy.addProxy")}
-                            </RippleButton>
-                          </div>
-                          {storedProxies.length > 0 || vpnConfigs.length > 0 ? (
-                            <Popover
-                              open={proxyPopoverOpen}
-                              onOpenChange={setProxyPopoverOpen}
-                            >
-                              <PopoverTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  role="combobox"
-                                  aria-expanded={proxyPopoverOpen}
-                                  aria-controls={proxyListboxIdAntiDetect}
-                                  className="w-full justify-between font-normal"
-                                >
-                                  {(() => {
-                                    if (!selectedProxyId)
-                                      return t("createProfile.proxy.noProxy");
-                                    if (selectedProxyId.startsWith("vpn-")) {
-                                      const vpn = vpnConfigs.find(
-                                        (v) =>
-                                          v.id === selectedProxyId.slice(4),
-                                      );
-                                      return vpn
-                                        ? `WG — ${vpn.name}`
-                                        : t("createProfile.proxy.noProxy");
-                                    }
-                                    const proxy = storedProxies.find(
-                                      (p) => p.id === selectedProxyId,
-                                    );
-                                    return (
-                                      proxy?.name ??
-                                      t("createProfile.proxy.noProxy")
-                                    );
-                                  })()}
-                                  <LuChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent
-                                id={proxyListboxIdAntiDetect}
-                                className="w-[240px] p-0"
-                                sideOffset={8}
-                              >
-                                <Command>
-                                  <CommandInput
-                                    placeholder={t(
-                                      "createProfile.proxy.search",
-                                    )}
-                                  />
-                                  <CommandList>
-                                    <CommandEmpty>
-                                      {t("createProfile.proxy.notFound")}
-                                    </CommandEmpty>
-                                    <CommandGroup>
-                                      <CommandItem
-                                        value="__none__"
-                                        onSelect={() => {
-                                          setSelectedProxyId(undefined);
-                                          setProxyPopoverOpen(false);
-                                        }}
-                                      >
-                                        <LuCheck
-                                          className={cn(
-                                            "mr-2 size-4",
-                                            !selectedProxyId
-                                              ? "opacity-100"
-                                              : "opacity-0",
-                                          )}
-                                        />
-                                        {t("common.labels.none")}
-                                      </CommandItem>
-                                      {storedProxies.map((proxy) => (
-                                        <CommandItem
-                                          key={proxy.id}
-                                          value={proxy.name}
-                                          onSelect={() => {
-                                            setSelectedProxyId(proxy.id);
-                                            setProxyPopoverOpen(false);
-                                          }}
-                                        >
-                                          <LuCheck
-                                            className={cn(
-                                              "mr-2 size-4",
-                                              selectedProxyId === proxy.id
-                                                ? "opacity-100"
-                                                : "opacity-0",
-                                            )}
-                                          />
-                                          {proxy.name}
-                                        </CommandItem>
-                                      ))}
-                                    </CommandGroup>
-                                    {vpnConfigs.length > 0 && (
-                                      <CommandGroup heading="VPNs">
-                                        {vpnConfigs.map((vpn) => (
-                                          <CommandItem
-                                            key={vpn.id}
-                                            value={`vpn-${vpn.name}`}
-                                            onSelect={() => {
-                                              setSelectedProxyId(
-                                                `vpn-${vpn.id}`,
-                                              );
-                                              setProxyPopoverOpen(false);
-                                            }}
-                                          >
-                                            <LuCheck
-                                              className={cn(
-                                                "mr-2 size-4",
-                                                selectedProxyId ===
-                                                  `vpn-${vpn.id}`
-                                                  ? "opacity-100"
-                                                  : "opacity-0",
-                                              )}
-                                            />
-                                            <Badge
-                                              variant="outline"
-                                              className="text-[10px] px-1 py-0 leading-tight mr-1"
-                                            >
-                                              WG
-                                            </Badge>
-                                            {vpn.name}
-                                          </CommandItem>
-                                        ))}
-                                      </CommandGroup>
-                                    )}
-                                  </CommandList>
-                                </Command>
-                              </PopoverContent>
-                            </Popover>
-                          ) : (
-                            <div className="flex gap-3 items-center p-3 text-sm rounded-md border text-muted-foreground">
-                              {t("createProfile.proxy.noProxiesAvailable")}
-                            </div>
-                          )}
+                        {/* Proxy - Inline string input */}
+                        <div className="space-y-2">
+                          <Label htmlFor="proxy-input">
+                            {t("createProfile.proxy.title")}
+                          </Label>
+                          <Input
+                            id="proxy-input"
+                            value={proxyString}
+                            onChange={(e) => setProxyString(e.target.value)}
+                            placeholder="address:port:user:pass"
+                            disabled={isCreating}
+                          />
                         </div>
 
                         <div className="space-y-2">
@@ -1610,154 +1449,18 @@ export function CreateProfileDialog({
                           )}
                         </div>
 
-                        {/* Proxy / VPN Selection - Always visible */}
-                        <div className="space-y-3">
-                          <div className="flex justify-between items-center">
-                            <Label>{t("createProfile.proxy.title")}</Label>
-                            <RippleButton
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setShowProxyForm(true);
-                              }}
-                              className="px-2 h-7 text-xs"
-                            >
-                              <GoPlus className="mr-1 size-3" />{" "}
-                              {t("createProfile.proxy.addProxy")}
-                            </RippleButton>
-                          </div>
-                          {storedProxies.length > 0 || vpnConfigs.length > 0 ? (
-                            <Popover
-                              open={proxyPopoverOpen}
-                              onOpenChange={setProxyPopoverOpen}
-                            >
-                              <PopoverTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  role="combobox"
-                                  aria-expanded={proxyPopoverOpen}
-                                  aria-controls={proxyListboxIdRegular}
-                                  className="w-full justify-between font-normal"
-                                >
-                                  {(() => {
-                                    if (!selectedProxyId)
-                                      return t("createProfile.proxy.noProxy");
-                                    if (selectedProxyId.startsWith("vpn-")) {
-                                      const vpn = vpnConfigs.find(
-                                        (v) =>
-                                          v.id === selectedProxyId.slice(4),
-                                      );
-                                      return vpn
-                                        ? `WG — ${vpn.name}`
-                                        : t("createProfile.proxy.noProxy");
-                                    }
-                                    const proxy = storedProxies.find(
-                                      (p) => p.id === selectedProxyId,
-                                    );
-                                    return (
-                                      proxy?.name ??
-                                      t("createProfile.proxy.noProxy")
-                                    );
-                                  })()}
-                                  <LuChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent
-                                id={proxyListboxIdRegular}
-                                className="w-[240px] p-0"
-                                sideOffset={8}
-                              >
-                                <Command>
-                                  <CommandInput
-                                    placeholder={t(
-                                      "createProfile.proxy.search",
-                                    )}
-                                  />
-                                  <CommandList>
-                                    <CommandEmpty>
-                                      {t("createProfile.proxy.notFound")}
-                                    </CommandEmpty>
-                                    <CommandGroup>
-                                      <CommandItem
-                                        value="__none__"
-                                        onSelect={() => {
-                                          setSelectedProxyId(undefined);
-                                          setProxyPopoverOpen(false);
-                                        }}
-                                      >
-                                        <LuCheck
-                                          className={cn(
-                                            "mr-2 size-4",
-                                            !selectedProxyId
-                                              ? "opacity-100"
-                                              : "opacity-0",
-                                          )}
-                                        />
-                                        {t("common.labels.none")}
-                                      </CommandItem>
-                                      {storedProxies.map((proxy) => (
-                                        <CommandItem
-                                          key={proxy.id}
-                                          value={proxy.name}
-                                          onSelect={() => {
-                                            setSelectedProxyId(proxy.id);
-                                            setProxyPopoverOpen(false);
-                                          }}
-                                        >
-                                          <LuCheck
-                                            className={cn(
-                                              "mr-2 size-4",
-                                              selectedProxyId === proxy.id
-                                                ? "opacity-100"
-                                                : "opacity-0",
-                                            )}
-                                          />
-                                          {proxy.name}
-                                        </CommandItem>
-                                      ))}
-                                    </CommandGroup>
-                                    {vpnConfigs.length > 0 && (
-                                      <CommandGroup heading="VPNs">
-                                        {vpnConfigs.map((vpn) => (
-                                          <CommandItem
-                                            key={vpn.id}
-                                            value={`vpn-${vpn.name}`}
-                                            onSelect={() => {
-                                              setSelectedProxyId(
-                                                `vpn-${vpn.id}`,
-                                              );
-                                              setProxyPopoverOpen(false);
-                                            }}
-                                          >
-                                            <LuCheck
-                                              className={cn(
-                                                "mr-2 size-4",
-                                                selectedProxyId ===
-                                                  `vpn-${vpn.id}`
-                                                  ? "opacity-100"
-                                                  : "opacity-0",
-                                              )}
-                                            />
-                                            <Badge
-                                              variant="outline"
-                                              className="text-[10px] px-1 py-0 leading-tight mr-1"
-                                            >
-                                              WG
-                                            </Badge>
-                                            {vpn.name}
-                                          </CommandItem>
-                                        ))}
-                                      </CommandGroup>
-                                    )}
-                                  </CommandList>
-                                </Command>
-                              </PopoverContent>
-                            </Popover>
-                          ) : (
-                            <div className="flex gap-3 items-center p-3 text-sm rounded-md border text-muted-foreground">
-                              {t("createProfile.proxy.noProxiesAvailable")}
-                            </div>
-                          )}
+                        {/* Proxy - Inline string input */}
+                        <div className="space-y-2">
+                          <Label htmlFor="proxy-input-regular">
+                            {t("createProfile.proxy.title")}
+                          </Label>
+                          <Input
+                            id="proxy-input-regular"
+                            value={proxyString}
+                            onChange={(e) => setProxyString(e.target.value)}
+                            placeholder="address:port:user:pass"
+                            disabled={isCreating}
+                          />
                         </div>
 
                         <div className="space-y-2">
@@ -1806,12 +1509,6 @@ export function CreateProfileDialog({
           )}
         </DialogFooter>
       </DialogContent>
-      <ProxyFormDialog
-        isOpen={showProxyForm}
-        onClose={() => {
-          setShowProxyForm(false);
-        }}
-      />
     </Dialog>
   );
 }

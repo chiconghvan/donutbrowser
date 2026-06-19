@@ -226,7 +226,8 @@
     "newProfile": "Новый",
     "donutLogo": "Логотип Donut Browser",
     "scrollGroupsLeft": "Прокрутить группы влево",
-    "scrollGroupsRight": "Прокрутить группы вправо"
+    "scrollGroupsRight": "Прокрутить группы вправо",
+    "bulkNewProfile": "Bulk New"
   },
   "profiles": {
     "title": "Профили",
@@ -315,7 +316,11 @@
       "assignToGroup": "Назначить группе",
       "assignProxy": "Назначить прокси",
       "assignExtensionGroup": "Назначить группу расширений",
-      "copyCookies": "Копировать cookies"
+      "copySelectedNames": "Копировать выбранные имена",
+      "copySelectedNamesSuccess": "Имена выбранных профилей скопированы",
+      "copySelectedNamesFailed": "Не удалось скопировать имена выбранных профилей",
+      "copyCookies": "Копировать cookies",
+      "assignProxyBulk": "Назначить прокси (массовая вставка)"
     },
     "passwordProtectedBadge": "Защищено паролем",
     "launchHook": {
@@ -1490,6 +1495,20 @@
     "vpnGroupHeading": "VPN",
     "failedFallback": "Не удалось назначить прокси/VPN профилям"
   },
+  "bulkProxyAssignment": {
+    "title": "Массовое назначение прокси",
+    "description": "Вставьте по одному прокси на строку. Строка 1 → первый выбранный профиль, строка 2 → второй и т.д.",
+    "selectedProfilesLabel": "Выбранные профили:",
+    "textareaLabel": "Прокси (по одному на строку)",
+    "textareaPlaceholder": "address:port:user:pass",
+    "helperText": "По одному прокси на строку, в том же порядке, что и выбранные профили выше.",
+    "applyButton": "Применить ко всем",
+    "countMismatch": "Несоответствие: {{proxyCount}} строк прокси, но выбрано {{profileCount}} профилей.",
+    "invalidLineFormat": "Неверный формат прокси: \"{{line}}\". Ожидается: address:port:user:pass",
+    "invalidPort": "Неверный порт в \"{{line}}\". Порт должен быть 1–65535.",
+    "success": "Прокси успешно назначены {{count}} профилям.",
+    "failed": "Не удалось назначить прокси."
+  },
   "groupAssignment": {
     "title": "Назначить группу",
     "description_one": "Назначить группу для {{count}} выбранного профиля.",
@@ -2061,5 +2080,21 @@
     "title": "Поддержка Camoufox прекращается",
     "description": "Поддержка профилей Camoufox прекращается 8 июля 2026 года. У вас есть один или несколько профилей Camoufox. Перенесите их на Wayfern до этой даты — после неё профили Camoufox могут перестать работать.",
     "acknowledge": "Понятно"
+  },
+  "bulkCreateProfile": {
+    "title": "Bulk Create Profiles",
+    "configureTitle": "Configure {{browser}}",
+    "countLabel": "Number of profiles",
+    "countPlaceholder": "Enter count...",
+    "proxyLabel": "Proxies (one per line)",
+    "proxyPlaceholder": "address:port:user:pass",
+    "proxyHelper": "One proxy per line. Line 1 → profile 1, etc.",
+    "countMismatch": "Mismatch: {{proxyCount}} proxy lines but {{profileCount}} requested.",
+    "invalidProxy": "Invalid proxy format: {{line}}",
+    "createButton": "Create {{count}} Profiles",
+    "success": "Created {{count}} profiles successfully.",
+    "failed": "Failed to create profiles.",
+    "namePattern": "Names: {{prefix}}.01 through {{prefix}}.{{count}}",
+    "proxyCountMatch": "{{count}} proxy line(s) — matches {{count}} profile(s)."
   }
 }

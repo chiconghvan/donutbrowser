@@ -156,7 +156,11 @@ fn generate_tray_icons() {
 
   // Skip regeneration if all output PNGs already exist to avoid infinite rebuild loop
   // (writing PNGs into icons/ triggers cargo's file-change detection → rebuild → loop)
-  let outputs = ["tray-icon-22.png", "tray-icon-44.png", "tray-icon-win-44.png"];
+  let outputs = [
+    "tray-icon-22.png",
+    "tray-icon-44.png",
+    "tray-icon-win-44.png",
+  ];
   if outputs.iter().all(|f| icons_dir.join(f).exists()) {
     println!("cargo:warning=Tray icons already exist, skipping generation");
     return;

@@ -4,17 +4,13 @@ on:
   push:
     tags:
       - "v*"
-  release:
-    types:
-      - published
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
-    if: github.repository == 'chiconghvan/donutbrowser'
     runs-on: windows-latest
     timeout-minutes: 90
 
@@ -57,16 +53,52 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: pnpm exec tauri build --verbose
 
-      - name: Upload NSIS installer
-        uses: actions/upload-artifact@v4
-        with:
-          name: Donut-${{ github.ref_name }}-setup
-          path: src-tauri/target/release/bundle/nsis/*.exe
-          if-no-files-found: warn
+      - name: Create portable Windows ZIP
+        shell: bash
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          VERSION="${TAG#v}"
+          PORTABLE_DIR="Donut-Portable"
+          mkdir -p "$PORTABLE_DIR"
 
-      - name: Upload MSI installer
-        uses: actions/upload-artifact@v4
-        with:
-          name: Donut-${{ github.ref_name }}-msi
-          path: src-tauri/target/release/bundle/msi/*.msi
-          if-no-files-found: warn
+          # Copy main executable
+          cp "src-tauri/target/release/donutbrowser.exe" "$PORTABLE_DIR/Donut.exe"
+
+          # Copy sidecar binary
+          cp "src-tauri/target/release/donut-proxy.exe" "$PORTABLE_DIR/"
+
+          # Copy WebView2Loader if present
+          if [ -f "src-tauri/target/release/WebView2Loader.dll" ]; then
+            cp "src-tauri/target/release/WebView2Loader.dll" "$PORTABLE_DIR/"
+          fi
+
+          # Create .portable marker
+          touch "$PORTABLE_DIR/.portable"
+
+          # Create ZIP
+          7z a "Donut_${VERSION}_x64-portable.zip" "$PORTABLE_DIR"
+
+      - name: Create GitHub Release and upload assets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          VERSION="${TAG#v}"
+
+          # Create release (idempotent — skip if tag/release already exists)
+          gh release create "$TAG" \
+            --title "Donut Browser $TAG" \
+            --notes "See the assets to download this version and install." \
+            --draft=false \
+            --prerelease=false \
+            2>/dev/null || echo "Release $TAG already exists, uploading assets..."
+
+          # Upload NSIS installer
+          INSTALLER="Donut_${VERSION}_x64-setup.exe"
+          cp "$(ls src-tauri/target/release/bundle/nsis/*.exe | head -1)" "$INSTALLER"
+          gh release upload "$TAG" "$INSTALLER" --clobber
+
+          # Upload portable ZIP
+          gh release upload "$TAG" "Donut_${VERSION}_x64-portable.zip" --clobber

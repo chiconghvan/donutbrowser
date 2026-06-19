@@ -681,7 +681,7 @@ mod tests {
       browser: browser.to_string(),
       version: version.to_string(),
       process_id: None,
-      proxy_id: None,
+      proxy: None,
       vpn_id: None,
       launch_hook: None,
       last_launch: None,

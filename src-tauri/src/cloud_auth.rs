@@ -1219,10 +1219,10 @@ impl CloudAuthManager {
       }
 
       // Reconnect profile lock manager if needed
-      if CLOUD_AUTH.get_user().await.is_some() {
-        if !crate::team_lock::PROFILE_LOCK.is_connected().await {
-          crate::team_lock::PROFILE_LOCK.connect().await;
-        }
+      if CLOUD_AUTH.get_user().await.is_some()
+        && !crate::team_lock::PROFILE_LOCK.is_connected().await
+      {
+        crate::team_lock::PROFILE_LOCK.connect().await;
       }
 
       // Sync cloud proxy credentials

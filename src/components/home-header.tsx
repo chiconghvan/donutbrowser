@@ -27,6 +27,7 @@ const ALL_FILTER_ID = "__all__";
 
 interface Props {
   onCreateProfileDialogOpen: (open: boolean) => void;
+  onBulkCreateProfileDialogOpen: (open: boolean) => void;
   searchQuery: string;
   onSearchQueryChange: (query: string) => void;
   groups: GroupWithCount[];
@@ -38,6 +39,7 @@ interface Props {
 
 const HomeHeader = ({
   onCreateProfileDialogOpen,
+  onBulkCreateProfileDialogOpen,
   searchQuery,
   onSearchQueryChange,
   groups,
@@ -316,24 +318,44 @@ const HomeHeader = ({
       )}
 
       {showProfileToolbar && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="shrink-0">
-              <Button
-                size="sm"
-                data-onborda="create-profile"
-                onClick={() => {
-                  onCreateProfileDialogOpen(true);
-                }}
-                className="flex gap-1.5 items-center h-7 px-2.5 text-xs"
-              >
-                <GoPlus className="size-3.5" />
-                {t("header.newProfile")}
-              </Button>
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>{t("header.createProfile")}</TooltipContent>
-        </Tooltip>
+        <>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="shrink-0">
+                <Button
+                  size="sm"
+                  data-onborda="create-profile"
+                  onClick={() => {
+                    onCreateProfileDialogOpen(true);
+                  }}
+                  className="flex gap-1.5 items-center h-7 px-2.5 text-xs"
+                >
+                  <GoPlus className="size-3.5" />
+                  {t("header.newProfile")}
+                </Button>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>{t("header.createProfile")}</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="shrink-0">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => {
+                    onBulkCreateProfileDialogOpen(true);
+                  }}
+                  className="flex gap-1.5 items-center h-7 px-2.5 text-xs"
+                >
+                  <GoPlus className="size-3.5" />
+                  {t("header.bulkNewProfile")}
+                </Button>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>{t("header.bulkNewProfile")}</TooltipContent>
+          </Tooltip>
+        </>
       )}
     </div>
   );

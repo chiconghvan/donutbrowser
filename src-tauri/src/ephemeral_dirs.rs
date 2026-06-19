@@ -258,7 +258,7 @@ mod tests {
       name: "test".to_string(),
       browser: "camoufox".to_string(),
       version: "1.0".to_string(),
-      proxy_id: None,
+      proxy: None,
       vpn_id: None,
       launch_hook: None,
       process_id: None,

@@ -27,8 +27,8 @@ pub struct BrowserProfile {
   pub name: String,
   pub browser: String,
   pub version: String,
-  #[serde(default)]
-  pub proxy_id: Option<String>, // Reference to stored proxy
+  #[serde(default, rename = "proxy", alias = "proxy_id")]
+  pub proxy: Option<String>, // Inline proxy string: address:port:user:pass
   #[serde(default)]
   pub vpn_id: Option<String>, // Reference to stored VPN config
   #[serde(default)]

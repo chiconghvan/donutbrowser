@@ -32,7 +32,6 @@ import {
 } from "@/components/ui/select";
 import { WayfernConfigForm } from "@/components/wayfern-config-form";
 import { useBrowserSupport } from "@/hooks/use-browser-support";
-import { useProxyEvents } from "@/hooks/use-proxy-events";
 import { parseBackendError, translateBackendError } from "@/lib/backend-errors";
 import { getBrowserDisplayName, getBrowserIcon } from "@/lib/browser-utils";
 import { cn } from "@/lib/utils";
@@ -71,7 +70,7 @@ export function ImportProfileDialog({
     "select",
   );
   const [wayfernConfig, setWayfernConfig] = useState<WayfernConfig>({});
-  const [selectedProxyId, setSelectedProxyId] = useState<string | undefined>();
+  const [proxyString, setProxyString] = useState<string>("");
 
   // Auto-detect state
   const [selectedDetectedProfile, setSelectedDetectedProfile] = useState<
@@ -88,7 +87,7 @@ export function ImportProfileDialog({
 
   const { supportedBrowsers, isLoading: isLoadingSupport } =
     useBrowserSupport();
-  const { storedProxies } = useProxyEvents();
+  // Proxy is inline string, no stored proxy list needed.
 
   // All detected browsers are importable — both Wayfern (Chromium-family)
   // and Camoufox (Firefox-family) sources are accepted.
@@ -186,7 +185,7 @@ export function ImportProfileDialog({
         sourcePath,
         browserType,
         newProfileName,
-        proxyId: selectedProxyId ?? null,
+        proxyId: proxyString.trim() || null,
         camoufoxConfig: mappedBrowser === "camoufox" ? {} : null,
         wayfernConfig: mappedBrowser === "wayfern" ? wayfernConfig : null,
       });
@@ -225,7 +224,7 @@ export function ImportProfileDialog({
     manualBrowserType,
     manualProfilePath,
     manualProfileName,
-    selectedProxyId,
+    proxyString,
     wayfernConfig,
     onClose,
     selectedProfile,
@@ -235,7 +234,7 @@ export function ImportProfileDialog({
   const handleClose = () => {
     setCurrentStep("select");
     setWayfernConfig({});
-    setSelectedProxyId(undefined);
+    setProxyString("");
     setSelectedDetectedProfile(null);
     setAutoDetectProfileName("");
     setManualBrowserType(null);
@@ -557,26 +556,11 @@ export function ImportProfileDialog({
                 <Label className="mb-2">
                   {t("importProfile.proxyOptional")}
                 </Label>
-                <Select
-                  value={selectedProxyId ?? "none"}
-                  onValueChange={(value) => {
-                    setSelectedProxyId(value === "none" ? undefined : value);
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("importProfile.noProxy")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">
-                      {t("importProfile.noProxy")}
-                    </SelectItem>
-                    {storedProxies.map((proxy) => (
-                      <SelectItem key={proxy.id} value={proxy.id}>
-                        {proxy.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Input
+                  value={proxyString}
+                  onChange={(e) => setProxyString(e.target.value)}
+                  placeholder="address:port:user:pass"
+                />
               </div>
 
               {/* Show Wayfern config for Wayfern imports; Camoufox imports

@@ -226,7 +226,8 @@
     "newProfile": "Nouveau",
     "donutLogo": "Logo de Donut Browser",
     "scrollGroupsLeft": "Faire défiler les groupes vers la gauche",
-    "scrollGroupsRight": "Faire défiler les groupes vers la droite"
+    "scrollGroupsRight": "Faire défiler les groupes vers la droite",
+    "bulkNewProfile": "Bulk New"
   },
   "profiles": {
     "title": "Profils",
@@ -315,7 +316,11 @@
       "assignToGroup": "Assigner à un groupe",
       "assignProxy": "Assigner un proxy",
       "assignExtensionGroup": "Assigner un groupe d’extensions",
-      "copyCookies": "Copier les cookies"
+      "copySelectedNames": "Copier les noms sélectionnés",
+      "copySelectedNamesSuccess": "Noms des profils sélectionnés copiés",
+      "copySelectedNamesFailed": "Échec de la copie des noms des profils sélectionnés",
+      "copyCookies": "Copier les cookies",
+      "assignProxyBulk": "Assigner des Proxys (Collage en Masse)"
     },
     "passwordProtectedBadge": "Protégé par mot de passe",
     "launchHook": {
@@ -1490,6 +1495,20 @@
     "vpnGroupHeading": "VPN",
     "failedFallback": "Échec de l'assignation du proxy/VPN aux profils"
   },
+  "bulkProxyAssignment": {
+    "title": "Assignation en Masse de Proxys",
+    "description": "Collez un proxy par ligne. Ligne 1 → premier profil sélectionné, ligne 2 → second, etc.",
+    "selectedProfilesLabel": "Profils sélectionnés :",
+    "textareaLabel": "Proxys (un par ligne)",
+    "textareaPlaceholder": "address:port:user:pass",
+    "helperText": "Un proxy par ligne, dans le même ordre que les profils sélectionnés ci-dessus.",
+    "applyButton": "Appliquer à Tous",
+    "countMismatch": "Décalage : {{proxyCount}} lignes de proxy mais {{profileCount}} profils sélectionnés.",
+    "invalidLineFormat": "Format de proxy invalide : \"{{line}}\". Attendu : address:port:user:pass",
+    "invalidPort": "Port invalide dans \"{{line}}\". Le port doit être 1–65535.",
+    "success": "Proxys assignés avec succès à {{count}} profil(s).",
+    "failed": "Échec de l'assignation des proxys."
+  },
   "groupAssignment": {
     "title": "Assigner un groupe",
     "description_one": "Assigner un groupe à {{count}} profil sélectionné.",
@@ -2061,5 +2080,21 @@
     "title": "La prise en charge de Camoufox prend fin",
     "description": "La prise en charge des profils Camoufox prendra fin le 8 juillet 2026. Vous avez un ou plusieurs profils Camoufox. Migrez-les vers Wayfern avant cette date — après quoi, les profils Camoufox pourraient cesser de fonctionner.",
     "acknowledge": "Compris"
+  },
+  "bulkCreateProfile": {
+    "title": "Bulk Create Profiles",
+    "configureTitle": "Configure {{browser}}",
+    "countLabel": "Number of profiles",
+    "countPlaceholder": "Enter count...",
+    "proxyLabel": "Proxies (one per line)",
+    "proxyPlaceholder": "address:port:user:pass",
+    "proxyHelper": "One proxy per line. Line 1 → profile 1, etc.",
+    "countMismatch": "Mismatch: {{proxyCount}} proxy lines but {{profileCount}} requested.",
+    "invalidProxy": "Invalid proxy format: {{line}}",
+    "createButton": "Create {{count}} Profiles",
+    "success": "Created {{count}} profiles successfully.",
+    "failed": "Failed to create profiles.",
+    "namePattern": "Names: {{prefix}}.01 through {{prefix}}.{{count}}",
+    "proxyCountMatch": "{{count}} proxy line(s) — matches {{count}} profile(s)."
   }
 }

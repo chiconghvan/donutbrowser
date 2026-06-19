@@ -213,9 +213,9 @@ impl SyncScheduler {
     }
   }
 
-  pub async fn queue_proxy_sync(&self, proxy_id: String) {
-    let mut pending = self.pending_proxies.lock().await;
-    pending.insert(proxy_id);
+  /// Stored proxy sync is deprecated — no-op.
+  pub async fn queue_proxy_sync(&self, _proxy_id: String) {
+    log::debug!("queue_proxy_sync called for deprecated stored proxy: no-op");
   }
 
   pub async fn queue_vpn_sync(&self, vpn_id: String) {
@@ -742,20 +742,13 @@ impl SyncScheduler {
             );
           }
         }
+        // Stored proxy sync is deprecated — profiles carry proxy inline.
+        // Skipping remote-delete replication for proxy entities.
         "proxy" => {
-          let proxy_manager = &crate::proxy_manager::PROXY_MANAGER;
-          let proxies = proxy_manager.get_stored_proxies();
-          if let Some(proxy) = proxies.iter().find(|p| p.id == entity_id) {
-            if proxy.sync_enabled {
-              log::info!("Proxy {} was deleted remotely, deleting locally", entity_id);
-              let proxy_file = proxy_manager.get_proxy_file_path(&entity_id);
-              if proxy_file.exists() {
-                let _ = std::fs::remove_file(&proxy_file);
-              }
-              proxy_manager.remove_from_memory(&entity_id);
-              let _ = events::emit("stored-proxies-changed", ());
-            }
-          }
+          log::debug!(
+            "Remote tombstone for proxy {} ignored (stored proxy sync deprecated)",
+            entity_id
+          );
         }
         "group" => {
           let group_manager = crate::group_manager::GROUP_MANAGER.lock().unwrap();

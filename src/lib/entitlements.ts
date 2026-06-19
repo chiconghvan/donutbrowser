@@ -9,7 +9,7 @@ interface Capabilities {
   teamCollaboration: boolean;
 }
 
-const NONE: Entitlements = {
+const _NONE: Entitlements = {
   active: false,
   browserAutomation: false,
   crossOsFingerprints: false,
@@ -21,7 +21,7 @@ const NONE: Entitlements = {
 
 // Mirror of PLAN_CAPABILITIES in apps/backend/src/plans/entitlements.ts. Keep in
 // sync — a new plan must be declared here too, or it falls back to DEFAULT_PAID.
-const PLAN_CAPABILITIES: Record<string, Capabilities> = {
+const _PLAN_CAPABILITIES: Record<string, Capabilities> = {
   starter: {
     browserAutomation: false,
     crossOsFingerprints: true,
@@ -49,7 +49,7 @@ const PLAN_CAPABILITIES: Record<string, Capabilities> = {
 };
 
 // Unknown paid plan -> pro-level (never team), matching the backend default.
-const DEFAULT_PAID: Capabilities = {
+const _DEFAULT_PAID: Capabilities = {
   browserAutomation: true,
   crossOsFingerprints: true,
   cloudBackup: true,

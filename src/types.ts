@@ -16,7 +16,7 @@ export interface BrowserProfile {
   name: string;
   browser: string;
   version: string;
-  proxy_id?: string; // Reference to stored proxy
+  proxy?: string; // Inline proxy string: address:port:user:pass
   vpn_id?: string; // Reference to stored VPN config
   launch_hook?: string;
   process_id?: number;

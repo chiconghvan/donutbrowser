@@ -27,7 +27,6 @@ import {
 } from "@/components/ui/tooltip";
 import { useBrowserState } from "@/hooks/use-browser-state";
 import { useProfileEvents } from "@/hooks/use-profile-events";
-import { useProxyEvents } from "@/hooks/use-proxy-events";
 import { getBrowserDisplayName, getBrowserIcon } from "@/lib/browser-utils";
 import type { BrowserProfile } from "@/types";
 import { CopyToClipboard } from "./ui/copy-to-clipboard";
@@ -63,8 +62,6 @@ export function ProfileSelectorDialog({
   // Use external runningProfiles if provided, otherwise use hook's runningProfiles
   const runningProfiles = externalRunningProfiles ?? hookRunningProfiles;
 
-  const { storedProxies } = useProxyEvents();
-
   const [selectedProfile, setSelectedProfile] = useState<string | null>(null);
   const [isLaunching, setIsLaunching] = useState(false);
   const [launchingProfiles, setLaunchingProfiles] = useState<Set<string>>(
@@ -83,12 +80,8 @@ export function ProfileSelectorDialog({
 
   // Helper function to check if a profile has a proxy
   const hasProxy = useCallback(
-    (profile: BrowserProfile): boolean => {
-      if (!profile.proxy_id) return false;
-      const proxy = storedProxies.find((p) => p.id === profile.proxy_id);
-      return proxy !== undefined;
-    },
-    [storedProxies],
+    (profile: BrowserProfile): boolean => Boolean(profile.proxy),
+    [],
   );
 
   // Helper function to get tooltip content for profiles - now uses shared hook
