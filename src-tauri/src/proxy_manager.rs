@@ -1,4 +1,3 @@
-use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
@@ -12,36 +11,7 @@ use crate::browser::ProxySettings;
 use crate::events;
 use crate::ip_utils;
 
-// Export data format for JSON export
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ProxyExportData {
-  pub version: String,
-  pub proxies: Vec<ExportedProxy>,
-  pub exported_at: String,
-  pub source: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ExportedProxy {
-  pub name: String,
-  #[serde(rename = "type")]
-  pub proxy_type: String,
-  pub host: String,
-  pub port: u16,
-  #[serde(skip_serializing_if = "Option::is_none")]
-  pub username: Option<String>,
-  #[serde(skip_serializing_if = "Option::is_none")]
-  pub password: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ProxyImportResult {
-  pub imported_count: usize,
-  pub skipped_count: usize,
-  pub errors: Vec<String>,
-  pub proxies: Vec<StoredProxy>,
-}
-
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ParsedProxyLine {
   pub proxy_type: String,
@@ -52,6 +22,7 @@ pub struct ParsedProxyLine {
   pub original_line: String,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "status")]
 pub enum ProxyParseResult {
@@ -91,6 +62,7 @@ pub struct ProxyCheckResult {
   pub is_valid: bool,
 }
 
+#[allow(dead_code)]
 pub const CLOUD_PROXY_ID: &str = "cloud-included-proxy";
 
 /// Parse profile proxy string in canonical `address:port:user:pass` format.
@@ -181,8 +153,9 @@ pub fn now_secs() -> u64 {
 }
 
 impl StoredProxy {
+  #[allow(dead_code)]
   pub fn new(name: String, proxy_settings: ProxySettings) -> Self {
-    let sync_enabled = crate::sync::is_sync_configured();
+    let sync_enabled = false;
     Self {
       id: uuid::Uuid::new_v4().to_string(),
       name,
@@ -203,6 +176,7 @@ impl StoredProxy {
   }
 
   /// Migrate legacy geo_state to geo_region
+  #[allow(dead_code)]
   pub fn migrate_geo_fields(&mut self) {
     if self.geo_region.is_none() && self.geo_state.is_some() {
       self.geo_region = self.geo_state.take();
@@ -210,15 +184,18 @@ impl StoredProxy {
   }
 
   /// Get the effective region (prefers geo_region, falls back to geo_state for compat)
+  #[allow(dead_code)]
   pub fn effective_region(&self) -> Option<&String> {
     self.geo_region.as_ref().or(self.geo_state.as_ref())
   }
 
+  #[allow(dead_code)]
   pub fn update_settings(&mut self, proxy_settings: ProxySettings) {
     self.proxy_settings = proxy_settings;
     self.updated_at = Some(now_secs());
   }
 
+  #[allow(dead_code)]
   pub fn update_name(&mut self, name: String) {
     self.name = name;
     self.updated_at = Some(now_secs());
@@ -283,25 +260,6 @@ impl ProxyManager {
       hasher.finish()
     };
     Ok(cache_dir.join(format!("{hash:016x}.json")))
-  }
-
-  // Load cached proxy check result
-  fn load_proxy_check_cache(&self, proxy_id: &str) -> Option<ProxyCheckResult> {
-    let cache_file = match self.get_proxy_check_cache_file(proxy_id) {
-      Ok(file) => file,
-      Err(_) => return None,
-    };
-
-    if !cache_file.exists() {
-      return None;
-    }
-
-    let content = match fs::read_to_string(&cache_file) {
-      Ok(content) => content,
-      Err(_) => return None,
-    };
-
-    serde_json::from_str::<ProxyCheckResult>(&content).ok()
   }
 
   // Save proxy check result to cache
@@ -371,6 +329,7 @@ impl ProxyManager {
     }
   }
 
+  #[allow(dead_code)]
   pub fn get_proxy_file_path(&self, proxy_id: &str) -> PathBuf {
     self.get_proxies_dir().join(format!("{proxy_id}.json"))
   }
@@ -429,6 +388,7 @@ impl ProxyManager {
   }
 
   // Save a single proxy to disk
+  #[allow(dead_code)]
   fn save_proxy(&self, proxy: &StoredProxy) -> Result<(), Box<dyn std::error::Error>> {
     let proxies_dir = self.get_proxies_dir();
 
@@ -443,6 +403,7 @@ impl ProxyManager {
   }
 
   // Delete a proxy file from disk
+  #[allow(dead_code)]
   fn delete_proxy_file(&self, proxy_id: &str) -> Result<(), Box<dyn std::error::Error>> {
     let proxy_file = self.get_proxy_file_path(proxy_id);
     if proxy_file.exists() {
@@ -451,56 +412,15 @@ impl ProxyManager {
     Ok(())
   }
 
-  // Create a new stored proxy
-  pub fn create_stored_proxy(
-    &self,
-    _app_handle: &tauri::AppHandle,
-    name: String,
-    proxy_settings: ProxySettings,
-  ) -> Result<StoredProxy, String> {
-    // Check if name already exists
-    {
-      let stored_proxies = self.stored_proxies.lock().unwrap();
-      if stored_proxies.values().any(|p| p.name == name) {
-        return Err(format!("Proxy with name '{name}' already exists"));
-      }
-    }
-
-    let stored_proxy = StoredProxy::new(name, proxy_settings);
-
-    {
-      let mut stored_proxies = self.stored_proxies.lock().unwrap();
-      stored_proxies.insert(stored_proxy.id.clone(), stored_proxy.clone());
-    }
-
-    if let Err(e) = self.save_proxy(&stored_proxy) {
-      log::warn!("Failed to save proxy: {e}");
-    }
-
-    // Emit event for reactive UI updates
-    if let Err(e) = events::emit_empty("proxies-changed") {
-      log::error!("Failed to emit proxies-changed event: {e}");
-    }
-
-    if stored_proxy.sync_enabled {
-      if let Some(scheduler) = crate::sync::get_global_scheduler() {
-        let id = stored_proxy.id.clone();
-        tauri::async_runtime::spawn(async move {
-          scheduler.queue_proxy_sync(id).await;
-        });
-      }
-    }
-
-    Ok(stored_proxy)
-  }
-
   // Check if a cloud-managed proxy exists
+  #[allow(dead_code)]
   pub fn has_cloud_proxy(&self) -> bool {
     let stored_proxies = self.stored_proxies.lock().unwrap();
     stored_proxies.contains_key(CLOUD_PROXY_ID)
   }
 
   // Upsert the cloud-managed proxy (create or update)
+  #[allow(dead_code)]
   pub fn upsert_cloud_proxy(&self, proxy_settings: ProxySettings) -> Result<StoredProxy, String> {
     let mut stored_proxies = self.stored_proxies.lock().unwrap();
 
@@ -548,6 +468,7 @@ impl ProxyManager {
   }
 
   // Remove the cloud-managed proxy
+  #[allow(dead_code)]
   pub fn remove_cloud_proxy(&self) {
     let removed = {
       let mut stored_proxies = self.stored_proxies.lock().unwrap();
@@ -564,6 +485,7 @@ impl ProxyManager {
     }
   }
 
+  #[allow(dead_code)]
   pub fn remove_cloud_proxies(&self) {
     let removed_ids: Vec<String> = {
       let mut stored_proxies = self.stored_proxies.lock().unwrap();
@@ -595,8 +517,7 @@ impl ProxyManager {
 
   // Build a geo-targeted username from base username and location parts
   // LP v2 format: username-country-{cc}[-region-{region}][-city-{city}][-isp-{isp}]
-  // Note: sid and ttl are NOT included here — they are injected at browser launch time
-  // per-profile via resolve_proxy_for_profile()
+  #[allow(dead_code)]
   fn build_geo_username(
     base_username: &str,
     country: &str,
@@ -617,9 +538,7 @@ impl ProxyManager {
     username
   }
 
-  /// Generate a deterministic 11-char alphanumeric session ID from a profile UUID.
-  /// This ensures the same profile always gets the same sticky IP session,
-  /// even across credential refreshes.
+  #[allow(dead_code)]
   pub fn generate_sid_for_profile(profile_id: &str) -> String {
     use std::collections::hash_map::DefaultHasher;
     use std::hash::{Hash, Hasher};
@@ -639,35 +558,14 @@ impl ProxyManager {
     sid
   }
 
-  /// Build the full proxy username with sid and ttl for a specific profile launch.
-  /// This is called at browser launch time, not at proxy creation time.
+  #[allow(dead_code)]
   pub fn build_username_with_sid(base_geo_username: &str, profile_id: &str) -> String {
     let sid = Self::generate_sid_for_profile(profile_id);
     format!("{}-sid-{}-ttl-1440m", base_geo_username, sid)
   }
 
-  /// Resolve proxy settings for a specific profile, injecting profile-specific sid
-  /// for cloud-derived proxies with geo targeting.
-  pub fn resolve_proxy_for_profile(
-    &self,
-    proxy_id: &str,
-    profile_id: &str,
-  ) -> Option<ProxySettings> {
-    let stored_proxies = self.stored_proxies.lock().unwrap();
-    let proxy = stored_proxies.get(proxy_id)?;
-    let mut settings = proxy.proxy_settings.clone();
-
-    // For cloud-derived proxies with geo targeting, inject profile-specific sid
-    if proxy.is_cloud_derived && proxy.geo_country.is_some() {
-      if let Some(ref username) = settings.username {
-        settings.username = Some(Self::build_username_with_sid(username, profile_id));
-      }
-    }
-
-    Some(settings)
-  }
-
   // Create a cloud-derived location proxy from the base cloud proxy credentials
+  #[allow(dead_code)]
   pub fn create_cloud_location_proxy(
     &self,
     name: String,
@@ -744,6 +642,7 @@ impl ProxyManager {
   }
 
   // Update all cloud-derived proxies when base cloud proxy credentials change
+  #[allow(dead_code)]
   pub fn update_cloud_derived_proxies(&self) {
     let base_proxy = {
       let stored_proxies = self.stored_proxies.lock().unwrap();
@@ -812,12 +711,8 @@ impl ProxyManager {
     }
   }
 
-  pub fn remove_from_memory(&self, proxy_id: &str) {
-    let mut stored_proxies = self.stored_proxies.lock().unwrap();
-    stored_proxies.remove(proxy_id);
-  }
-
   // Get all stored proxies
+  #[allow(dead_code)]
   pub fn get_stored_proxies(&self) -> Vec<StoredProxy> {
     let stored_proxies = self.stored_proxies.lock().unwrap();
     let mut list: Vec<StoredProxy> = stored_proxies.values().cloned().collect();
@@ -832,191 +727,10 @@ impl ProxyManager {
   /// in-memory state in sync. Without this, get_stored_proxies (which reads
   /// only the map) never sees a downloaded proxy until restart, so sync keeps
   /// re-downloading it indefinitely.
+  #[allow(dead_code)]
   pub fn upsert_stored_proxy(&self, proxy: StoredProxy) {
     let mut stored_proxies = self.stored_proxies.lock().unwrap();
     stored_proxies.insert(proxy.id.clone(), proxy);
-  }
-
-  // Get a stored proxy by ID
-
-  // Update a stored proxy
-  pub fn update_stored_proxy(
-    &self,
-    _app_handle: &tauri::AppHandle,
-    proxy_id: &str,
-    name: Option<String>,
-    proxy_settings: Option<ProxySettings>,
-  ) -> Result<StoredProxy, String> {
-    // First, check for conflicts without holding a mutable reference
-    {
-      let stored_proxies = self.stored_proxies.lock().unwrap();
-
-      // Check if proxy exists
-      if !stored_proxies.contains_key(proxy_id) {
-        return Err(format!("Proxy with ID '{proxy_id}' not found"));
-      }
-
-      // Block editing cloud-managed proxies
-      if stored_proxies
-        .get(proxy_id)
-        .is_some_and(|p| p.is_cloud_managed)
-      {
-        return Err("Cannot edit a cloud-managed proxy".to_string());
-      }
-
-      // Check if new name conflicts with existing proxies
-      if let Some(ref new_name) = name {
-        if stored_proxies
-          .values()
-          .any(|p| p.id != proxy_id && p.name == *new_name)
-        {
-          return Err(format!("Proxy with name '{new_name}' already exists"));
-        }
-      }
-    } // Release the lock here
-
-    // Now get mutable access for updates
-    let updated_proxy = {
-      let mut stored_proxies = self.stored_proxies.lock().unwrap();
-      let stored_proxy = stored_proxies.get_mut(proxy_id).unwrap(); // Safe because we checked above
-
-      if let Some(new_name) = name {
-        stored_proxy.update_name(new_name);
-      }
-
-      if let Some(new_settings) = proxy_settings {
-        stored_proxy.update_settings(new_settings);
-      }
-
-      stored_proxy.clone()
-    };
-
-    if let Err(e) = self.save_proxy(&updated_proxy) {
-      log::warn!("Failed to save proxy: {e}");
-    }
-
-    // Emit event for reactive UI updates
-    if let Err(e) = events::emit_empty("proxies-changed") {
-      log::error!("Failed to emit proxies-changed event: {e}");
-    }
-
-    if updated_proxy.sync_enabled {
-      if let Some(scheduler) = crate::sync::get_global_scheduler() {
-        let id = updated_proxy.id.clone();
-        tauri::async_runtime::spawn(async move {
-          scheduler.queue_proxy_sync(id).await;
-        });
-      }
-    }
-
-    Ok(updated_proxy)
-  }
-
-  /// Update the in-memory `sync_enabled` / `last_sync` fields of a stored
-  /// proxy and persist the change to disk. Returns the updated proxy or
-  /// `Err` if the proxy isn't found / is cloud-managed.
-  ///
-  /// This is the canonical write path for sync-state changes — direct
-  /// `fs::write` from a sync command would leave the in-memory cache
-  /// (`stored_proxies`) stale, and the next `get_stored_proxies()` would
-  /// return the old `sync_enabled`, breaking the UI toggle.
-  pub fn set_stored_proxy_sync_state(
-    &self,
-    proxy_id: &str,
-    sync_enabled: bool,
-    last_sync: Option<u64>,
-  ) -> Result<StoredProxy, String> {
-    let updated_proxy = {
-      let mut stored_proxies = self.stored_proxies.lock().unwrap();
-      let proxy = stored_proxies
-        .get_mut(proxy_id)
-        .ok_or_else(|| format!("Proxy with ID '{proxy_id}' not found"))?;
-
-      if proxy.is_cloud_managed {
-        return Err("Cannot modify sync for a cloud-managed proxy".to_string());
-      }
-
-      proxy.sync_enabled = sync_enabled;
-      proxy.last_sync = last_sync;
-      proxy.clone()
-    };
-
-    self
-      .save_proxy(&updated_proxy)
-      .map_err(|e| format!("Failed to save proxy: {e}"))?;
-
-    Ok(updated_proxy)
-  }
-
-  // Delete a stored proxy
-  pub fn delete_stored_proxy(
-    &self,
-    app_handle: &tauri::AppHandle,
-    proxy_id: &str,
-  ) -> Result<(), String> {
-    // Remember if sync was enabled before deleting
-    let was_sync_enabled = {
-      let stored_proxies = self.stored_proxies.lock().unwrap();
-
-      // Block deleting cloud-managed proxies
-      if stored_proxies
-        .get(proxy_id)
-        .is_some_and(|p| p.is_cloud_managed)
-      {
-        return Err("Cannot delete a cloud-managed proxy".to_string());
-      }
-
-      stored_proxies
-        .get(proxy_id)
-        .map(|p| p.sync_enabled)
-        .unwrap_or(false)
-    };
-
-    {
-      let mut stored_proxies = self.stored_proxies.lock().unwrap();
-      if stored_proxies.remove(proxy_id).is_none() {
-        return Err(format!("Proxy with ID '{proxy_id}' not found"));
-      }
-    }
-
-    if let Err(e) = self.delete_proxy_file(proxy_id) {
-      log::warn!("Failed to delete proxy file: {e}");
-    }
-
-    // If sync was enabled, also delete from S3
-    if was_sync_enabled {
-      let proxy_id_owned = proxy_id.to_string();
-      let app_handle_clone = app_handle.clone();
-      tauri::async_runtime::spawn(async move {
-        match crate::sync::SyncEngine::create_from_settings(&app_handle_clone).await {
-          Ok(engine) => {
-            if let Err(e) = engine.delete_proxy(&proxy_id_owned).await {
-              log::warn!("Failed to delete proxy {} from sync: {}", proxy_id_owned, e);
-            } else {
-              log::info!("Proxy {} deleted from S3 sync storage", proxy_id_owned);
-            }
-          }
-          Err(e) => {
-            log::debug!("Sync not configured, skipping remote deletion: {}", e);
-          }
-        }
-      });
-    }
-
-    // Emit event for reactive UI updates
-    if let Err(e) = events::emit_empty("proxies-changed") {
-      log::error!("Failed to emit proxies-changed event: {e}");
-    }
-
-    Ok(())
-  }
-
-  // Check if a proxy is cloud-managed or cloud-derived (needs fresh credentials)
-  pub fn is_cloud_or_derived(&self, proxy_id: &str) -> bool {
-    let stored_proxies = self.stored_proxies.lock().unwrap();
-    stored_proxies
-      .get(proxy_id)
-      .is_some_and(|p| p.is_cloud_managed || p.is_cloud_derived)
   }
 
   // Get proxy settings for a stored proxy ID
@@ -1192,49 +906,8 @@ impl ProxyManager {
     Ok(result)
   }
 
-  // Get cached proxy check result
-  pub fn get_cached_proxy_check(&self, proxy_id: &str) -> Option<ProxyCheckResult> {
-    self.load_proxy_check_cache(proxy_id)
-  }
-
-  // Export all proxies as JSON
-  pub fn export_proxies_json(&self) -> Result<String, String> {
-    let stored_proxies = self.stored_proxies.lock().unwrap();
-    let proxies: Vec<ExportedProxy> = stored_proxies
-      .values()
-      .filter(|p| !p.is_cloud_managed && !p.is_cloud_derived)
-      .map(|p| ExportedProxy {
-        name: p.name.clone(),
-        proxy_type: p.proxy_settings.proxy_type.clone(),
-        host: p.proxy_settings.host.clone(),
-        port: p.proxy_settings.port,
-        username: p.proxy_settings.username.clone(),
-        password: p.proxy_settings.password.clone(),
-      })
-      .collect();
-
-    let export_data = ProxyExportData {
-      version: "1.0".to_string(),
-      proxies,
-      exported_at: Utc::now().to_rfc3339(),
-      source: "DonutBrowser".to_string(),
-    };
-
-    serde_json::to_string_pretty(&export_data).map_err(|e| format!("Failed to serialize: {e}"))
-  }
-
-  // Export all proxies as TXT (one per line: protocol://user:pass@host:port)
-  pub fn export_proxies_txt(&self) -> String {
-    let stored_proxies = self.stored_proxies.lock().unwrap();
-    stored_proxies
-      .values()
-      .filter(|p| !p.is_cloud_managed && !p.is_cloud_derived)
-      .map(|p| Self::build_proxy_url(&p.proxy_settings))
-      .collect::<Vec<_>>()
-      .join("\n")
-  }
-
   // Parse TXT content with auto-detection of formats
+  #[allow(dead_code)]
   pub fn parse_txt_proxies(content: &str) -> Vec<ProxyParseResult> {
     content
       .lines()
@@ -1243,7 +916,7 @@ impl ProxyManager {
       .collect()
   }
 
-  // Parse a single proxy line with format auto-detection
+  #[allow(dead_code)]
   fn parse_single_proxy_line(line: &str) -> ProxyParseResult {
     // Format 1: protocol://username:password@host:port (full URL)
     if let Some(result) = Self::try_parse_url_format(line) {
@@ -1335,7 +1008,7 @@ impl ProxyManager {
     }
   }
 
-  // Try to parse URL format: protocol://username:password@host:port
+  #[allow(dead_code)]
   fn try_parse_url_format(line: &str) -> Option<ProxyParseResult> {
     // Check for protocol prefix using strip_prefix
     let (protocol, rest) = if let Some(rest) = line.strip_prefix("http://") {
@@ -1410,7 +1083,7 @@ impl ProxyManager {
     })
   }
 
-  // Try to parse: username:password@host:port format (no protocol)
+  #[allow(dead_code)]
   fn try_parse_user_pass_at_host_port(line: &str) -> Option<ProxyParseResult> {
     if let Some(at_pos) = line.rfind('@') {
       let auth = &line[..at_pos];
@@ -1442,90 +1115,6 @@ impl ProxyManager {
       }
     }
     None
-  }
-
-  // Import proxies from JSON content
-  pub fn import_proxies_json(
-    &self,
-    app_handle: &tauri::AppHandle,
-    content: &str,
-  ) -> Result<ProxyImportResult, String> {
-    let export_data: ProxyExportData =
-      serde_json::from_str(content).map_err(|e| format!("Invalid JSON format: {e}"))?;
-
-    let mut imported = Vec::new();
-    let mut skipped = 0;
-    let mut errors = Vec::new();
-
-    for exported in export_data.proxies {
-      let proxy_settings = ProxySettings {
-        proxy_type: exported.proxy_type,
-        host: exported.host,
-        port: exported.port,
-        username: exported.username,
-        password: exported.password,
-      };
-
-      match self.create_stored_proxy(app_handle, exported.name.clone(), proxy_settings) {
-        Ok(proxy) => imported.push(proxy),
-        Err(e) => {
-          if e.contains("already exists") {
-            skipped += 1;
-          } else {
-            errors.push(format!("Failed to import '{}': {}", exported.name, e));
-          }
-        }
-      }
-    }
-
-    Ok(ProxyImportResult {
-      imported_count: imported.len(),
-      skipped_count: skipped,
-      errors,
-      proxies: imported,
-    })
-  }
-
-  // Import proxies from already parsed proxy lines
-  pub fn import_proxies_from_parsed(
-    &self,
-    app_handle: &tauri::AppHandle,
-    parsed_proxies: Vec<ParsedProxyLine>,
-    name_prefix: Option<String>,
-  ) -> Result<ProxyImportResult, String> {
-    let mut imported = Vec::new();
-    let mut skipped = 0;
-    let mut errors = Vec::new();
-    let prefix = name_prefix.unwrap_or_else(|| "Imported".to_string());
-
-    for (i, parsed) in parsed_proxies.into_iter().enumerate() {
-      let proxy_name = format!("{} Proxy {}", prefix, i + 1);
-      let proxy_settings = ProxySettings {
-        proxy_type: parsed.proxy_type,
-        host: parsed.host,
-        port: parsed.port,
-        username: parsed.username,
-        password: parsed.password,
-      };
-
-      match self.create_stored_proxy(app_handle, proxy_name.clone(), proxy_settings) {
-        Ok(proxy) => imported.push(proxy),
-        Err(e) => {
-          if e.contains("already exists") {
-            skipped += 1;
-          } else {
-            errors.push(format!("Failed to import '{}': {}", proxy_name, e));
-          }
-        }
-      }
-    }
-
-    Ok(ProxyImportResult {
-      imported_count: imported.len(),
-      skipped_count: skipped,
-      errors,
-      proxies: imported,
-    })
   }
 
   // Start a proxy for given proxy settings and associate it with a browser process ID
@@ -2160,27 +1749,6 @@ impl ProxyManager {
             }
           }
           let _ = crate::proxy_runner::stop_proxy_process(&proxy_id).await;
-        }
-      }
-    }
-
-    // Clean up orphaned VPN worker configs where the worker process is dead
-    {
-      use crate::proxy_storage::is_process_running;
-      use crate::vpn_worker_storage::{delete_vpn_worker_config, list_vpn_worker_configs};
-
-      let vpn_workers = list_vpn_worker_configs();
-      for worker in vpn_workers {
-        if let Some(pid) = worker.pid {
-          if !is_process_running(pid) {
-            log::info!(
-              "Cleaning up orphaned VPN worker config: {} (process PID {} is dead)",
-              worker.id,
-              pid
-            );
-            let _ = std::fs::remove_file(&worker.config_file_path);
-            delete_vpn_worker_config(&worker.id);
-          }
         }
       }
     }

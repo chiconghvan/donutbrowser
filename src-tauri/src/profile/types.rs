@@ -129,6 +129,7 @@ impl BrowserProfile {
   }
 
   /// Returns true if sync uses E2E encryption.
+  #[allow(dead_code)]
   pub fn is_encrypted_sync(&self) -> bool {
     self.sync_mode == SyncMode::Encrypted
   }

@@ -218,7 +218,6 @@
       "settings": "設定",
       "proxies": "プロキシ & VPN",
       "groups": "グループ",
-      "syncService": "アカウント",
       "integrations": "統合",
       "importProfile": "プロファイルをインポート",
       "extensions": "拡張機能"
@@ -391,32 +390,11 @@
   "proxies": {
     "title": "プロキシ",
     "management": {
-      "description": "プロキシと VPN の構成を管理し、プロファイル間で再利用します",
-      "tabProxies": "プロキシ",
-      "tabVpns": "VPN",
       "create": "作成",
-      "loading": "プロキシを読み込み中...",
-      "noneCreated": "プロキシはまだありません。上のボタンから最初のプロキシを作成してください。",
-      "usage": "使用状況",
       "syncCol": "同期",
-      "syncCannotDisable": "このプロキシが同期されたプロファイルで使用されている間は同期を無効にできません",
-      "enableSync": "同期を有効にする",
-      "disableSync": "同期を無効にする",
-      "editProxy": "プロキシを編集",
-      "deleteProxy": "プロキシを削除",
-      "cannotDelete_one": "削除できません: {{count}} プロファイルで使用中",
-      "cannotDelete_other": "削除できません: {{count}} プロファイルで使用中",
       "syncEnabled": "同期が有効になりました",
       "syncDisabled": "同期が無効になりました",
-      "updateSyncFailed": "同期の更新に失敗しました",
-      "deleteSuccess": "プロキシを削除しました",
-      "deleteFailed": "プロキシの削除に失敗しました",
-      "deleteTitle": "プロキシを削除",
-      "deleteDescription": "この操作は取り消せません。プロキシ「{{name}}」は完全に削除されます。",
-      "newProxy": "新しいプロキシ",
-      "newVpn": "新しいVPN",
-      "protocolCol": "プロトコル",
-      "title": "プロキシと VPN"
+      "updateSyncFailed": "同期の更新に失敗しました"
     },
     "add": "プロキシを追加",
     "edit": "プロキシを編集",
@@ -581,130 +559,24 @@
   },
   "sync": {
     "mode": {
-      "title": "プロファイル同期",
-      "description": "\"{{name}}\" の同期設定を管理",
       "disabled": "無効",
       "regular": "通常同期",
-      "encrypted": "E2E暗号化同期",
-      "disabledDescription": "このプロファイルの同期なし",
-      "regularDescription": "高速同期、暗号化なし",
-      "encryptedDescription": "アップロード前に暗号化。サーバーは平文データを見ることができません。",
-      "noPasswordWarning": "E2Eパスワードが設定されていません。設定でパスワードを設定してください。",
-      "passwordRequired": "E2Eパスワードが設定されていません。まず設定でパスワードを設定してください。",
-      "enabledToast": "同期が有効になりました",
-      "disabledToast": "同期が無効になりました",
-      "syncQueued": "同期がキューに追加されました",
-      "syncNow": "今すぐ同期",
-      "lastSynced": "最終同期",
-      "notConfigured": "同期サービスが設定されていません。",
-      "configureService": "同期サービスを設定"
-    },
-    "title": "同期サービス",
-    "config": {
-      "serverUrlRequired": "サーバーURLを入力してください",
-      "connectionSuccess": "接続に成功しました!",
-      "serverError": "サーバーがエラーで応答しました",
-      "connectFailed": "サーバーへの接続に失敗しました",
-      "settingsSaved": "同期設定を保存しました",
-      "saveFailed": "設定の保存に失敗しました",
-      "disconnected": "同期を切断しました",
-      "disconnectFailed": "切断に失敗しました"
-    },
-    "serverUrl": "サーバーURL",
-    "serverUrlPlaceholder": "https://sync.example.com",
-    "token": "同期トークン",
-    "tokenPlaceholder": "同期トークンを入力",
-    "status": {
-      "connected": "接続済み",
-      "disconnected": "切断",
-      "syncing": "同期中...",
-      "error": "同期エラー"
-    },
-    "description": "同期サーバーに接続して、デバイス間でプロファイル、プロキシ、グループを同期します。",
-    "cloud": {
-      "tabLabel": "クラウド",
-      "selfHostedTabLabel": "セルフホスト",
-      "email": "メールアドレス",
-      "deviceLinkInstructions": "「ログイン」をクリックすると、ブラウザでログインページが開きます。サインイン後、表示されたコードをコピーして下に貼り付けてください。",
-      "openLogin": "ログイン",
-      "linkCodeLabel": "ログインコード",
-      "linkCodePlaceholder": "ウェブサイトのコードを貼り付け",
-      "signInTitle": "サインイン",
-      "verifyAndLogin": "認証してログイン",
-      "loggingIn": "ログイン中...",
-      "connected": "接続済み",
-      "plan": "プラン",
-      "profiles": "プロファイル",
-      "profileUsage": "{{used}} / {{limit}}",
-      "manageAccount": "アカウント管理",
-      "logout": "ログアウト",
-      "logoutConfirm": "ログアウトしてもよろしいですか？クラウド同期が停止します。",
-      "loginSuccess": "ログインに成功しました！",
-      "logoutSuccess": "ログアウトしました。"
+      "encrypted": "E2E暗号化同期"
     },
     "team": {
       "title": "チーム",
-      "name": "チーム名",
-      "role": "役割",
-      "roleOwner": "オーナー",
-      "roleAdmin": "管理者",
-      "roleMember": "メンバー",
-      "manageOnWeb": "Webダッシュボードでチームを管理",
       "profileLocked": "{{email}} が使用中",
-      "profileLockedShort": "使用中",
       "cannotLaunchLocked": "起動できません — {{email}} がプロファイルを使用中です",
       "createdBy": "{{email}} が作成"
     },
-    "disabled": "無効",
     "toast": {
       "profileSynced": "プロファイル '{{name}}' を同期しました",
       "profileSyncFailed": "プロファイル '{{name}}' の同期に失敗しました",
       "profileSyncFailedWithError": "プロファイル '{{name}}' の同期に失敗しました: {{error}}"
-    },
-    "enabledToast": "同期を有効化しました",
-    "disabledToast": "同期を無効化しました",
-    "enabledDescription": "プロファイルの同期が有効になりました",
-    "disabledDescription": "プロファイルの同期が無効になりました"
+    }
   },
   "integrations": {
     "title": "統合",
-    "api": {
-      "title": "ローカルAPI",
-      "description": "外部統合用のローカルAPIサーバーを有効にします。",
-      "enabled": "API有効",
-      "disabled": "API無効",
-      "port": "ポート",
-      "token": "APIトークン",
-      "copyToken": "トークンをコピー",
-      "regenerateToken": "トークンを再生成"
-    },
-    "mcp": {
-      "title": "MCPサーバー",
-      "description": "AIアシスタント統合用のMCP（モデルコンテキストプロトコル）サーバーを有効にします。",
-      "enabled": "MCP有効",
-      "disabled": "MCP無効",
-      "port": "ポート",
-      "token": "認証トークン",
-      "tokenCopied": "トークンをコピーしました",
-      "url": "MCPサーバーURL",
-      "urlCopied": "URLをコピーしました",
-      "config": "MCP設定",
-      "copyConfig": "設定をコピー",
-      "clientsLabel": "クライアント",
-      "connected": "接続済み",
-      "add": "追加",
-      "addedToClient": "{{name}} に追加しました",
-      "removedFromClient": "{{name}} から削除しました",
-      "removeAriaLabel": "{{name}} から削除",
-      "category": {
-        "desktopApp": "デスクトップアプリ",
-        "cli": "CLI",
-        "editor": "エディタ",
-        "editorExt": "エディタ拡張"
-      }
-    },
-    "tabApi": "ローカル API",
-    "tabMcp": "MCP (AI アシスタント)",
     "apiEnableLabel": "ローカル API サーバーを有効にする",
     "apiEnableDescription": "REST API でプロファイル、グループ、プロキシを管理できます。",
     "apiPortLabel": "ポート",
@@ -720,13 +592,6 @@
     "apiToggleFailed": "API サーバーの切り替えに失敗しました",
     "apiStartFailed": "API サーバーの起動に失敗しました",
     "apiUnknownError": "不明なエラー",
-    "tokenCopied": "トークンをコピーしました",
-    "mcpEnableLabel": "MCP サーバーを有効にする (Model Context Protocol)",
-    "mcpEnableDescription": "Claude Desktop などの AI アシスタントがブラウザを制御できます。",
-    "mcpAcceptTermsFirst": "(設定で先に Wayfern の規約に同意してください)",
-    "mcpStarted": "MCP サーバーをポート {{port}} で起動しました",
-    "mcpStopped": "MCP サーバーを停止しました",
-    "mcpToggleFailed": "MCP サーバーの切り替えに失敗しました",
     "openSettings": "統合設定を開く",
     "apiRunningOn": "実行中",
     "apiExampleRequest": "リクエスト例"
@@ -1119,9 +984,7 @@
     }
   },
   "crossOs": {
-    "viewOnly": "このプロファイルは{{os}}で作成されたもので、このシステムではサポートされていません",
-    "cannotLaunch": "このプロファイルは{{os}}で作成されたもので、このシステムではサポートされていません",
-    "cannotModify": "他のOSのプロファイルの同期設定は変更できません"
+    "viewOnly": "このプロファイルは{{os}}で作成されたもので、このシステムではサポートされていません"
   },
   "profileInfo": {
     "title": "プロフィール詳細",
@@ -1391,19 +1254,6 @@
       "doneButton": "完了",
       "failedGeneric": "VPN 設定のインポートに失敗しました",
       "defaultName": "{{type}} VPN"
-    },
-    "management": {
-      "loading": "VPN を読み込み中...",
-      "noneCreated": "VPN 構成はまだありません。上のボタンからインポートまたは作成してください。",
-      "editVpn": "VPN を編集",
-      "deleteVpn": "VPN を削除",
-      "cannotDelete_one": "削除できません: {{count}} プロファイルで使用中",
-      "cannotDelete_other": "削除できません: {{count}} プロファイルで使用中",
-      "syncCannotDisable": "この VPN が同期されたプロファイルで使用されている間は同期を無効にできません",
-      "deleteSuccess": "VPN を削除しました",
-      "deleteFailed": "VPN の削除に失敗しました",
-      "deleteTitle": "VPN を削除",
-      "deleteDescription": "この操作は取り消せません。VPN「{{name}}」は完全に削除されます。"
     }
   },
   "importProfile": {
@@ -1475,39 +1325,6 @@
       "description_one": "{{count}} 個のグループを削除してもよろしいですか？{{names}}。プロファイルはデフォルトに移動されます。",
       "confirmButton": "グループを削除"
     }
-  },
-  "proxyAssignment": {
-    "title": "プロキシ / VPN を割り当てる",
-    "description_one": "{{count}} 件の選択されたプロファイルにプロキシまたは VPN を割り当てます。",
-    "description_other": "{{count}} 件の選択されたプロファイルにプロキシまたは VPN を割り当てます。",
-    "selectLabel": "プロキシ / VPN",
-    "placeholder": "プロキシまたは VPN を選択",
-    "noProxy": "プロキシ / VPN なし",
-    "searchPlaceholder": "プロキシまたは VPN を検索...",
-    "notFound": "プロキシまたは VPN が見つかりません。",
-    "assignButton": "割り当てる",
-    "success": "{{count}} 件のプロファイルにプロキシ/VPN を割り当てました",
-    "failed": "プロキシ/VPN の割り当てに失敗しました",
-    "selectedProfilesLabel": "選択したプロファイル:",
-    "assignProxyVpnLabel": "プロキシ / VPN を割り当てる:",
-    "noneOption": "なし",
-    "noValidProfiles": "有効なプロファイルが選択されていません。",
-    "vpnGroupHeading": "VPN",
-    "failedFallback": "プロファイルへのプロキシ/VPN の割り当てに失敗しました"
-  },
-  "bulkProxyAssignment": {
-    "title": "プロキシ一括割り当て",
-    "description": "1行に1つのプロキシを貼り付けてください。1行目→最初の選択プロファイル、2行目→2番目...",
-    "selectedProfilesLabel": "選択されたプロファイル:",
-    "textareaLabel": "プロキシ（1行に1つ）",
-    "textareaPlaceholder": "address:port:user:pass",
-    "helperText": "上記の選択プロファイルと同じ順序で、1行に1つのプロキシを入力してください。",
-    "applyButton": "すべてに適用",
-    "countMismatch": "不一致: {{proxyCount}} 行のプロキシに対して {{profileCount}} のプロファイルが選択されています。",
-    "invalidLineFormat": "無効なプロキシ形式: \"{{line}}\"。形式: address:port:user:pass",
-    "invalidPort": "「{{line}}」のポートが無効です。ポートは1～65535の範囲です。",
-    "success": "{{count}} のプロファイルにプロキシを割り当てました。",
-    "failed": "プロキシの割り当てに失敗しました。"
   },
   "groupAssignment": {
     "title": "グループを割り当てる",
@@ -1703,9 +1520,7 @@
     "syncTooltipDisabledWithLast": "同期無効、最終同期 {{time}}",
     "addTagsPlaceholder": "タグを追加",
     "tagsHeader": "タグ",
-    "noteHeader": "メモ",
-    "vpnsHeading": "VPN",
-    "createByCountryHeading": "国別に作成"
+    "noteHeader": "メモ"
   },
   "releaseTypeSelector": {
     "noReleaseTypes": "利用可能なリリースタイプがありません。",
@@ -1847,23 +1662,14 @@
     "profileLocked": "プロファイルはロックされています。先にパスワードを入力してください。",
     "invalidProfileId": "無効なプロファイルIDです",
     "passwordTooShort": "パスワードは {{min}} 文字以上必要です",
-    "proxyNotFound": "プロキシが見つかりません",
-    "groupNotFound": "グループが見つかりません",
-    "vpnNotFound": "VPNが見つかりません",
     "extensionNotFound": "拡張機能が見つかりません",
     "extensionGroupNotFound": "拡張機能グループが見つかりません",
-    "cannotModifyCloudManagedProxy": "クラウド管理のプロキシの同期は変更できません",
-    "syncLockedByProfile": "同期済みプロファイルで使用中のため、同期を無効にできません",
-    "syncNotConfigured": "同期が設定されていません。サインインするか、セルフホストサーバーを設定してください。",
     "internal": "問題が発生しました: {{detail}}",
     "invalidLaunchHookUrl": "起動フックURLが無効です。完全な http:// または https:// URL を使用してください。",
     "cookieDbLocked": "Cookie を読み取れません — データベースがロックされています。ブラウザを閉じてから再試行してください。",
     "cookieDbUnavailable": "Cookie を読み取れません — Cookie ストアを利用できません。",
-    "selfHostedRequiresLogout": "セルフホストサーバーを設定する前に Donut アカウントからサインアウトしてください。",
-    "fingerprintRequiresPro": "フィンガープリントの表示または編集には有効な有料プランが必要です。保護機能はすべてのプランに含まれています。",
     "proxyNotWorking": "選択したプロキシが機能していないため、プロファイルは作成されませんでした。",
     "proxyPaymentRequired": "選択したプロキシは支払いが必要です（402）。サブスクリプションが期限切れの可能性があります。そのため、プロファイルは作成されませんでした。",
-    "vpnNotWorking": "選択したVPNが機能していないため、プロファイルは作成されませんでした。",
     "camoufoxImportDeprecated": "Firefox ベース（Camoufox）のプロファイルのインポートはサポートされなくなりました。Camoufox は廃止予定です。代わりに Wayfern をご利用ください。"
   },
   "rail": {
@@ -1880,8 +1686,7 @@
       "keyboardShortcutsHint": "すべてのショートカットを表示"
     },
     "network": "ネットワーク",
-    "integrations": "連携",
-    "account": "アカウント"
+    "integrations": "連携"
   },
   "pageTitle": {
     "proxies": "ネットワーク",
@@ -1890,7 +1695,6 @@
     "vpns": "ネットワーク",
     "settings": "設定",
     "integrations": "連携",
-    "account": "アカウント",
     "import": "プロファイルをインポート",
     "shortcuts": "キーボードショートカット"
   },
@@ -1917,39 +1721,6 @@
       }
     }
   },
-  "account": {
-    "refreshed": "アカウントを更新しました",
-    "loggedOut": "ログアウトしました",
-    "signedOut": "未ログイン",
-    "signedOutDescription": "クラウド同期、暗号化プロファイル、チーム機能を有効にするにはサインインしてください。",
-    "plan": "プラン: {{plan}} · {{period}}",
-    "refresh": "更新",
-    "logout": "サインアウト",
-    "signIn": "サインイン",
-    "fields": {
-      "plan": "プラン",
-      "status": "ステータス",
-      "teamRole": "チームロール",
-      "period": "請求周期",
-      "device": "デバイス"
-    },
-    "tabs": {
-      "account": "アカウント",
-      "selfHosted": "セルフホスト"
-    },
-    "selfHosted": {
-      "title": "セルフホスト同期サーバー",
-      "description": "Donut を独自の donut-sync サーバーに接続して、ホスト型クラウドを使わずにプロファイル、プロキシ、グループ、拡張機能を同期します。",
-      "disabledWhileLoggedIn": "Donut アカウントにサインインしている間はセルフホスト同期を利用できません。カスタムサーバーを使うにはサインアウトしてください。",
-      "connectionStatus": "接続:",
-      "statusUnknown": "未テスト",
-      "testConnection": "接続をテスト",
-      "disconnect": "切断"
-    },
-    "deviceOrdinal": "{{count}} 台中 {{ordinal}} 台目",
-    "automationPrimaryOnly": "ブラウザの自動化はプライマリデバイス（デバイス1）でのみ実行できます。ここで使用するには、そのデバイスでサインアウトしてください。",
-    "automationActiveHere": "ブラウザの自動化はこのデバイスで有効です。"
-  },
   "shortcutsPage": {
     "title": "キーボードショートカット",
     "description": "これらのショートカットでワークフローを高速化できます。"
@@ -1974,11 +1745,9 @@
     "openShortcuts": "キーボードショートカットを表示",
     "importProfile": "プロファイルをインポート",
     "goProfiles": "プロファイルへ移動",
-    "goProxies": "ネットワークへ移動",
     "goExtensions": "拡張機能へ移動",
     "goGroups": "グループへ移動",
     "goIntegrations": "統合へ移動",
-    "goAccount": "アカウントへ移動",
     "goSettings": "設定へ移動"
   },
   "closeConfirm": {
@@ -2095,6 +1864,7 @@
     "success": "Created {{count}} profiles successfully.",
     "failed": "Failed to create profiles.",
     "namePattern": "Names: {{prefix}}.01 through {{prefix}}.{{count}}",
-    "proxyCountMatch": "{{count}} proxy line(s) — matches {{count}} profile(s)."
+    "proxyCountMatch": "{{count}} proxy line(s) — matches {{count}} profile(s).",
+    "proxyCountInfo": "{{proxyCount}} proxy line(s) for {{profileCount}} profile(s). Extra proxies ignored, missing proxies left unset."
   }
 }

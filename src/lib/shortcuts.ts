@@ -31,11 +31,9 @@ export type ShortcutId =
   | "openShortcuts"
   | "importProfile"
   | "goProfiles"
-  | "goProxies"
   | "goExtensions"
   | "goGroups"
   | "goIntegrations"
-  | "goAccount"
   | "goSettings";
 
 export const SHORTCUTS: ShortcutDef[] = [
@@ -70,13 +68,6 @@ export const SHORTCUTS: ShortcutDef[] = [
     mod: true,
   },
   {
-    id: "goProxies",
-    labelKey: "shortcuts.goProxies",
-    group: "navigation",
-    key: "n",
-    mod: true,
-  },
-  {
     id: "goExtensions",
     labelKey: "shortcuts.goExtensions",
     group: "navigation",
@@ -95,13 +86,6 @@ export const SHORTCUTS: ShortcutDef[] = [
     labelKey: "shortcuts.goIntegrations",
     group: "navigation",
     key: "i",
-    mod: true,
-  },
-  {
-    id: "goAccount",
-    labelKey: "shortcuts.goAccount",
-    group: "navigation",
-    key: "a",
     mod: true,
   },
   {

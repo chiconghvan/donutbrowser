@@ -26,6 +26,7 @@
 ## Features
 
 - **Unlimited browser profiles** — each fully isolated with its own fingerprint, cookies, extensions, and data
+- **Bulk create profiles** — generate multiple profiles at once with date-based naming and per-profile proxy assignment
 - **Anti-detect Chromium engine** — powered by [Wayfern](https://wayfern.com), with advanced fingerprint spoofing
 - **DNS AdBlocker** - block ads, trackers, and other unwanted content with per-profile DNS blocking
 - **Proxy support** — HTTP, HTTPS, SOCKS4, SOCKS5 per profile, with dynamic proxy URLs

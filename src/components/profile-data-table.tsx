@@ -70,11 +70,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useBrowserState } from "@/hooks/use-browser-state";
-import { useCloudAuth } from "@/hooks/use-cloud-auth";
 import { useScrollFade } from "@/hooks/use-scroll-fade";
 import { useTableSorting } from "@/hooks/use-table-sorting";
 import { useTeamLocks } from "@/hooks/use-team-locks";
-import { useVpnEvents } from "@/hooks/use-vpn-events";
 import {
   getBrowserDisplayName,
   getOSDisplayName,
@@ -1181,9 +1179,8 @@ export function ProfilesDataTable({
     new Set(),
   );
 
-  const { vpnConfigs } = useVpnEvents();
-  const { user } = useCloudAuth();
-  const { isProfileLocked, getLockInfo } = useTeamLocks(user?.id);
+  const vpnConfigs = React.useMemo(() => [] as any[], []);
+  const { isProfileLocked, getLockInfo } = useTeamLocks(undefined);
 
   const [proxyOverrides, setProxyOverrides] = React.useState<
     Record<string, string | null>

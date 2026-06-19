@@ -19,19 +19,10 @@ export type BackendErrorCode =
   | "INVALID_LAUNCH_HOOK_URL"
   | "COOKIE_DB_LOCKED"
   | "COOKIE_DB_UNAVAILABLE"
-  | "SELF_HOSTED_REQUIRES_LOGOUT"
-  | "PROXY_NOT_FOUND"
-  | "GROUP_NOT_FOUND"
-  | "VPN_NOT_FOUND"
   | "EXTENSION_NOT_FOUND"
   | "EXTENSION_GROUP_NOT_FOUND"
-  | "CANNOT_MODIFY_CLOUD_MANAGED_PROXY"
-  | "SYNC_LOCKED_BY_PROFILE"
-  | "SYNC_NOT_CONFIGURED"
-  | "FINGERPRINT_REQUIRES_PRO"
   | "PROXY_NOT_WORKING"
   | "PROXY_PAYMENT_REQUIRED"
-  | "VPN_NOT_WORKING"
   | "CAMOUFOX_IMPORT_DEPRECATED"
   | "INTERNAL_ERROR";
 
@@ -107,32 +98,14 @@ export function translateBackendError(t: TFunction, err: unknown): string {
       return t("backendErrors.cookieDbLocked");
     case "COOKIE_DB_UNAVAILABLE":
       return t("backendErrors.cookieDbUnavailable");
-    case "SELF_HOSTED_REQUIRES_LOGOUT":
-      return t("backendErrors.selfHostedRequiresLogout");
-    case "PROXY_NOT_FOUND":
-      return t("backendErrors.proxyNotFound");
-    case "GROUP_NOT_FOUND":
-      return t("backendErrors.groupNotFound");
-    case "VPN_NOT_FOUND":
-      return t("backendErrors.vpnNotFound");
     case "EXTENSION_NOT_FOUND":
       return t("backendErrors.extensionNotFound");
     case "EXTENSION_GROUP_NOT_FOUND":
       return t("backendErrors.extensionGroupNotFound");
-    case "CANNOT_MODIFY_CLOUD_MANAGED_PROXY":
-      return t("backendErrors.cannotModifyCloudManagedProxy");
-    case "SYNC_LOCKED_BY_PROFILE":
-      return t("backendErrors.syncLockedByProfile");
-    case "SYNC_NOT_CONFIGURED":
-      return t("backendErrors.syncNotConfigured");
-    case "FINGERPRINT_REQUIRES_PRO":
-      return t("backendErrors.fingerprintRequiresPro");
     case "PROXY_NOT_WORKING":
       return t("backendErrors.proxyNotWorking");
     case "PROXY_PAYMENT_REQUIRED":
       return t("backendErrors.proxyPaymentRequired");
-    case "VPN_NOT_WORKING":
-      return t("backendErrors.vpnNotWorking");
     case "CAMOUFOX_IMPORT_DEPRECATED":
       return t("backendErrors.camoufoxImportDeprecated");
     case "INTERNAL_ERROR":

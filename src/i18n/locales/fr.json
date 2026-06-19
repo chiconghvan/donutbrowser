@@ -218,7 +218,6 @@
       "settings": "Paramètres",
       "proxies": "Proxys et VPNs",
       "groups": "Groupes",
-      "syncService": "Compte",
       "integrations": "Intégrations",
       "importProfile": "Importer un profil",
       "extensions": "Extensions"
@@ -391,32 +390,11 @@
   "proxies": {
     "title": "Proxies",
     "management": {
-      "description": "Gérez vos configurations de proxys et VPN pour les réutiliser sur les profils",
-      "tabProxies": "Proxys",
-      "tabVpns": "VPN",
       "create": "Créer",
-      "loading": "Chargement des proxys...",
-      "noneCreated": "Aucun proxy créé. Créez votre premier proxy avec le bouton ci-dessus.",
-      "usage": "Utilisation",
       "syncCol": "Sync",
-      "syncCannotDisable": "La sync ne peut pas être désactivée tant que ce proxy est utilisé par des profils synchronisés",
-      "enableSync": "Activer la sync",
-      "disableSync": "Désactiver la sync",
-      "editProxy": "Modifier le proxy",
-      "deleteProxy": "Supprimer le proxy",
-      "cannotDelete_one": "Suppression impossible : utilisé par {{count}} profil",
-      "cannotDelete_other": "Suppression impossible : utilisé par {{count}} profils",
       "syncEnabled": "Sync activée",
       "syncDisabled": "Sync désactivée",
-      "updateSyncFailed": "Échec de la mise à jour de la sync",
-      "deleteSuccess": "Proxy supprimé avec succès",
-      "deleteFailed": "Échec de la suppression du proxy",
-      "deleteTitle": "Supprimer le proxy",
-      "deleteDescription": "Cette action est irréversible. Le proxy « {{name}} » sera supprimé définitivement.",
-      "newProxy": "Nouveau proxy",
-      "newVpn": "Nouveau VPN",
-      "protocolCol": "Protocole",
-      "title": "Proxys et VPN"
+      "updateSyncFailed": "Échec de la mise à jour de la sync"
     },
     "add": "Ajouter un proxy",
     "edit": "Modifier le proxy",
@@ -581,130 +559,24 @@
   },
   "sync": {
     "mode": {
-      "title": "Synchronisation du profil",
-      "description": "Gérer les paramètres de synchronisation pour \"{{name}}\"",
       "disabled": "Désactivé",
       "regular": "Synchronisation régulière",
-      "encrypted": "Synchronisation chiffrée E2E",
-      "disabledDescription": "Pas de synchronisation pour ce profil",
-      "regularDescription": "Synchronisation rapide, non chiffrée",
-      "encryptedDescription": "Chiffré avant l'envoi. Le serveur ne voit jamais les données en clair.",
-      "noPasswordWarning": "Mot de passe E2E non défini. Veuillez définir un mot de passe dans les Paramètres.",
-      "passwordRequired": "Mot de passe E2E non défini. Veuillez d'abord définir un mot de passe dans les Paramètres.",
-      "enabledToast": "Synchronisation activée",
-      "disabledToast": "Synchronisation désactivée",
-      "syncQueued": "Synchronisation en file d'attente",
-      "syncNow": "Synchroniser maintenant",
-      "lastSynced": "Dernière synchronisation",
-      "notConfigured": "Service de synchronisation non configuré.",
-      "configureService": "Configurer le service de synchronisation"
-    },
-    "title": "Service de synchronisation",
-    "config": {
-      "serverUrlRequired": "Veuillez saisir une URL de serveur",
-      "connectionSuccess": "Connexion réussie !",
-      "serverError": "Le serveur a répondu avec une erreur",
-      "connectFailed": "Échec de la connexion au serveur",
-      "settingsSaved": "Paramètres de synchronisation enregistrés",
-      "saveFailed": "Échec de l’enregistrement des paramètres",
-      "disconnected": "Synchronisation déconnectée",
-      "disconnectFailed": "Échec de la déconnexion"
-    },
-    "serverUrl": "URL du serveur",
-    "serverUrlPlaceholder": "https://sync.exemple.com",
-    "token": "Jeton de synchronisation",
-    "tokenPlaceholder": "Entrez votre jeton de synchronisation",
-    "status": {
-      "connected": "Connecté",
-      "disconnected": "Déconnecté",
-      "syncing": "Synchronisation...",
-      "error": "Erreur de synchronisation"
-    },
-    "description": "Connectez-vous à un serveur de synchronisation pour synchroniser vos profils, proxies et groupes entre appareils.",
-    "cloud": {
-      "tabLabel": "Cloud",
-      "selfHostedTabLabel": "Auto-hébergé",
-      "email": "E-mail",
-      "deviceLinkInstructions": "Cliquez sur « Se connecter » pour ouvrir la page de connexion dans votre navigateur. Une fois connecté, copiez le code affiché et collez-le ci-dessous.",
-      "openLogin": "Se connecter",
-      "linkCodeLabel": "Code de connexion",
-      "linkCodePlaceholder": "Collez le code du site web",
-      "signInTitle": "Se Connecter",
-      "verifyAndLogin": "Vérifier et Se Connecter",
-      "loggingIn": "Connexion en cours...",
-      "connected": "Connecté",
-      "plan": "Forfait",
-      "profiles": "Profils",
-      "profileUsage": "{{used}} / {{limit}}",
-      "manageAccount": "Gérer le Compte",
-      "logout": "Se Déconnecter",
-      "logoutConfirm": "Êtes-vous sûr de vouloir vous déconnecter ? La synchronisation cloud sera arrêtée.",
-      "loginSuccess": "Connexion réussie !",
-      "logoutSuccess": "Déconnexion réussie."
+      "encrypted": "Synchronisation chiffrée E2E"
     },
     "team": {
       "title": "Équipe",
-      "name": "Nom de l'équipe",
-      "role": "Rôle",
-      "roleOwner": "Propriétaire",
-      "roleAdmin": "Administrateur",
-      "roleMember": "Membre",
-      "manageOnWeb": "Gérer l'équipe sur le tableau de bord web",
       "profileLocked": "Utilisé par {{email}}",
-      "profileLockedShort": "En cours d'utilisation",
       "cannotLaunchLocked": "Impossible de lancer — le profil est utilisé par {{email}}",
       "createdBy": "Créé par {{email}}"
     },
-    "disabled": "Désactivée",
     "toast": {
       "profileSynced": "Profil '{{name}}' synchronisé avec succès",
       "profileSyncFailed": "Échec de la synchronisation du profil '{{name}}'",
       "profileSyncFailedWithError": "Échec de la synchronisation du profil '{{name}}' : {{error}}"
-    },
-    "enabledToast": "Synchronisation activée",
-    "disabledToast": "Synchronisation désactivée",
-    "enabledDescription": "La synchronisation du profil a été activée",
-    "disabledDescription": "La synchronisation du profil a été désactivée"
+    }
   },
   "integrations": {
     "title": "Intégrations",
-    "api": {
-      "title": "API locale",
-      "description": "Activez le serveur d'API locale pour les intégrations externes.",
-      "enabled": "API activée",
-      "disabled": "API désactivée",
-      "port": "Port",
-      "token": "Jeton API",
-      "copyToken": "Copier le jeton",
-      "regenerateToken": "Régénérer le jeton"
-    },
-    "mcp": {
-      "title": "Serveur MCP",
-      "description": "Activez le serveur MCP (Model Context Protocol) pour les intégrations avec les assistants IA.",
-      "enabled": "MCP activé",
-      "disabled": "MCP désactivé",
-      "port": "Port",
-      "token": "Jeton d'authentification",
-      "tokenCopied": "Jeton copié",
-      "url": "URL du serveur MCP",
-      "urlCopied": "URL copiée",
-      "config": "Configuration MCP",
-      "copyConfig": "Copier la configuration",
-      "clientsLabel": "Clients",
-      "connected": "Connecté",
-      "add": "Ajouter",
-      "addedToClient": "Ajouté à {{name}}",
-      "removedFromClient": "Supprimé de {{name}}",
-      "removeAriaLabel": "Supprimer de {{name}}",
-      "category": {
-        "desktopApp": "Application bureau",
-        "cli": "CLI",
-        "editor": "Éditeur",
-        "editorExt": "Ext. d'éditeur"
-      }
-    },
-    "tabApi": "API locale",
-    "tabMcp": "MCP (Assistants IA)",
     "apiEnableLabel": "Activer le serveur API local",
     "apiEnableDescription": "Permet de gérer les profils, groupes et proxys via l'API REST.",
     "apiPortLabel": "Port",
@@ -720,13 +592,6 @@
     "apiToggleFailed": "Échec du basculement du serveur API",
     "apiStartFailed": "Échec du démarrage du serveur API",
     "apiUnknownError": "Erreur inconnue",
-    "tokenCopied": "Jeton copié",
-    "mcpEnableLabel": "Activer le serveur MCP (Model Context Protocol)",
-    "mcpEnableDescription": "Permet aux assistants IA comme Claude Desktop de contrôler les navigateurs.",
-    "mcpAcceptTermsFirst": "(Acceptez d'abord les conditions Wayfern dans les Paramètres)",
-    "mcpStarted": "Serveur MCP démarré sur le port {{port}}",
-    "mcpStopped": "Serveur MCP arrêté",
-    "mcpToggleFailed": "Échec du basculement du serveur MCP",
     "openSettings": "Ouvrir les paramètres d'intégrations",
     "apiRunningOn": "En cours sur",
     "apiExampleRequest": "Exemple de requête"
@@ -1119,9 +984,7 @@
     }
   },
   "crossOs": {
-    "viewOnly": "Ce profil a été créé sur {{os}} et n'est pas pris en charge sur ce système",
-    "cannotLaunch": "Ce profil a été créé sur {{os}} et n'est pas pris en charge sur ce système",
-    "cannotModify": "Impossible de modifier les paramètres de synchronisation d'un profil d'un autre système d'exploitation"
+    "viewOnly": "Ce profil a été créé sur {{os}} et n'est pas pris en charge sur ce système"
   },
   "profileInfo": {
     "title": "Détails du Profil",
@@ -1391,19 +1254,6 @@
       "doneButton": "Terminé",
       "failedGeneric": "Échec de l'import de la configuration VPN",
       "defaultName": "VPN {{type}}"
-    },
-    "management": {
-      "loading": "Chargement des VPN...",
-      "noneCreated": "Aucune configuration VPN. Importez ou créez-en une avec les boutons ci-dessus.",
-      "editVpn": "Modifier le VPN",
-      "deleteVpn": "Supprimer le VPN",
-      "cannotDelete_one": "Suppression impossible : utilisé par {{count}} profil",
-      "cannotDelete_other": "Suppression impossible : utilisé par {{count}} profils",
-      "syncCannotDisable": "La sync ne peut pas être désactivée tant que ce VPN est utilisé par des profils synchronisés",
-      "deleteSuccess": "VPN supprimé avec succès",
-      "deleteFailed": "Échec de la suppression du VPN",
-      "deleteTitle": "Supprimer le VPN",
-      "deleteDescription": "Cette action est irréversible. Le VPN « {{name}} » sera supprimé définitivement."
     }
   },
   "importProfile": {
@@ -1475,39 +1325,6 @@
       "description_one": "Êtes-vous sûr de vouloir supprimer {{count}} groupe ? {{names}}. Les profils seront déplacés vers Par défaut.",
       "confirmButton": "Supprimer les groupes"
     }
-  },
-  "proxyAssignment": {
-    "title": "Assigner un proxy / VPN",
-    "description_one": "Assigner un proxy ou VPN à {{count}} profil sélectionné.",
-    "description_other": "Assigner un proxy ou VPN à {{count}} profils sélectionnés.",
-    "selectLabel": "Proxy / VPN",
-    "placeholder": "Sélectionnez un proxy ou VPN",
-    "noProxy": "Aucun proxy / VPN",
-    "searchPlaceholder": "Rechercher des proxys ou VPN...",
-    "notFound": "Aucun proxy ou VPN trouvé.",
-    "assignButton": "Assigner",
-    "success": "Proxy/VPN assigné à {{count}} profil(s)",
-    "failed": "Échec de l'assignation du proxy/VPN",
-    "selectedProfilesLabel": "Profils sélectionnés :",
-    "assignProxyVpnLabel": "Assigner un proxy / VPN :",
-    "noneOption": "Aucun",
-    "noValidProfiles": "Aucun profil valide sélectionné.",
-    "vpnGroupHeading": "VPN",
-    "failedFallback": "Échec de l'assignation du proxy/VPN aux profils"
-  },
-  "bulkProxyAssignment": {
-    "title": "Assignation en Masse de Proxys",
-    "description": "Collez un proxy par ligne. Ligne 1 → premier profil sélectionné, ligne 2 → second, etc.",
-    "selectedProfilesLabel": "Profils sélectionnés :",
-    "textareaLabel": "Proxys (un par ligne)",
-    "textareaPlaceholder": "address:port:user:pass",
-    "helperText": "Un proxy par ligne, dans le même ordre que les profils sélectionnés ci-dessus.",
-    "applyButton": "Appliquer à Tous",
-    "countMismatch": "Décalage : {{proxyCount}} lignes de proxy mais {{profileCount}} profils sélectionnés.",
-    "invalidLineFormat": "Format de proxy invalide : \"{{line}}\". Attendu : address:port:user:pass",
-    "invalidPort": "Port invalide dans \"{{line}}\". Le port doit être 1–65535.",
-    "success": "Proxys assignés avec succès à {{count}} profil(s).",
-    "failed": "Échec de l'assignation des proxys."
   },
   "groupAssignment": {
     "title": "Assigner un groupe",
@@ -1703,9 +1520,7 @@
     "syncTooltipDisabledWithLast": "Sync désactivée, dernière sync {{time}}",
     "addTagsPlaceholder": "Ajouter des étiquettes",
     "tagsHeader": "Étiquettes",
-    "noteHeader": "Note",
-    "vpnsHeading": "VPN",
-    "createByCountryHeading": "Créer par pays"
+    "noteHeader": "Note"
   },
   "releaseTypeSelector": {
     "noReleaseTypes": "Aucun type de version disponible.",
@@ -1847,23 +1662,14 @@
     "profileLocked": "Le profil est verrouillé. Entrez d'abord le mot de passe.",
     "invalidProfileId": "Identifiant de profil non valide",
     "passwordTooShort": "Le mot de passe doit comporter au moins {{min}} caractères",
-    "proxyNotFound": "Proxy introuvable",
-    "groupNotFound": "Groupe introuvable",
-    "vpnNotFound": "VPN introuvable",
     "extensionNotFound": "Extension introuvable",
     "extensionGroupNotFound": "Groupe d'extensions introuvable",
-    "cannotModifyCloudManagedProxy": "Impossible de modifier la synchronisation d'un proxy géré dans le cloud",
-    "syncLockedByProfile": "La synchronisation ne peut pas être désactivée tant qu'elle est utilisée par des profils synchronisés",
-    "syncNotConfigured": "La synchronisation n'est pas configurée. Connectez-vous ou configurez un serveur auto-hébergé.",
     "internal": "Une erreur s'est produite : {{detail}}",
     "invalidLaunchHookUrl": "URL du hook de lancement invalide. Utilisez une URL http:// ou https:// complète.",
     "cookieDbLocked": "Impossible de lire les cookies — la base de données est verrouillée. Fermez le navigateur et réessayez.",
     "cookieDbUnavailable": "Impossible de lire les cookies — le magasin de cookies est indisponible.",
-    "selfHostedRequiresLogout": "Déconnectez-vous de votre compte Donut avant de configurer un serveur auto-hébergé.",
-    "fingerprintRequiresPro": "Afficher ou modifier l'empreinte nécessite un forfait payant actif. La protection est incluse dans tous les forfaits.",
     "proxyNotWorking": "Le proxy sélectionné ne fonctionne pas, le profil n'a donc pas été créé.",
     "proxyPaymentRequired": "Le proxy sélectionné requiert un paiement (402) — son abonnement a peut-être expiré — le profil n'a donc pas été créé.",
-    "vpnNotWorking": "Le VPN sélectionné ne fonctionne pas, le profil n'a donc pas été créé.",
     "camoufoxImportDeprecated": "L'importation de profils basés sur Firefox (Camoufox) n'est plus prise en charge. Camoufox est en cours d'abandon — utilisez Wayfern à la place."
   },
   "rail": {
@@ -1880,8 +1686,7 @@
       "keyboardShortcutsHint": "Voir tous les raccourcis"
     },
     "network": "Réseau",
-    "integrations": "Intégrations",
-    "account": "Compte"
+    "integrations": "Intégrations"
   },
   "pageTitle": {
     "proxies": "Réseau",
@@ -1890,7 +1695,6 @@
     "vpns": "Réseau",
     "settings": "Paramètres",
     "integrations": "Intégrations",
-    "account": "Compte",
     "import": "Importer un profil",
     "shortcuts": "Raccourcis clavier"
   },
@@ -1917,39 +1721,6 @@
       }
     }
   },
-  "account": {
-    "refreshed": "Compte actualisé",
-    "loggedOut": "Déconnecté",
-    "signedOut": "Déconnecté",
-    "signedOutDescription": "Connectez-vous pour activer la synchronisation cloud, les profils chiffrés et les fonctionnalités d’équipe.",
-    "plan": "Plan : {{plan}} · {{period}}",
-    "refresh": "Actualiser",
-    "logout": "Se déconnecter",
-    "signIn": "Se connecter",
-    "fields": {
-      "plan": "Plan",
-      "status": "Statut",
-      "teamRole": "Rôle d’équipe",
-      "period": "Période",
-      "device": "Appareil"
-    },
-    "tabs": {
-      "account": "Compte",
-      "selfHosted": "Auto-hébergé"
-    },
-    "selfHosted": {
-      "title": "Serveur de synchronisation auto-hébergé",
-      "description": "Connectez Donut à votre propre serveur donut-sync pour synchroniser profils, proxys, groupes et extensions sans utiliser le cloud hébergé.",
-      "disabledWhileLoggedIn": "La synchronisation auto-hébergée n'est pas disponible lorsque vous êtes connecté à votre compte Donut. Déconnectez-vous pour utiliser un serveur personnalisé.",
-      "connectionStatus": "Connexion :",
-      "statusUnknown": "Non testé",
-      "testConnection": "Tester la connexion",
-      "disconnect": "Déconnecter"
-    },
-    "deviceOrdinal": "{{ordinal}} sur {{count}}",
-    "automationPrimaryOnly": "L'automatisation du navigateur ne fonctionne que sur votre appareil principal (Appareil 1). Déconnectez-vous là-bas pour l'utiliser ici.",
-    "automationActiveHere": "L'automatisation du navigateur est active sur cet appareil."
-  },
   "shortcutsPage": {
     "title": "Raccourcis clavier",
     "description": "Accélérez votre flux de travail avec ces raccourcis."
@@ -1974,11 +1745,9 @@
     "openShortcuts": "Voir les raccourcis clavier",
     "importProfile": "Importer un profil",
     "goProfiles": "Aller à Profils",
-    "goProxies": "Aller à Réseau",
     "goExtensions": "Aller à Extensions",
     "goGroups": "Aller à Groupes",
     "goIntegrations": "Aller à Intégrations",
-    "goAccount": "Aller à Compte",
     "goSettings": "Aller à Paramètres"
   },
   "closeConfirm": {
@@ -2095,6 +1864,7 @@
     "success": "Created {{count}} profiles successfully.",
     "failed": "Failed to create profiles.",
     "namePattern": "Names: {{prefix}}.01 through {{prefix}}.{{count}}",
-    "proxyCountMatch": "{{count}} proxy line(s) — matches {{count}} profile(s)."
+    "proxyCountMatch": "{{count}} proxy line(s) — matches {{count}} profile(s).",
+    "proxyCountInfo": "{{proxyCount}} proxy line(s) for {{profileCount}} profile(s). Extra proxies ignored, missing proxies left unset."
   }
 }

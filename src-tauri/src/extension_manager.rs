@@ -289,6 +289,7 @@ impl ExtensionManager {
     self.get_extension_dir(ext_id).join("file")
   }
 
+  #[allow(dead_code)]
   pub fn get_file_dir_public(&self, ext_id: &str) -> PathBuf {
     self.get_file_dir(ext_id)
   }
@@ -325,7 +326,7 @@ impl ExtensionManager {
       browser_compatibility,
       created_at: now,
       updated_at: now,
-      sync_enabled: crate::sync::is_sync_configured(),
+      sync_enabled: false,
       last_sync: None,
       version,
       description,
@@ -351,15 +352,6 @@ impl ExtensionManager {
 
     if let Err(e) = events::emit_empty("extensions-changed") {
       log::error!("Failed to emit extensions-changed event: {e}");
-    }
-
-    if ext.sync_enabled {
-      if let Some(scheduler) = crate::sync::get_global_scheduler() {
-        let id = ext.id.clone();
-        tauri::async_runtime::spawn(async move {
-          scheduler.queue_extension_sync(id).await;
-        });
-      }
     }
 
     Ok(ext)
@@ -466,24 +458,15 @@ impl ExtensionManager {
       log::error!("Failed to emit extensions-changed event: {e}");
     }
 
-    if ext.sync_enabled {
-      if let Some(scheduler) = crate::sync::get_global_scheduler() {
-        let eid = ext.id.clone();
-        tauri::async_runtime::spawn(async move {
-          scheduler.queue_extension_sync(eid).await;
-        });
-      }
-    }
-
     Ok(ext)
   }
 
   pub fn delete_extension(
     &self,
-    app_handle: &tauri::AppHandle,
+    _app_handle: &tauri::AppHandle,
     id: &str,
   ) -> Result<(), Box<dyn std::error::Error>> {
-    let ext = self.get_extension(id)?;
+    let _ext = self.get_extension(id)?;
     let ext_dir = self.get_extension_dir(id);
     if ext_dir.exists() {
       fs::remove_dir_all(&ext_dir)?;
@@ -498,23 +481,6 @@ impl ExtensionManager {
 
     if let Err(e) = events::emit_empty("extensions-changed") {
       log::error!("Failed to emit extensions-changed event: {e}");
-    }
-
-    if ext.sync_enabled {
-      let ext_id = id.to_string();
-      let app_handle_clone = app_handle.clone();
-      tauri::async_runtime::spawn(async move {
-        match crate::sync::SyncEngine::create_from_settings(&app_handle_clone).await {
-          Ok(engine) => {
-            if let Err(e) = engine.delete_extension(&ext_id).await {
-              log::warn!("Failed to delete extension {} from sync: {}", ext_id, e);
-            }
-          }
-          Err(e) => {
-            log::debug!("Sync not configured, skipping remote deletion: {}", e);
-          }
-        }
-      });
     }
 
     Ok(())
@@ -556,7 +522,7 @@ impl ExtensionManager {
       extension_ids: Vec::new(),
       created_at: now,
       updated_at: now,
-      sync_enabled: crate::sync::is_sync_configured(),
+      sync_enabled: false,
       last_sync: None,
     };
 
@@ -565,15 +531,6 @@ impl ExtensionManager {
 
     if let Err(e) = events::emit_empty("extensions-changed") {
       log::error!("Failed to emit extensions-changed event: {e}");
-    }
-
-    if group.sync_enabled {
-      if let Some(scheduler) = crate::sync::get_global_scheduler() {
-        let id = group.id.clone();
-        tauri::async_runtime::spawn(async move {
-          scheduler.queue_extension_group_sync(id).await;
-        });
-      }
     }
 
     Ok(group)
@@ -632,31 +589,15 @@ impl ExtensionManager {
       log::error!("Failed to emit extensions-changed event: {e}");
     }
 
-    if updated.sync_enabled {
-      if let Some(scheduler) = crate::sync::get_global_scheduler() {
-        let gid = updated.id.clone();
-        tauri::async_runtime::spawn(async move {
-          scheduler.queue_extension_group_sync(gid).await;
-        });
-      }
-    }
-
     Ok(updated)
   }
 
   pub fn delete_group(
     &self,
-    app_handle: &tauri::AppHandle,
+    _app_handle: &tauri::AppHandle,
     id: &str,
   ) -> Result<(), Box<dyn std::error::Error>> {
     let mut data = self.load_groups_data()?;
-
-    let was_sync_enabled = data
-      .groups
-      .iter()
-      .find(|g| g.id == id)
-      .map(|g| g.sync_enabled)
-      .unwrap_or(false);
 
     let initial_len = data.groups.len();
     data.groups.retain(|g| g.id != id);
@@ -674,27 +615,6 @@ impl ExtensionManager {
           let _ = profile_manager.save_profile(&p);
         }
       }
-    }
-
-    if was_sync_enabled {
-      let group_id_owned = id.to_string();
-      let app_handle_clone = app_handle.clone();
-      tauri::async_runtime::spawn(async move {
-        match crate::sync::SyncEngine::create_from_settings(&app_handle_clone).await {
-          Ok(engine) => {
-            if let Err(e) = engine.delete_extension_group(&group_id_owned).await {
-              log::warn!(
-                "Failed to delete extension group {} from sync: {}",
-                group_id_owned,
-                e
-              );
-            }
-          }
-          Err(e) => {
-            log::debug!("Sync not configured, skipping remote deletion: {}", e);
-          }
-        }
-      });
     }
 
     if let Err(e) = events::emit_empty("extensions-changed") {
@@ -731,15 +651,6 @@ impl ExtensionManager {
       log::error!("Failed to emit extensions-changed event: {e}");
     }
 
-    if updated.sync_enabled {
-      if let Some(scheduler) = crate::sync::get_global_scheduler() {
-        let gid = updated.id.clone();
-        tauri::async_runtime::spawn(async move {
-          scheduler.queue_extension_group_sync(gid).await;
-        });
-      }
-    }
-
     Ok(updated)
   }
 
@@ -765,20 +676,12 @@ impl ExtensionManager {
       log::error!("Failed to emit extensions-changed event: {e}");
     }
 
-    if updated.sync_enabled {
-      if let Some(scheduler) = crate::sync::get_global_scheduler() {
-        let gid = updated.id.clone();
-        tauri::async_runtime::spawn(async move {
-          scheduler.queue_extension_group_sync(gid).await;
-        });
-      }
-    }
-
     Ok(updated)
   }
 
   // Sync helpers
 
+  #[allow(dead_code)]
   pub fn update_extension_internal(
     &self,
     ext: &Extension,
@@ -792,6 +695,7 @@ impl ExtensionManager {
     Ok(())
   }
 
+  #[allow(dead_code)]
   pub fn upsert_extension_internal(
     &self,
     ext: &Extension,
@@ -799,6 +703,7 @@ impl ExtensionManager {
     self.update_extension_internal(ext)
   }
 
+  #[allow(dead_code)]
   pub fn delete_extension_internal(&self, id: &str) -> Result<(), Box<dyn std::error::Error>> {
     let ext_dir = self.get_extension_dir(id);
     if ext_dir.exists() {
@@ -813,6 +718,7 @@ impl ExtensionManager {
     Ok(())
   }
 
+  #[allow(dead_code)]
   pub fn update_group_internal(
     &self,
     group: &ExtensionGroup,
@@ -829,6 +735,7 @@ impl ExtensionManager {
     Ok(())
   }
 
+  #[allow(dead_code)]
   pub fn upsert_group_internal(
     &self,
     group: &ExtensionGroup,
@@ -847,6 +754,7 @@ impl ExtensionManager {
     Ok(())
   }
 
+  #[allow(dead_code)]
   pub fn delete_group_internal(&self, id: &str) -> Result<(), Box<dyn std::error::Error>> {
     let mut data = self.load_groups_data()?;
     data.groups.retain(|g| g.id != id);

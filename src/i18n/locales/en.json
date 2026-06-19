@@ -218,7 +218,6 @@
       "settings": "Settings",
       "proxies": "Proxies & VPNs",
       "groups": "Groups",
-      "syncService": "Account",
       "integrations": "Integrations",
       "importProfile": "Import Profile",
       "extensions": "Extensions"
@@ -391,32 +390,11 @@
   "proxies": {
     "title": "Proxies",
     "management": {
-      "description": "Manage your proxy and VPN configurations for reuse across profiles",
-      "tabProxies": "Proxies",
-      "tabVpns": "VPNs",
       "create": "Create",
-      "loading": "Loading proxies...",
-      "noneCreated": "No proxies created yet. Create your first proxy using the button above.",
-      "usage": "Usage",
       "syncCol": "Sync",
-      "syncCannotDisable": "Sync cannot be disabled while this proxy is used by synced profiles",
-      "enableSync": "Enable sync",
-      "disableSync": "Disable sync",
-      "editProxy": "Edit proxy",
-      "deleteProxy": "Delete proxy",
-      "cannotDelete_one": "Cannot delete: in use by {{count}} profile",
-      "cannotDelete_other": "Cannot delete: in use by {{count}} profiles",
       "syncEnabled": "Sync enabled",
       "syncDisabled": "Sync disabled",
-      "updateSyncFailed": "Failed to update sync",
-      "deleteSuccess": "Proxy deleted successfully",
-      "deleteFailed": "Failed to delete proxy",
-      "deleteTitle": "Delete Proxy",
-      "deleteDescription": "This action cannot be undone. This will permanently delete the proxy \"{{name}}\".",
-      "newProxy": "New proxy",
-      "newVpn": "New VPN",
-      "protocolCol": "Protocol",
-      "title": "Proxies & VPNs"
+      "updateSyncFailed": "Failed to update sync"
     },
     "add": "Add Proxy",
     "edit": "Edit Proxy",
@@ -581,130 +559,24 @@
   },
   "sync": {
     "mode": {
-      "title": "Profile Sync",
-      "description": "Manage sync settings for \"{{name}}\"",
       "disabled": "Disabled",
       "regular": "Regular Sync",
-      "encrypted": "E2E Encrypted Sync",
-      "disabledDescription": "No sync for this profile",
-      "regularDescription": "Fast sync, unencrypted",
-      "encryptedDescription": "Encrypted before upload. Server never sees plaintext data.",
-      "noPasswordWarning": "E2E password not set. Please set a password in Settings.",
-      "passwordRequired": "E2E password not set. Please set a password in Settings first.",
-      "enabledToast": "Sync enabled",
-      "disabledToast": "Sync disabled",
-      "syncQueued": "Sync queued",
-      "syncNow": "Sync Now",
-      "lastSynced": "Last Synced",
-      "notConfigured": "Sync service not configured.",
-      "configureService": "Configure Sync Service"
-    },
-    "title": "Account",
-    "config": {
-      "serverUrlRequired": "Please enter a server URL",
-      "connectionSuccess": "Connection successful!",
-      "serverError": "Server responded with an error",
-      "connectFailed": "Failed to connect to server",
-      "settingsSaved": "Sync settings saved",
-      "saveFailed": "Failed to save settings",
-      "disconnected": "Sync disconnected",
-      "disconnectFailed": "Failed to disconnect"
-    },
-    "serverUrl": "Server URL",
-    "serverUrlPlaceholder": "https://sync.example.com",
-    "token": "Sync Token",
-    "tokenPlaceholder": "Enter your sync token",
-    "status": {
-      "connected": "Connected",
-      "disconnected": "Disconnected",
-      "syncing": "Syncing...",
-      "error": "Sync Error"
-    },
-    "description": "Connect to a sync server to synchronize your profiles, proxies, and groups across devices.",
-    "cloud": {
-      "tabLabel": "Cloud",
-      "selfHostedTabLabel": "Self-Hosted",
-      "email": "Email",
-      "deviceLinkInstructions": "Click \"Login\" to open the login page in your browser. Once signed in there, copy the code shown and paste it below.",
-      "openLogin": "Login",
-      "linkCodeLabel": "Login code",
-      "linkCodePlaceholder": "Paste the code from the website",
-      "signInTitle": "Sign in",
-      "verifyAndLogin": "Verify & Log In",
-      "loggingIn": "Logging in...",
-      "connected": "Connected",
-      "plan": "Plan",
-      "profiles": "Profiles",
-      "profileUsage": "{{used}} / {{limit}}",
-      "manageAccount": "Manage Account",
-      "logout": "Log Out",
-      "logoutConfirm": "Are you sure you want to log out? Cloud sync will stop.",
-      "loginSuccess": "Successfully logged in!",
-      "logoutSuccess": "Successfully logged out."
+      "encrypted": "E2E Encrypted Sync"
     },
     "team": {
       "title": "Team",
-      "name": "Team Name",
-      "role": "Role",
-      "roleOwner": "Owner",
-      "roleAdmin": "Admin",
-      "roleMember": "Member",
-      "manageOnWeb": "Manage team on the web dashboard",
       "profileLocked": "In use by {{email}}",
-      "profileLockedShort": "In use",
       "cannotLaunchLocked": "Cannot launch — profile is in use by {{email}}",
       "createdBy": "Created by {{email}}"
     },
-    "disabled": "Disabled",
     "toast": {
       "profileSynced": "Profile '{{name}}' synced successfully",
       "profileSyncFailed": "Failed to sync profile '{{name}}'",
       "profileSyncFailedWithError": "Failed to sync profile '{{name}}': {{error}}"
-    },
-    "enabledToast": "Sync enabled",
-    "disabledToast": "Sync disabled",
-    "enabledDescription": "Profile sync has been enabled",
-    "disabledDescription": "Profile sync has been disabled"
+    }
   },
   "integrations": {
     "title": "Integrations",
-    "api": {
-      "title": "Local API",
-      "description": "Enable the local API server for external integrations.",
-      "enabled": "API Enabled",
-      "disabled": "API Disabled",
-      "port": "Port",
-      "token": "API Token",
-      "copyToken": "Copy Token",
-      "regenerateToken": "Regenerate Token"
-    },
-    "mcp": {
-      "title": "MCP Server",
-      "description": "Enable the MCP (Model Context Protocol) server for AI assistant integrations.",
-      "enabled": "MCP Enabled",
-      "disabled": "MCP Disabled",
-      "port": "Port",
-      "token": "Authentication Token",
-      "tokenCopied": "Token copied",
-      "url": "MCP Server URL",
-      "urlCopied": "URL copied",
-      "config": "MCP Configuration",
-      "copyConfig": "Copy Configuration",
-      "clientsLabel": "Clients",
-      "connected": "Connected",
-      "add": "Add",
-      "addedToClient": "Added to {{name}}",
-      "removedFromClient": "Removed from {{name}}",
-      "removeAriaLabel": "Remove from {{name}}",
-      "category": {
-        "desktopApp": "Desktop app",
-        "cli": "CLI",
-        "editor": "Editor",
-        "editorExt": "Editor ext"
-      }
-    },
-    "tabApi": "Local API",
-    "tabMcp": "MCP (AI Assistants)",
     "apiEnableLabel": "Enable Local API Server",
     "apiEnableDescription": "Allow managing profiles, groups, and proxies via REST API.",
     "apiPortLabel": "Port",
@@ -720,13 +592,6 @@
     "apiToggleFailed": "Failed to toggle API server",
     "apiStartFailed": "Failed to start API server",
     "apiUnknownError": "Unknown error",
-    "tokenCopied": "Token copied",
-    "mcpEnableLabel": "Enable MCP Server (Model Context Protocol)",
-    "mcpEnableDescription": "Allow AI assistants like Claude Desktop to control browsers.",
-    "mcpAcceptTermsFirst": "(Accept Wayfern terms in Settings first)",
-    "mcpStarted": "MCP server started on port {{port}}",
-    "mcpStopped": "MCP server stopped",
-    "mcpToggleFailed": "Failed to toggle MCP server",
     "openSettings": "Open Integrations Settings",
     "apiRunningOn": "Running on",
     "apiExampleRequest": "Example request"
@@ -1119,9 +984,7 @@
     }
   },
   "crossOs": {
-    "viewOnly": "This profile was created on {{os}} and is not supported on this system",
-    "cannotLaunch": "This profile was created on {{os}} and is not supported on this system",
-    "cannotModify": "Cannot modify sync settings for a cross-OS profile"
+    "viewOnly": "This profile was created on {{os}} and is not supported on this system"
   },
   "profileInfo": {
     "title": "Profile Details",
@@ -1391,19 +1254,6 @@
       "doneButton": "Done",
       "failedGeneric": "Failed to import VPN config",
       "defaultName": "{{type}} VPN"
-    },
-    "management": {
-      "loading": "Loading VPNs...",
-      "noneCreated": "No VPN configs created yet. Import or create one using the buttons above.",
-      "editVpn": "Edit VPN",
-      "deleteVpn": "Delete VPN",
-      "cannotDelete_one": "Cannot delete: in use by {{count}} profile",
-      "cannotDelete_other": "Cannot delete: in use by {{count}} profiles",
-      "syncCannotDisable": "Sync cannot be disabled while this VPN is used by synced profiles",
-      "deleteSuccess": "VPN deleted successfully",
-      "deleteFailed": "Failed to delete VPN",
-      "deleteTitle": "Delete VPN",
-      "deleteDescription": "This action cannot be undone. This will permanently delete the VPN \"{{name}}\"."
     }
   },
   "importProfile": {
@@ -1476,39 +1326,6 @@
       "description_one": "Are you sure you want to delete {{count}} group? {{names}}. Profiles will be moved to Default.",
       "confirmButton": "Delete groups"
     }
-  },
-  "proxyAssignment": {
-    "title": "Assign Proxy / VPN",
-    "description_one": "Assign a proxy or VPN to {{count}} selected profile.",
-    "description_other": "Assign a proxy or VPN to {{count}} selected profiles.",
-    "selectLabel": "Proxy / VPN",
-    "placeholder": "Select a proxy or VPN",
-    "noProxy": "No proxy / VPN",
-    "searchPlaceholder": "Search proxies or VPNs...",
-    "notFound": "No proxies or VPNs found.",
-    "assignButton": "Assign",
-    "success": "Successfully assigned proxy/VPN to {{count}} profile(s)",
-    "failed": "Failed to assign proxy/VPN",
-    "selectedProfilesLabel": "Selected Profiles:",
-    "assignProxyVpnLabel": "Assign Proxy / VPN:",
-    "noneOption": "None",
-    "noValidProfiles": "No valid profiles selected.",
-    "vpnGroupHeading": "VPNs",
-    "failedFallback": "Failed to assign proxy/VPN to profiles"
-  },
-  "bulkProxyAssignment": {
-    "title": "Bulk Proxy Assignment",
-    "description": "Paste one proxy per line. Line 1 → first selected profile, line 2 → second, etc.",
-    "selectedProfilesLabel": "Selected profiles:",
-    "textareaLabel": "Proxies (one per line)",
-    "textareaPlaceholder": "address:port:user:pass",
-    "helperText": "One proxy per line, in the same order as the selected profiles above.",
-    "applyButton": "Apply to All",
-    "countMismatch": "Mismatch: {{proxyCount}} proxy lines but {{profileCount}} profiles selected.",
-    "invalidLineFormat": "Invalid proxy format: \"{{line}}\". Expected: address:port:user:pass",
-    "invalidPort": "Invalid port in \"{{line}}\". Port must be 1–65535.",
-    "success": "Successfully assigned proxies to {{count}} profile(s).",
-    "failed": "Failed to assign proxies."
   },
   "groupAssignment": {
     "title": "Assign Group",
@@ -1704,9 +1521,7 @@
     "syncTooltipDisabledWithLast": "Sync disabled, last sync {{time}}",
     "addTagsPlaceholder": "Add tags",
     "tagsHeader": "Tags",
-    "noteHeader": "Note",
-    "vpnsHeading": "VPNs",
-    "createByCountryHeading": "Create by country"
+    "noteHeader": "Note"
   },
   "releaseTypeSelector": {
     "noReleaseTypes": "No release types available.",
@@ -1848,23 +1663,14 @@
     "profileLocked": "Profile is locked. Enter the password first.",
     "invalidProfileId": "Invalid profile id",
     "passwordTooShort": "Password must be at least {{min}} characters",
-    "proxyNotFound": "Proxy not found",
-    "groupNotFound": "Group not found",
-    "vpnNotFound": "VPN not found",
     "extensionNotFound": "Extension not found",
     "extensionGroupNotFound": "Extension group not found",
-    "cannotModifyCloudManagedProxy": "Cannot modify sync for a cloud-managed proxy",
-    "syncLockedByProfile": "Sync cannot be disabled while this is used by synced profiles",
-    "syncNotConfigured": "Sync is not configured. Sign in or configure a self-hosted server first.",
     "internal": "Something went wrong: {{detail}}",
     "invalidLaunchHookUrl": "Invalid launch hook URL. Use a full http:// or https:// URL.",
     "cookieDbLocked": "Could not read cookies — the database is locked. Close the browser and try again.",
     "cookieDbUnavailable": "Could not read cookies — the cookie store is unavailable.",
-    "selfHostedRequiresLogout": "Sign out of your Donut account before configuring a self-hosted server.",
-    "fingerprintRequiresPro": "Viewing or editing the fingerprint requires an active paid plan. Protection is included on all plans.",
     "proxyNotWorking": "The selected proxy isn't working, so the profile wasn't created.",
     "proxyPaymentRequired": "The selected proxy requires payment (402) — its subscription may have expired — so the profile wasn't created.",
-    "vpnNotWorking": "The selected VPN isn't working, so the profile wasn't created.",
     "camoufoxImportDeprecated": "Importing Firefox-based (Camoufox) profiles is no longer supported. Camoufox is being deprecated — please use Wayfern instead."
   },
   "rail": {
@@ -1881,8 +1687,7 @@
       "keyboardShortcutsHint": "View all shortcuts"
     },
     "network": "Network",
-    "integrations": "Integrations",
-    "account": "Account"
+    "integrations": "Integrations"
   },
   "pageTitle": {
     "proxies": "Network",
@@ -1891,7 +1696,6 @@
     "vpns": "Network",
     "settings": "Settings",
     "integrations": "Integrations",
-    "account": "Account",
     "import": "Import profile",
     "shortcuts": "Keyboard shortcuts"
   },
@@ -1918,39 +1722,6 @@
       }
     }
   },
-  "account": {
-    "refreshed": "Account refreshed",
-    "loggedOut": "Logged out",
-    "signedOut": "Signed out",
-    "signedOutDescription": "Sign in to enable cloud sync, encrypted profiles, and team features.",
-    "plan": "Plan: {{plan}} · {{period}}",
-    "refresh": "Refresh",
-    "logout": "Sign out",
-    "signIn": "Sign in",
-    "fields": {
-      "plan": "Plan",
-      "status": "Status",
-      "teamRole": "Team role",
-      "period": "Billing period",
-      "device": "Device"
-    },
-    "tabs": {
-      "account": "Account",
-      "selfHosted": "Self-hosted"
-    },
-    "selfHosted": {
-      "title": "Self-hosted sync server",
-      "description": "Point Donut at your own donut-sync server to sync profiles, proxies, groups, and extensions without using the hosted cloud.",
-      "disabledWhileLoggedIn": "Self-hosted sync is unavailable while you're signed into your Donut account. Sign out to use a custom server.",
-      "connectionStatus": "Connection:",
-      "statusUnknown": "Untested",
-      "testConnection": "Test connection",
-      "disconnect": "Disconnect"
-    },
-    "deviceOrdinal": "{{ordinal}} of {{count}}",
-    "automationPrimaryOnly": "Browser automation runs only on your primary device (Device 1). Sign out there to use it here.",
-    "automationActiveHere": "Browser automation is active on this device."
-  },
   "shortcutsPage": {
     "title": "Keyboard shortcuts",
     "description": "Speed up your workflow with these shortcuts."
@@ -1975,11 +1746,9 @@
     "openShortcuts": "View keyboard shortcuts",
     "importProfile": "Import profile",
     "goProfiles": "Go to Profiles",
-    "goProxies": "Go to Network",
     "goExtensions": "Go to Extensions",
     "goGroups": "Go to Groups",
     "goIntegrations": "Go to Integrations",
-    "goAccount": "Go to Account",
     "goSettings": "Go to Settings"
   },
   "closeConfirm": {
@@ -2096,6 +1865,7 @@
     "success": "Created {{count}} profiles successfully.",
     "failed": "Failed to create profiles.",
     "namePattern": "Names: {{prefix}}.01 through {{prefix}}.{{count}}",
-    "proxyCountMatch": "{{count}} proxy line(s) — matches {{count}} profile(s)."
+    "proxyCountMatch": "{{count}} proxy line(s) — matches {{count}} profile(s).",
+    "proxyCountInfo": "{{proxyCount}} proxy line(s) for {{profileCount}} profile(s). Extra proxies ignored, missing proxies left unset."
   }
 }

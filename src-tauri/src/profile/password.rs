@@ -12,8 +12,7 @@ use crate::profile::encryption::{
   has_cached_key, rekey_profile_dir, unlock as unlock_dir, verify_key_against_dir,
 };
 use crate::profile::ProfileManager;
-use crate::sync::encryption::derive_profile_key;
-use crate::sync::manifest::DEFAULT_EXCLUDE_PATTERNS;
+use crate::profile::encryption::derive_profile_key;
 use serde_json::json;
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
@@ -265,7 +264,8 @@ pub async fn set_profile_password(profile_id: String, password: String) -> Resul
   if staging.exists() {
     let _ = std::fs::remove_dir_all(&staging);
   }
-  encrypt_profile_dir(&key, &plaintext_dir, &staging, DEFAULT_EXCLUDE_PATTERNS)
+  // TODO: re-add sync manifest exclude patterns when sync module is restored
+  encrypt_profile_dir(&key, &plaintext_dir, &staging, &[])
     .map_err(err_internal)?;
 
   // Move plaintext aside, swap in encrypted, then delete plaintext.
@@ -292,7 +292,6 @@ pub async fn set_profile_password(profile_id: String, password: String) -> Resul
     .map_err(err_internal)?;
 
   cache_key(id, key);
-  crate::sync::queue_profile_sync_if_eligible(&profile);
   emit_profiles_changed();
   Ok(())
 }
@@ -431,7 +430,6 @@ pub async fn change_profile_password(
 
   drop_cached_key(&id);
   cache_key(id, new_key);
-  crate::sync::queue_profile_sync_if_eligible(&profile);
   emit_profiles_changed();
   Ok(())
 }
@@ -500,7 +498,6 @@ pub async fn remove_profile_password(profile_id: String, password: String) -> Re
     .map_err(err_internal)?;
 
   drop_cached_key(&id);
-  crate::sync::queue_profile_sync_if_eligible(&profile);
   emit_profiles_changed();
   Ok(())
 }
@@ -644,11 +641,12 @@ pub fn complete_after_quit_blocking(
   let encrypted = profile_data_dir(profile);
   let key = get_cached_key(&id)?;
 
+  // TODO: re-add sync manifest exclude patterns when sync module is restored
   let result = match reencrypt_changed_files(
     &key,
     &ephemeral,
     &encrypted,
-    DEFAULT_EXCLUDE_PATTERNS,
+    &[],
     &snapshot,
   ) {
     Ok(n) => {

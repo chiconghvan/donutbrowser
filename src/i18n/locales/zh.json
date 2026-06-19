@@ -218,7 +218,6 @@
       "settings": "设置",
       "proxies": "代理和VPN",
       "groups": "分组",
-      "syncService": "账户",
       "integrations": "集成",
       "importProfile": "导入配置文件",
       "extensions": "扩展程序"
@@ -391,32 +390,11 @@
   "proxies": {
     "title": "代理",
     "management": {
-      "description": "管理代理和 VPN 配置以便在配置文件中重复使用",
-      "tabProxies": "代理",
-      "tabVpns": "VPN",
       "create": "创建",
-      "loading": "正在加载代理...",
-      "noneCreated": "尚未创建代理。使用上方按钮创建第一个代理。",
-      "usage": "使用情况",
       "syncCol": "同步",
-      "syncCannotDisable": "此代理被同步的配置文件使用时无法禁用同步",
-      "enableSync": "启用同步",
-      "disableSync": "禁用同步",
-      "editProxy": "编辑代理",
-      "deleteProxy": "删除代理",
-      "cannotDelete_one": "无法删除: 被 {{count}} 个配置文件使用",
-      "cannotDelete_other": "无法删除: 被 {{count}} 个配置文件使用",
       "syncEnabled": "已启用同步",
       "syncDisabled": "已禁用同步",
-      "updateSyncFailed": "更新同步失败",
-      "deleteSuccess": "代理删除成功",
-      "deleteFailed": "删除代理失败",
-      "deleteTitle": "删除代理",
-      "deleteDescription": "此操作无法撤消。代理「{{name}}」将被永久删除。",
-      "newProxy": "新建代理",
-      "newVpn": "新建 VPN",
-      "protocolCol": "协议",
-      "title": "代理和 VPN"
+      "updateSyncFailed": "更新同步失败"
     },
     "add": "添加代理",
     "edit": "编辑代理",
@@ -581,130 +559,24 @@
   },
   "sync": {
     "mode": {
-      "title": "配置文件同步",
-      "description": "管理 \"{{name}}\" 的同步设置",
       "disabled": "已禁用",
       "regular": "常规同步",
-      "encrypted": "E2E加密同步",
-      "disabledDescription": "此配置文件不同步",
-      "regularDescription": "快速同步，无加密",
-      "encryptedDescription": "上传前加密。服务器永远不会看到明文数据。",
-      "noPasswordWarning": "未设置E2E密码。请在设置中设置密码。",
-      "passwordRequired": "未设置E2E密码。请先在设置中设置密码。",
-      "enabledToast": "同步已启用",
-      "disabledToast": "同步已禁用",
-      "syncQueued": "同步已排队",
-      "syncNow": "立即同步",
-      "lastSynced": "上次同步",
-      "notConfigured": "同步服务未配置。",
-      "configureService": "配置同步服务"
-    },
-    "title": "同步服务",
-    "config": {
-      "serverUrlRequired": "请输入服务器 URL",
-      "connectionSuccess": "连接成功!",
-      "serverError": "服务器返回了错误",
-      "connectFailed": "连接服务器失败",
-      "settingsSaved": "同步设置已保存",
-      "saveFailed": "保存设置失败",
-      "disconnected": "已断开同步",
-      "disconnectFailed": "断开连接失败"
-    },
-    "serverUrl": "服务器 URL",
-    "serverUrlPlaceholder": "https://sync.example.com",
-    "token": "同步令牌",
-    "tokenPlaceholder": "输入您的同步令牌",
-    "status": {
-      "connected": "已连接",
-      "disconnected": "已断开",
-      "syncing": "同步中...",
-      "error": "同步错误"
-    },
-    "description": "连接到同步服务器以在设备之间同步您的配置文件、代理和分组。",
-    "cloud": {
-      "tabLabel": "云端",
-      "selfHostedTabLabel": "自托管",
-      "email": "电子邮件",
-      "deviceLinkInstructions": "点击\"登录\"以在浏览器中打开登录页面。登录后复制显示的代码并粘贴到下方。",
-      "openLogin": "登录",
-      "linkCodeLabel": "登录代码",
-      "linkCodePlaceholder": "粘贴网站的代码",
-      "signInTitle": "登录",
-      "verifyAndLogin": "验证并登录",
-      "loggingIn": "登录中...",
-      "connected": "已连接",
-      "plan": "套餐",
-      "profiles": "配置文件",
-      "profileUsage": "{{used}} / {{limit}}",
-      "manageAccount": "管理账户",
-      "logout": "退出登录",
-      "logoutConfirm": "您确定要退出登录吗？云同步将会停止。",
-      "loginSuccess": "登录成功！",
-      "logoutSuccess": "已成功退出登录。"
+      "encrypted": "E2E加密同步"
     },
     "team": {
       "title": "团队",
-      "name": "团队名称",
-      "role": "角色",
-      "roleOwner": "所有者",
-      "roleAdmin": "管理员",
-      "roleMember": "成员",
-      "manageOnWeb": "在网页控制台管理团队",
       "profileLocked": "{{email}} 正在使用中",
-      "profileLockedShort": "使用中",
       "cannotLaunchLocked": "无法启动 — 配置文件正被 {{email}} 使用",
       "createdBy": "由 {{email}} 创建"
     },
-    "disabled": "已禁用",
     "toast": {
       "profileSynced": "配置文件 '{{name}}' 同步成功",
       "profileSyncFailed": "同步配置文件 '{{name}}' 失败",
       "profileSyncFailedWithError": "同步配置文件 '{{name}}' 失败: {{error}}"
-    },
-    "enabledToast": "已启用同步",
-    "disabledToast": "已禁用同步",
-    "enabledDescription": "已启用配置文件同步",
-    "disabledDescription": "已禁用配置文件同步"
+    }
   },
   "integrations": {
     "title": "集成",
-    "api": {
-      "title": "本地 API",
-      "description": "启用本地 API 服务器以进行外部集成。",
-      "enabled": "API 已启用",
-      "disabled": "API 已禁用",
-      "port": "端口",
-      "token": "API 令牌",
-      "copyToken": "复制令牌",
-      "regenerateToken": "重新生成令牌"
-    },
-    "mcp": {
-      "title": "MCP 服务器",
-      "description": "启用 MCP（模型上下文协议）服务器以与 AI 助手集成。",
-      "enabled": "MCP 已启用",
-      "disabled": "MCP 已禁用",
-      "port": "端口",
-      "token": "认证令牌",
-      "tokenCopied": "令牌已复制",
-      "url": "MCP 服务器 URL",
-      "urlCopied": "URL 已复制",
-      "config": "MCP 配置",
-      "copyConfig": "复制配置",
-      "clientsLabel": "客户端",
-      "connected": "已连接",
-      "add": "添加",
-      "addedToClient": "已添加到 {{name}}",
-      "removedFromClient": "已从 {{name}} 移除",
-      "removeAriaLabel": "从 {{name}} 移除",
-      "category": {
-        "desktopApp": "桌面应用",
-        "cli": "CLI",
-        "editor": "编辑器",
-        "editorExt": "编辑器扩展"
-      }
-    },
-    "tabApi": "本地 API",
-    "tabMcp": "MCP (AI 助手)",
     "apiEnableLabel": "启用本地 API 服务器",
     "apiEnableDescription": "允许通过 REST API 管理配置文件、分组和代理。",
     "apiPortLabel": "端口",
@@ -720,13 +592,6 @@
     "apiToggleFailed": "切换 API 服务器失败",
     "apiStartFailed": "启动 API 服务器失败",
     "apiUnknownError": "未知错误",
-    "tokenCopied": "令牌已复制",
-    "mcpEnableLabel": "启用 MCP 服务器 (Model Context Protocol)",
-    "mcpEnableDescription": "允许 Claude Desktop 等 AI 助手控制浏览器。",
-    "mcpAcceptTermsFirst": "(请先在设置中接受 Wayfern 条款)",
-    "mcpStarted": "MCP 服务器已在端口 {{port}} 上启动",
-    "mcpStopped": "MCP 服务器已停止",
-    "mcpToggleFailed": "切换 MCP 服务器失败",
     "openSettings": "打开集成设置",
     "apiRunningOn": "运行于",
     "apiExampleRequest": "示例请求"
@@ -1119,9 +984,7 @@
     }
   },
   "crossOs": {
-    "viewOnly": "此配置文件在 {{os}} 上创建，不受此系统支持",
-    "cannotLaunch": "此配置文件在 {{os}} 上创建，不受此系统支持",
-    "cannotModify": "无法修改跨操作系统配置文件的同步设置"
+    "viewOnly": "此配置文件在 {{os}} 上创建，不受此系统支持"
   },
   "profileInfo": {
     "title": "配置文件详情",
@@ -1391,19 +1254,6 @@
       "doneButton": "完成",
       "failedGeneric": "导入 VPN 配置失败",
       "defaultName": "{{type}} VPN"
-    },
-    "management": {
-      "loading": "正在加载 VPN...",
-      "noneCreated": "尚未创建 VPN 配置。使用上方按钮导入或创建一个。",
-      "editVpn": "编辑 VPN",
-      "deleteVpn": "删除 VPN",
-      "cannotDelete_one": "无法删除: 被 {{count}} 个配置文件使用",
-      "cannotDelete_other": "无法删除: 被 {{count}} 个配置文件使用",
-      "syncCannotDisable": "此 VPN 被同步的配置文件使用时无法禁用同步",
-      "deleteSuccess": "VPN 删除成功",
-      "deleteFailed": "删除 VPN 失败",
-      "deleteTitle": "删除 VPN",
-      "deleteDescription": "此操作无法撤消。VPN「{{name}}」将被永久删除。"
     }
   },
   "importProfile": {
@@ -1475,39 +1325,6 @@
       "description_one": "确定要删除 {{count}} 个分组吗？{{names}}。配置文件将被移至默认分组。",
       "confirmButton": "删除分组"
     }
-  },
-  "proxyAssignment": {
-    "title": "分配代理 / VPN",
-    "description_one": "为 {{count}} 个选定的配置文件分配代理或 VPN。",
-    "description_other": "为 {{count}} 个选定的配置文件分配代理或 VPN。",
-    "selectLabel": "代理 / VPN",
-    "placeholder": "选择代理或 VPN",
-    "noProxy": "无代理 / VPN",
-    "searchPlaceholder": "搜索代理或 VPN...",
-    "notFound": "未找到代理或 VPN。",
-    "assignButton": "分配",
-    "success": "已成功为 {{count}} 个配置文件分配代理/VPN",
-    "failed": "分配代理/VPN 失败",
-    "selectedProfilesLabel": "选定的配置文件:",
-    "assignProxyVpnLabel": "分配代理 / VPN:",
-    "noneOption": "无",
-    "noValidProfiles": "未选择有效的配置文件。",
-    "vpnGroupHeading": "VPN",
-    "failedFallback": "为配置文件分配代理/VPN 失败"
-  },
-  "bulkProxyAssignment": {
-    "title": "批量代理分配",
-    "description": "每行粘贴一个代理。第1行→第一个选中的配置文件，第2行→第二个，以此类推。",
-    "selectedProfilesLabel": "选中的配置文件：",
-    "textareaLabel": "代理（每行一个）",
-    "textareaPlaceholder": "address:port:user:pass",
-    "helperText": "每行一个代理，顺序与上方选中的配置文件一致。",
-    "applyButton": "全部应用",
-    "countMismatch": "不匹配：{{proxyCount}} 行代理，但选中了 {{profileCount}} 个配置文件。",
-    "invalidLineFormat": "无效的代理格式：\"{{line}}\"。期望格式：address:port:user:pass",
-    "invalidPort": "「{{line}}」中的端口无效。端口必须为 1–65535。",
-    "success": "已成功为 {{count}} 个配置文件分配代理。",
-    "failed": "分配代理失败。"
   },
   "groupAssignment": {
     "title": "分配分组",
@@ -1703,9 +1520,7 @@
     "syncTooltipDisabledWithLast": "同步已禁用,上次同步 {{time}}",
     "addTagsPlaceholder": "添加标签",
     "tagsHeader": "标签",
-    "noteHeader": "备注",
-    "vpnsHeading": "VPN",
-    "createByCountryHeading": "按国家创建"
+    "noteHeader": "备注"
   },
   "releaseTypeSelector": {
     "noReleaseTypes": "没有可用的发布类型。",
@@ -1847,23 +1662,14 @@
     "profileLocked": "配置文件已锁定。请先输入密码。",
     "invalidProfileId": "配置文件 ID 无效",
     "passwordTooShort": "密码至少需要 {{min}} 个字符",
-    "proxyNotFound": "未找到代理",
-    "groupNotFound": "未找到分组",
-    "vpnNotFound": "未找到 VPN",
     "extensionNotFound": "未找到扩展",
     "extensionGroupNotFound": "未找到扩展分组",
-    "cannotModifyCloudManagedProxy": "无法修改云管理代理的同步",
-    "syncLockedByProfile": "在被已同步的配置文件使用时无法禁用同步",
-    "syncNotConfigured": "同步未配置。请先登录或配置自托管服务器。",
     "internal": "出现问题:{{detail}}",
     "invalidLaunchHookUrl": "启动钩子 URL 无效。请使用完整的 http:// 或 https:// URL。",
     "cookieDbLocked": "无法读取 Cookie — 数据库已锁定。请关闭浏览器后重试。",
     "cookieDbUnavailable": "无法读取 Cookie — Cookie 存储不可用。",
-    "selfHostedRequiresLogout": "在配置自托管服务器之前请先退出 Donut 账户。",
-    "fingerprintRequiresPro": "查看或编辑指纹需要有效的付费方案。所有方案均包含指纹保护。",
     "proxyNotWorking": "所选代理无法使用，因此未创建配置文件。",
     "proxyPaymentRequired": "所选代理需要付费（402），其订阅可能已过期，因此未创建配置文件。",
-    "vpnNotWorking": "所选 VPN 无法使用，因此未创建配置文件。",
     "camoufoxImportDeprecated": "不再支持导入基于 Firefox 的 (Camoufox) 配置文件。Camoufox 即将停用——请改用 Wayfern。"
   },
   "rail": {
@@ -1880,8 +1686,7 @@
       "keyboardShortcutsHint": "查看所有快捷键"
     },
     "network": "网络",
-    "integrations": "集成",
-    "account": "账号"
+    "integrations": "集成"
   },
   "pageTitle": {
     "proxies": "网络",
@@ -1890,7 +1695,6 @@
     "vpns": "网络",
     "settings": "设置",
     "integrations": "集成",
-    "account": "账户",
     "import": "导入配置文件",
     "shortcuts": "键盘快捷键"
   },
@@ -1917,39 +1721,6 @@
       }
     }
   },
-  "account": {
-    "refreshed": "账户已刷新",
-    "loggedOut": "已退出",
-    "signedOut": "未登录",
-    "signedOutDescription": "登录以启用云同步、加密配置文件和团队功能。",
-    "plan": "套餐：{{plan}} · {{period}}",
-    "refresh": "刷新",
-    "logout": "退出",
-    "signIn": "登录",
-    "fields": {
-      "plan": "套餐",
-      "status": "状态",
-      "teamRole": "团队角色",
-      "period": "计费周期",
-      "device": "设备"
-    },
-    "tabs": {
-      "account": "账户",
-      "selfHosted": "自托管"
-    },
-    "selfHosted": {
-      "title": "自托管同步服务器",
-      "description": "将 Donut 连接到您自己的 donut-sync 服务器，无需使用托管云即可同步配置文件、代理、组和扩展程序。",
-      "disabledWhileLoggedIn": "登录 Donut 账户时无法使用自托管同步。请先退出登录以使用自定义服务器。",
-      "connectionStatus": "连接：",
-      "statusUnknown": "未测试",
-      "testConnection": "测试连接",
-      "disconnect": "断开连接"
-    },
-    "deviceOrdinal": "第 {{ordinal}} 台，共 {{count}} 台",
-    "automationPrimaryOnly": "浏览器自动化仅在您的主设备（设备 1）上运行。请在该设备上退出登录，才能在此设备上使用。",
-    "automationActiveHere": "浏览器自动化已在此设备上启用。"
-  },
   "shortcutsPage": {
     "title": "键盘快捷键",
     "description": "使用这些快捷键加速您的工作流程。"
@@ -1974,11 +1745,9 @@
     "openShortcuts": "查看键盘快捷键",
     "importProfile": "导入配置文件",
     "goProfiles": "转到配置文件",
-    "goProxies": "转到网络",
     "goExtensions": "转到扩展程序",
     "goGroups": "转到分组",
     "goIntegrations": "转到集成",
-    "goAccount": "转到账户",
     "goSettings": "转到设置"
   },
   "closeConfirm": {
@@ -2095,6 +1864,7 @@
     "success": "Created {{count}} profiles successfully.",
     "failed": "Failed to create profiles.",
     "namePattern": "Names: {{prefix}}.01 through {{prefix}}.{{count}}",
-    "proxyCountMatch": "{{count}} proxy line(s) — matches {{count}} profile(s)."
+    "proxyCountMatch": "{{count}} proxy line(s) — matches {{count}} profile(s).",
+    "proxyCountInfo": "{{proxyCount}} proxy line(s) for {{profileCount}} profile(s). Extra proxies ignored, missing proxies left unset."
   }
 }

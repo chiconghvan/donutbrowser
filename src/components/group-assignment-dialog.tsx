@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { BrowserProfile, ProfileGroup } from "@/types";
+import type { ProfileGroup } from "@/types";
 import { RippleButton } from "./ui/ripple";
 
 interface GroupAssignmentDialogProps {
@@ -31,7 +31,6 @@ interface GroupAssignmentDialogProps {
   onClose: () => void;
   selectedProfiles: string[];
   onAssignmentComplete: () => void;
-  profiles?: BrowserProfile[];
 }
 
 export function GroupAssignmentDialog({
@@ -39,7 +38,6 @@ export function GroupAssignmentDialog({
   onClose,
   selectedProfiles,
   onAssignmentComplete,
-  profiles = [],
 }: GroupAssignmentDialogProps) {
   const { t } = useTranslation();
   const [groups, setGroups] = useState<ProfileGroup[]>([]);
@@ -132,26 +130,6 @@ export function GroupAssignmentDialog({
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="space-y-2">
-            <Label>{t("groupAssignment.selectedProfilesLabel")}</Label>
-            <div className="p-3 bg-muted rounded-md max-h-32 overflow-y-auto">
-              <ul className="text-sm space-y-1">
-                {selectedProfiles.map((profileId) => {
-                  // Find the profile name for display
-                  const profile = profiles.find(
-                    (p: BrowserProfile) => p.id === profileId,
-                  );
-                  const displayName = profile ? profile.name : profileId;
-                  return (
-                    <li key={profileId} className="truncate">
-                      • {displayName}
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          </div>
-
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <Label htmlFor="group-select">

@@ -3,29 +3,18 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FaDownload } from "react-icons/fa";
-import { FiWifi } from "react-icons/fi";
 import { GoGear, GoKebabHorizontal } from "react-icons/go";
-import {
-  LuCloud,
-  LuKeyboard,
-  LuPlug,
-  LuPuzzle,
-  LuUser,
-  LuUsers,
-} from "react-icons/lu";
+import { LuKeyboard, LuPlug, LuPuzzle, LuUser, LuUsers } from "react-icons/lu";
 import { cn } from "@/lib/utils";
 import { Logo } from "./icons/logo";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 export type AppPage =
   | "profiles"
-  | "proxies"
   | "extensions"
   | "groups"
-  | "vpns"
   | "settings"
   | "integrations"
-  | "account"
   | "import"
   | "shortcuts";
 
@@ -244,11 +233,9 @@ interface RailItem {
 
 const TOP_ITEMS: RailItem[] = [
   { page: "profiles", Icon: LuUser, labelKey: "rail.profiles" },
-  { page: "proxies", Icon: FiWifi, labelKey: "rail.network" },
   { page: "extensions", Icon: LuPuzzle, labelKey: "rail.extensions" },
   { page: "groups", Icon: LuUsers, labelKey: "rail.groups" },
   { page: "integrations", Icon: LuPlug, labelKey: "rail.integrations" },
-  { page: "account", Icon: LuCloud, labelKey: "rail.account" },
 ];
 
 interface MoreMenuItem {

@@ -20,7 +20,73 @@ use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 use std::time::SystemTime;
 
-use crate::sync::encryption::{decrypt_bytes, derive_profile_key, encrypt_bytes, generate_salt};
+use aes_gcm::{
+  aead::{Aead, KeyInit},
+  Aes256Gcm, Nonce,
+};
+use rand::RngExt;
+
+/// Derive a 256-bit profile key from a password and salt using HKDF-SHA256.
+pub fn derive_profile_key(
+  password: &str,
+  salt: &str,
+) -> Result<[u8; 32], PasswordError> {
+  let salt_obj = ring::hkdf::Salt::new(ring::hkdf::HKDF_SHA256, salt.as_bytes());
+  let prk = salt_obj.extract(password.as_bytes());
+  let info = b"donut-profile-key-v1";
+  let mut output = [0u8; 32];
+  prk.expand(&[info.as_ref()], ring::hkdf::HKDF_SHA256)
+    .map_err(|_| PasswordError::Encryption("HKDF expand failed".into()))?
+    .fill(&mut output)
+    .map_err(|_| PasswordError::Encryption("HKDF fill failed".into()))?;
+  Ok(output)
+}
+
+/// Generate a random base64 salt string.
+pub fn generate_salt() -> String {
+  let mut bytes = [0u8; 16];
+  rand::rng().fill(&mut bytes);
+  base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(bytes)
+}
+
+/// Encrypt bytes using AES-256-GCM with a random 12-byte nonce prepended.
+pub fn encrypt_bytes(
+  key: &[u8; 32],
+  plaintext: &[u8],
+) -> Result<Vec<u8>, String> {
+  let cipher =
+    Aes256Gcm::new_from_slice(key).map_err(|e| format!("AES-GCM key error: {e}"))?;
+  let mut nonce_bytes = [0u8; 12];
+  rand::rng().fill(&mut nonce_bytes);
+  let nonce = Nonce::from_slice(&nonce_bytes);
+
+  let ciphertext = cipher
+    .encrypt(nonce, plaintext)
+    .map_err(|e| format!("AES-GCM encrypt error: {e}"))?;
+
+  let mut output = Vec::with_capacity(12 + ciphertext.len());
+  output.extend_from_slice(&nonce_bytes);
+  output.extend_from_slice(&ciphertext);
+  Ok(output)
+}
+
+/// Decrypt bytes using AES-256-GCM (nonce is the first 12 bytes).
+pub fn decrypt_bytes(
+  key: &[u8; 32],
+  ciphertext: &[u8],
+) -> Result<Vec<u8>, String> {
+  if ciphertext.len() < 12 {
+    return Err("ciphertext too short".into());
+  }
+
+  let cipher =
+    Aes256Gcm::new_from_slice(key).map_err(|e| format!("AES-GCM key error: {e}"))?;
+  let nonce = Nonce::from_slice(&ciphertext[..12]);
+
+  cipher
+    .decrypt(nonce, &ciphertext[12..])
+    .map_err(|e| format!("AES-GCM decrypt error: {e}"))
+}
 
 /// Length of the on-disk HMAC filename in chars.
 const HMAC_FILENAME_LEN: usize = 32;
@@ -396,7 +462,7 @@ pub fn unlock(
   salt: &str,
   encrypted_dir: &Path,
 ) -> PasswordResult<()> {
-  let key = derive_profile_key(password, salt).map_err(PasswordError::Encryption)?;
+  let key = derive_profile_key(password, salt)?;
   verify_key_against_dir(&key, encrypted_dir)?;
   cache_key(profile_id, key);
   Ok(())

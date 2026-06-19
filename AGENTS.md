@@ -9,7 +9,8 @@
 donutbrowser/
 ├── src/                              # Next.js frontend
 │   ├── app/                          # App router (page.tsx, layout.tsx)
-│   ├── components/                   # 50+ React components (dialogs, tables, UI)
+│   ├── components/                   # 55+ React components (dialogs, tables, UI)
+│   │   ├── bulk-create-profile-dialog.tsx  # Bulk profile creation (browser selection + count/proxy form)
 │   ├── hooks/                        # Event-driven React hooks
 │   ├── i18n/locales/                 # Translations (en, es, fr, ja, ko, pt, ru, vi, zh)
 │   ├── lib/                          # Utilities (themes, toast, browser-utils)

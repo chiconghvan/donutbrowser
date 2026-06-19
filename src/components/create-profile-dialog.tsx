@@ -28,7 +28,6 @@ import {
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { WayfernConfigForm } from "@/components/wayfern-config-form";
 import { useBrowserDownload } from "@/hooks/use-browser-download";
-import { useVpnEvents } from "@/hooks/use-vpn-events";
 import { getBrowserIcon } from "@/lib/browser-utils";
 import type {
   BrowserReleaseTypes,
@@ -148,7 +147,6 @@ export function CreateProfileDialog({
   };
 
   const [supportedBrowsers, setSupportedBrowsers] = useState<string[]>([]);
-  const { vpnConfigs } = useVpnEvents();
   const [isCreating, setIsCreating] = useState(false);
   const [ephemeral, setEphemeral] = useState(false);
   const [enablePassword, setEnablePassword] = useState(false);

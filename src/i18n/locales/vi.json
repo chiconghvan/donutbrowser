@@ -218,7 +218,6 @@
       "settings": "Cài đặt",
       "proxies": "Proxy & VPN",
       "groups": "Nhóm",
-      "syncService": "Tài khoản",
       "integrations": "Tích hợp",
       "importProfile": "Nhập hồ sơ",
       "extensions": "Tiện ích mở rộng"
@@ -391,32 +390,11 @@
   "proxies": {
     "title": "Proxy",
     "management": {
-      "description": "Quản lý cấu hình proxy và VPN để tái sử dụng giữa các hồ sơ",
-      "tabProxies": "Proxy",
-      "tabVpns": "VPN",
       "create": "Tạo",
-      "loading": "Đang tải proxy...",
-      "noneCreated": "Chưa có proxy nào. Tạo proxy đầu tiên bằng nút phía trên.",
-      "usage": "Sử dụng",
       "syncCol": "Đồng bộ",
-      "syncCannotDisable": "Không thể tắt đồng bộ khi proxy này đang được sử dụng bởi các hồ sơ đã đồng bộ",
-      "enableSync": "Bật đồng bộ",
-      "disableSync": "Tắt đồng bộ",
-      "editProxy": "Chỉnh sửa proxy",
-      "deleteProxy": "Xóa proxy",
-      "cannotDelete_one": "Không thể xóa: đang được {{count}} hồ sơ sử dụng",
-      "cannotDelete_other": "Không thể xóa: đang được {{count}} hồ sơ sử dụng",
       "syncEnabled": "Đã bật đồng bộ",
       "syncDisabled": "Đã tắt đồng bộ",
-      "updateSyncFailed": "Cập nhật đồng bộ thất bại",
-      "deleteSuccess": "Đã xóa proxy thành công",
-      "deleteFailed": "Xóa proxy thất bại",
-      "deleteTitle": "Xóa proxy",
-      "deleteDescription": "Hành động này không thể hoàn tác. Thao tác này sẽ xóa vĩnh viễn proxy \"{{name}}\".",
-      "newProxy": "Proxy mới",
-      "newVpn": "VPN mới",
-      "protocolCol": "Giao thức",
-      "title": "Proxy & VPN"
+      "updateSyncFailed": "Cập nhật đồng bộ thất bại"
     },
     "add": "Thêm Proxy",
     "edit": "Chỉnh sửa Proxy",
@@ -581,130 +559,24 @@
   },
   "sync": {
     "mode": {
-      "title": "Đồng bộ profile",
-      "description": "Quản lý cài đặt đồng bộ cho \"{{name}}\"",
       "disabled": "Tắt",
       "regular": "Đồng bộ thường",
-      "encrypted": "Đồng bộ mã hóa E2E",
-      "disabledDescription": "Không đồng bộ profile này",
-      "regularDescription": "Đồng bộ nhanh, không mã hóa",
-      "encryptedDescription": "Mã hóa trước khi tải lên. Máy chủ không bao giờ thấy dữ liệu dạng văn bản thuần.",
-      "noPasswordWarning": "Chưa đặt mật khẩu E2E. Vui lòng đặt mật khẩu trong Cài đặt.",
-      "passwordRequired": "Chưa đặt mật khẩu E2E. Vui lòng đặt mật khẩu trong Cài đặt trước.",
-      "enabledToast": "Đã bật đồng bộ",
-      "disabledToast": "Đã tắt đồng bộ",
-      "syncQueued": "Đã đưa đồng bộ vào hàng đợi",
-      "syncNow": "Đồng bộ ngay",
-      "lastSynced": "Lần đồng bộ cuối",
-      "notConfigured": "Chưa cấu hình dịch vụ đồng bộ.",
-      "configureService": "Cấu hình dịch vụ đồng bộ"
-    },
-    "title": "Tài khoản",
-    "config": {
-      "serverUrlRequired": "Vui lòng nhập URL máy chủ",
-      "connectionSuccess": "Kết nối thành công!",
-      "serverError": "Máy chủ trả về lỗi",
-      "connectFailed": "Kết nối máy chủ thất bại",
-      "settingsSaved": "Đã lưu cài đặt đồng bộ",
-      "saveFailed": "Lưu cài đặt thất bại",
-      "disconnected": "Đã ngắt kết nối đồng bộ",
-      "disconnectFailed": "Ngắt kết nối thất bại"
-    },
-    "serverUrl": "URL máy chủ",
-    "serverUrlPlaceholder": "https://sync.example.com",
-    "token": "Token đồng bộ",
-    "tokenPlaceholder": "Nhập token đồng bộ của bạn",
-    "status": {
-      "connected": "Đã kết nối",
-      "disconnected": "Đã ngắt kết nối",
-      "syncing": "Đang đồng bộ...",
-      "error": "Lỗi đồng bộ"
-    },
-    "description": "Kết nối với máy chủ đồng bộ để đồng bộ profile, proxy và nhóm giữa các thiết bị.",
-    "cloud": {
-      "tabLabel": "Đám mây",
-      "selfHostedTabLabel": "Tự lưu trữ",
-      "email": "Email",
-      "deviceLinkInstructions": "Nhấn \"Đăng nhập\" để mở trang đăng nhập trong trình duyệt. Sau khi đăng nhập, sao chép mã hiển thị và dán vào bên dưới.",
-      "openLogin": "Đăng nhập",
-      "linkCodeLabel": "Mã đăng nhập",
-      "linkCodePlaceholder": "Dán mã từ trang web",
-      "signInTitle": "Đăng nhập",
-      "verifyAndLogin": "Xác minh và đăng nhập",
-      "loggingIn": "Đang đăng nhập...",
-      "connected": "Đã kết nối",
-      "plan": "Gói",
-      "profiles": "Profile",
-      "profileUsage": "{{used}} / {{limit}}",
-      "manageAccount": "Quản lý tài khoản",
-      "logout": "Đăng xuất",
-      "logoutConfirm": "Bạn có chắc muốn đăng xuất? Đồng bộ đám mây sẽ dừng lại.",
-      "loginSuccess": "Đăng nhập thành công!",
-      "logoutSuccess": "Đăng xuất thành công."
+      "encrypted": "Đồng bộ mã hóa E2E"
     },
     "team": {
       "title": "Nhóm",
-      "name": "Tên nhóm",
-      "role": "Vai trò",
-      "roleOwner": "Chủ sở hữu",
-      "roleAdmin": "Quản trị viên",
-      "roleMember": "Thành viên",
-      "manageOnWeb": "Quản lý nhóm trên bảng điều khiển web",
       "profileLocked": "Đang được sử dụng bởi {{email}}",
-      "profileLockedShort": "Đang sử dụng",
       "cannotLaunchLocked": "Không thể khởi chạy — profile đang được sử dụng bởi {{email}}",
       "createdBy": "Được tạo bởi {{email}}"
     },
-    "disabled": "Tắt",
     "toast": {
       "profileSynced": "Đã đồng bộ profile '{{name}}' thành công",
       "profileSyncFailed": "Đồng bộ profile '{{name}}' thất bại",
       "profileSyncFailedWithError": "Đồng bộ profile '{{name}}' thất bại: {{error}}"
-    },
-    "enabledToast": "Đã bật đồng bộ",
-    "disabledToast": "Đã tắt đồng bộ",
-    "enabledDescription": "Đồng bộ profile đã được bật",
-    "disabledDescription": "Đồng bộ profile đã được tắt"
+    }
   },
   "integrations": {
     "title": "Tích hợp",
-    "api": {
-      "title": "API cục bộ",
-      "description": "Bật máy chủ API cục bộ để tích hợp bên ngoài.",
-      "enabled": "Đã bật API",
-      "disabled": "Đã tắt API",
-      "port": "Cổng",
-      "token": "Token API",
-      "copyToken": "Sao chép token",
-      "regenerateToken": "Tạo lại token"
-    },
-    "mcp": {
-      "title": "Máy chủ MCP",
-      "description": "Bật máy chủ MCP (Model Context Protocol) để tích hợp trợ lý AI.",
-      "enabled": "Đã bật MCP",
-      "disabled": "Đã tắt MCP",
-      "port": "Cổng",
-      "token": "Token xác thực",
-      "tokenCopied": "Đã sao chép token",
-      "url": "URL máy chủ MCP",
-      "urlCopied": "Đã sao chép URL",
-      "config": "Cấu hình MCP",
-      "copyConfig": "Sao chép cấu hình",
-      "clientsLabel": "Ứng dụng khách",
-      "connected": "Đã kết nối",
-      "add": "Thêm",
-      "addedToClient": "Đã thêm vào {{name}}",
-      "removedFromClient": "Đã xóa khỏi {{name}}",
-      "removeAriaLabel": "Xóa khỏi {{name}}",
-      "category": {
-        "desktopApp": "Ứng dụng desktop",
-        "cli": "CLI",
-        "editor": "Trình soạn thảo",
-        "editorExt": "Tiện ích editor"
-      }
-    },
-    "tabApi": "API cục bộ",
-    "tabMcp": "MCP (Trợ lý AI)",
     "apiEnableLabel": "Bật máy chủ API cục bộ",
     "apiEnableDescription": "Cho phép quản lý profile, nhóm và proxy qua REST API.",
     "apiPortLabel": "Cổng",
@@ -720,13 +592,6 @@
     "apiToggleFailed": "Bật/tắt máy chủ API thất bại",
     "apiStartFailed": "Khởi động máy chủ API thất bại",
     "apiUnknownError": "Lỗi không xác định",
-    "tokenCopied": "Đã sao chép token",
-    "mcpEnableLabel": "Bật máy chủ MCP (Model Context Protocol)",
-    "mcpEnableDescription": "Cho phép trợ lý AI như Claude Desktop điều khiển trình duyệt.",
-    "mcpAcceptTermsFirst": "(Chấp nhận điều khoản Wayfern trong Cài đặt trước)",
-    "mcpStarted": "Máy chủ MCP đã khởi động trên cổng {{port}}",
-    "mcpStopped": "Máy chủ MCP đã dừng",
-    "mcpToggleFailed": "Bật/tắt máy chủ MCP thất bại",
     "openSettings": "Mở cài đặt tích hợp",
     "apiRunningOn": "Đang chạy trên",
     "apiExampleRequest": "Ví dụ yêu cầu"
@@ -1119,9 +984,7 @@
     }
   },
   "crossOs": {
-    "viewOnly": "Profile này được tạo trên {{os}} và không được hỗ trợ trên hệ thống này",
-    "cannotLaunch": "Profile này được tạo trên {{os}} và không được hỗ trợ trên hệ thống này",
-    "cannotModify": "Không thể chỉnh sửa cài đặt đồng bộ cho profile đa hệ điều hành"
+    "viewOnly": "Profile này được tạo trên {{os}} và không được hỗ trợ trên hệ thống này"
   },
   "profileInfo": {
     "title": "Chi tiết profile",
@@ -1391,19 +1254,6 @@
       "doneButton": "Xong",
       "failedGeneric": "Nhập cấu hình VPN thất bại",
       "defaultName": "VPN {{type}}"
-    },
-    "management": {
-      "loading": "Đang tải VPN...",
-      "noneCreated": "Chưa tạo cấu hình VPN nào. Nhập hoặc tạo một VPN bằng các nút phía trên.",
-      "editVpn": "Chỉnh sửa VPN",
-      "deleteVpn": "Xóa VPN",
-      "cannotDelete_one": "Không thể xóa: đang được sử dụng bởi {{count}} profile",
-      "cannotDelete_other": "Không thể xóa: đang được sử dụng bởi {{count}} profile",
-      "syncCannotDisable": "Không thể tắt đồng bộ khi VPN này được sử dụng bởi profile đã đồng bộ",
-      "deleteSuccess": "Xóa VPN thành công",
-      "deleteFailed": "Xóa VPN thất bại",
-      "deleteTitle": "Xóa VPN",
-      "deleteDescription": "Hành động này không thể hoàn tác. VPN \"{{name}}\" sẽ bị xóa vĩnh viễn."
     }
   },
   "importProfile": {
@@ -1475,39 +1325,6 @@
       "description_one": "Bạn có chắc muốn xóa {{count}} nhóm? {{names}}. Profile sẽ được chuyển về Mặc định.",
       "confirmButton": "Xóa nhóm"
     }
-  },
-  "proxyAssignment": {
-    "title": "Gán proxy / VPN",
-    "description_one": "Gán proxy hoặc VPN cho {{count}} profile đã chọn.",
-    "description_other": "Gán proxy hoặc VPN cho {{count}} profile đã chọn.",
-    "selectLabel": "Proxy / VPN",
-    "placeholder": "Chọn proxy hoặc VPN",
-    "noProxy": "Không có proxy / VPN",
-    "searchPlaceholder": "Tìm kiếm proxy hoặc VPN...",
-    "notFound": "Không tìm thấy proxy hoặc VPN nào.",
-    "assignButton": "Gán",
-    "success": "Đã gán proxy/VPN thành công cho {{count}} profile",
-    "failed": "Gán proxy/VPN thất bại",
-    "selectedProfilesLabel": "Profile đã chọn:",
-    "assignProxyVpnLabel": "Gán Proxy / VPN:",
-    "noneOption": "Không có",
-    "noValidProfiles": "Chưa chọn profile hợp lệ nào.",
-    "vpnGroupHeading": "VPN",
-    "failedFallback": "Gán proxy/VPN cho profile thất bại"
-  },
-  "bulkProxyAssignment": {
-    "title": "Gán Proxy Hàng Loạt",
-    "description": "Dán một proxy trên mỗi dòng. Dòng 1 → profile đầu tiên, dòng 2 → profile thứ hai, v.v.",
-    "selectedProfilesLabel": "Profile đã chọn:",
-    "textareaLabel": "Proxy (một dòng một cái)",
-    "textareaPlaceholder": "address:port:user:pass",
-    "helperText": "Một proxy mỗi dòng, theo đúng thứ tự các profile đã chọn bên trên.",
-    "applyButton": "Áp dụng cho Tất cả",
-    "countMismatch": "Không khớp: {{proxyCount}} dòng proxy nhưng có {{profileCount}} profile được chọn.",
-    "invalidLineFormat": "Định dạng proxy không hợp lệ: \"{{line}}\". Mong đợi: address:port:user:pass",
-    "invalidPort": "Cổng không hợp lệ trong \"{{line}}\". Cổng phải từ 1–65535.",
-    "success": "Đã gán proxy thành công cho {{count}} profile.",
-    "failed": "Gán proxy thất bại."
   },
   "groupAssignment": {
     "title": "Gán nhóm",
@@ -1703,9 +1520,7 @@
     "syncTooltipDisabledWithLast": "Đã tắt đồng bộ, lần đồng bộ cuối {{time}}",
     "addTagsPlaceholder": "Thêm thẻ",
     "tagsHeader": "Thẻ",
-    "noteHeader": "Ghi chú",
-    "vpnsHeading": "VPN",
-    "createByCountryHeading": "Tạo theo quốc gia"
+    "noteHeader": "Ghi chú"
   },
   "releaseTypeSelector": {
     "noReleaseTypes": "Không có loại phát hành nào.",
@@ -1847,23 +1662,14 @@
     "profileLocked": "Profile đã bị khóa. Hãy nhập mật khẩu trước.",
     "invalidProfileId": "ID profile không hợp lệ",
     "passwordTooShort": "Mật khẩu phải có ít nhất {{min}} ký tự",
-    "proxyNotFound": "Không tìm thấy proxy",
-    "groupNotFound": "Không tìm thấy nhóm",
-    "vpnNotFound": "Không tìm thấy VPN",
     "extensionNotFound": "Không tìm thấy tiện ích",
     "extensionGroupNotFound": "Không tìm thấy nhóm tiện ích",
-    "cannotModifyCloudManagedProxy": "Không thể chỉnh sửa đồng bộ cho proxy được quản lý bởi đám mây",
-    "syncLockedByProfile": "Không thể tắt đồng bộ khi đang được sử dụng bởi profile đã đồng bộ",
-    "syncNotConfigured": "Chưa cấu hình đồng bộ. Đăng nhập hoặc cấu hình máy chủ tự lưu trữ trước.",
     "internal": "Đã xảy ra lỗi: {{detail}}",
     "invalidLaunchHookUrl": "URL hook khởi chạy không hợp lệ. Sử dụng URL http:// hoặc https:// đầy đủ.",
     "cookieDbLocked": "Không thể đọc cookie — cơ sở dữ liệu bị khóa. Đóng trình duyệt và thử lại.",
     "cookieDbUnavailable": "Không thể đọc cookie — kho cookie không khả dụng.",
-    "selfHostedRequiresLogout": "Đăng xuất khỏi tài khoản Donut trước khi cấu hình máy chủ tự lưu trữ.",
-    "fingerprintRequiresPro": "Xem hoặc chỉnh sửa vân tay yêu cầu gói trả phí đang hoạt động. Tính năng bảo vệ được bao gồm trong mọi gói.",
     "proxyNotWorking": "Proxy đã chọn không hoạt động, nên profile chưa được tạo.",
     "proxyPaymentRequired": "Proxy đã chọn yêu cầu thanh toán (402) — gói đăng ký của nó có thể đã hết hạn — nên profile chưa được tạo.",
-    "vpnNotWorking": "VPN đã chọn không hoạt động, nên profile chưa được tạo.",
     "camoufoxImportDeprecated": "Không còn hỗ trợ nhập profile dựa trên Firefox (Camoufox). Camoufox đang bị ngừng hỗ trợ — vui lòng dùng Wayfern."
   },
   "rail": {
@@ -1880,8 +1686,7 @@
       "keyboardShortcutsHint": "Xem tất cả phím tắt"
     },
     "network": "Mạng",
-    "integrations": "Tích hợp",
-    "account": "Tài khoản"
+    "integrations": "Tích hợp"
   },
   "pageTitle": {
     "proxies": "Mạng",
@@ -1890,7 +1695,6 @@
     "vpns": "Mạng",
     "settings": "Cài đặt",
     "integrations": "Tích hợp",
-    "account": "Tài khoản",
     "import": "Nhập profile",
     "shortcuts": "Phím tắt"
   },
@@ -1917,39 +1721,6 @@
       }
     }
   },
-  "account": {
-    "refreshed": "Đã làm mới tài khoản",
-    "loggedOut": "Đã đăng xuất",
-    "signedOut": "Đã đăng xuất",
-    "signedOutDescription": "Đăng nhập để bật đồng bộ đám mây, profile mã hóa và tính năng nhóm.",
-    "plan": "Gói: {{plan}} · {{period}}",
-    "refresh": "Làm mới",
-    "logout": "Đăng xuất",
-    "signIn": "Đăng nhập",
-    "fields": {
-      "plan": "Gói",
-      "status": "Trạng thái",
-      "teamRole": "Vai trò nhóm",
-      "period": "Chu kỳ thanh toán",
-      "device": "Thiết bị"
-    },
-    "tabs": {
-      "account": "Tài khoản",
-      "selfHosted": "Tự lưu trữ"
-    },
-    "selfHosted": {
-      "title": "Máy chủ đồng bộ tự lưu trữ",
-      "description": "Trỏ Donut đến máy chủ donut-sync của riêng bạn để đồng bộ profile, proxy, nhóm và tiện ích mà không cần sử dụng đám mây.",
-      "disabledWhileLoggedIn": "Đồng bộ tự lưu trữ không khả dụng khi bạn đã đăng nhập vào tài khoản Donut. Đăng xuất để sử dụng máy chủ tùy chỉnh.",
-      "connectionStatus": "Kết nối:",
-      "statusUnknown": "Chưa kiểm tra",
-      "testConnection": "Kiểm tra kết nối",
-      "disconnect": "Ngắt kết nối"
-    },
-    "deviceOrdinal": "{{ordinal}} trên {{count}}",
-    "automationPrimaryOnly": "Tự động hóa trình duyệt chỉ chạy trên thiết bị chính của bạn (Thiết bị 1). Đăng xuất ở đó để sử dụng tại đây.",
-    "automationActiveHere": "Tự động hóa trình duyệt đang hoạt động trên thiết bị này."
-  },
   "shortcutsPage": {
     "title": "Phím tắt",
     "description": "Tăng tốc quy trình làm việc với các phím tắt này."
@@ -1974,11 +1745,9 @@
     "openShortcuts": "Xem phím tắt",
     "importProfile": "Nhập profile",
     "goProfiles": "Đi đến Profile",
-    "goProxies": "Đi đến Mạng",
     "goExtensions": "Đi đến Tiện ích",
     "goGroups": "Đi đến Nhóm",
     "goIntegrations": "Đi đến Tích hợp",
-    "goAccount": "Đi đến Tài khoản",
     "goSettings": "Đi đến Cài đặt"
   },
   "closeConfirm": {
@@ -2095,6 +1864,7 @@
     "success": "Created {{count}} profiles successfully.",
     "failed": "Failed to create profiles.",
     "namePattern": "Names: {{prefix}}.01 through {{prefix}}.{{count}}",
-    "proxyCountMatch": "{{count}} proxy line(s) — matches {{count}} profile(s)."
+    "proxyCountMatch": "{{count}} proxy line(s) — matches {{count}} profile(s).",
+    "proxyCountInfo": "{{proxyCount}} proxy line(s) for {{profileCount}} profile(s). Extra proxies ignored, missing proxies left unset."
   }
 }

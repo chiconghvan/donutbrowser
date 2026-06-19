@@ -218,7 +218,6 @@
       "settings": "Настройки",
       "proxies": "Прокси и VPN",
       "groups": "Группы",
-      "syncService": "Аккаунт",
       "integrations": "Интеграции",
       "importProfile": "Импорт профиля",
       "extensions": "Расширения"
@@ -391,32 +390,11 @@
   "proxies": {
     "title": "Прокси",
     "management": {
-      "description": "Управляйте конфигурациями прокси и VPN для переиспользования в профилях",
-      "tabProxies": "Прокси",
-      "tabVpns": "VPN",
       "create": "Создать",
-      "loading": "Загрузка прокси...",
-      "noneCreated": "Прокси еще нет. Создайте первый прокси, используя кнопку выше.",
-      "usage": "Использование",
       "syncCol": "Синхронизация",
-      "syncCannotDisable": "Нельзя отключить синхронизацию, пока этот прокси используется синхронизированными профилями",
-      "enableSync": "Включить синхронизацию",
-      "disableSync": "Отключить синхронизацию",
-      "editProxy": "Редактировать прокси",
-      "deleteProxy": "Удалить прокси",
-      "cannotDelete_one": "Невозможно удалить: используется {{count}} профилем",
-      "cannotDelete_other": "Невозможно удалить: используется {{count}} профилями",
       "syncEnabled": "Синхронизация включена",
       "syncDisabled": "Синхронизация отключена",
-      "updateSyncFailed": "Не удалось обновить синхронизацию",
-      "deleteSuccess": "Прокси успешно удален",
-      "deleteFailed": "Не удалось удалить прокси",
-      "deleteTitle": "Удалить прокси",
-      "deleteDescription": "Это действие нельзя отменить. Прокси «{{name}}» будет удален навсегда.",
-      "newProxy": "Новый прокси",
-      "newVpn": "Новый VPN",
-      "protocolCol": "Протокол",
-      "title": "Прокси и VPN"
+      "updateSyncFailed": "Не удалось обновить синхронизацию"
     },
     "add": "Добавить прокси",
     "edit": "Редактировать прокси",
@@ -581,130 +559,24 @@
   },
   "sync": {
     "mode": {
-      "title": "Синхронизация профиля",
-      "description": "Управление настройками синхронизации для \"{{name}}\"",
       "disabled": "Отключено",
       "regular": "Обычная синхронизация",
-      "encrypted": "E2E зашифрованная синхронизация",
-      "disabledDescription": "Без синхронизации для этого профиля",
-      "regularDescription": "Быстрая синхронизация, без шифрования",
-      "encryptedDescription": "Шифрование перед загрузкой. Сервер никогда не видит данные в открытом виде.",
-      "noPasswordWarning": "Пароль E2E не установлен. Пожалуйста, установите пароль в Настройках.",
-      "passwordRequired": "Пароль E2E не установлен. Сначала установите пароль в Настройках.",
-      "enabledToast": "Синхронизация включена",
-      "disabledToast": "Синхронизация отключена",
-      "syncQueued": "Синхронизация в очереди",
-      "syncNow": "Синхронизировать сейчас",
-      "lastSynced": "Последняя синхронизация",
-      "notConfigured": "Сервис синхронизации не настроен.",
-      "configureService": "Настроить сервис синхронизации"
-    },
-    "title": "Служба синхронизации",
-    "config": {
-      "serverUrlRequired": "Введите URL сервера",
-      "connectionSuccess": "Подключение успешно!",
-      "serverError": "Сервер вернул ошибку",
-      "connectFailed": "Не удалось подключиться к серверу",
-      "settingsSaved": "Настройки синхронизации сохранены",
-      "saveFailed": "Не удалось сохранить настройки",
-      "disconnected": "Синхронизация отключена",
-      "disconnectFailed": "Не удалось отключиться"
-    },
-    "serverUrl": "URL сервера",
-    "serverUrlPlaceholder": "https://sync.example.com",
-    "token": "Токен синхронизации",
-    "tokenPlaceholder": "Введите токен синхронизации",
-    "status": {
-      "connected": "Подключено",
-      "disconnected": "Отключено",
-      "syncing": "Синхронизация...",
-      "error": "Ошибка синхронизации"
-    },
-    "description": "Подключитесь к серверу синхронизации для синхронизации профилей, прокси и групп между устройствами.",
-    "cloud": {
-      "tabLabel": "Облако",
-      "selfHostedTabLabel": "Свой сервер",
-      "email": "Электронная почта",
-      "deviceLinkInstructions": "Нажмите «Войти», чтобы открыть страницу входа в браузере. После входа скопируйте показанный код и вставьте его ниже.",
-      "openLogin": "Войти",
-      "linkCodeLabel": "Код входа",
-      "linkCodePlaceholder": "Вставьте код с сайта",
-      "signInTitle": "Войти",
-      "verifyAndLogin": "Подтвердить и Войти",
-      "loggingIn": "Вход...",
-      "connected": "Подключено",
-      "plan": "Тариф",
-      "profiles": "Профили",
-      "profileUsage": "{{used}} / {{limit}}",
-      "manageAccount": "Управление аккаунтом",
-      "logout": "Выйти",
-      "logoutConfirm": "Вы уверены, что хотите выйти? Облачная синхронизация будет остановлена.",
-      "loginSuccess": "Вход выполнен успешно!",
-      "logoutSuccess": "Выход выполнен успешно."
+      "encrypted": "E2E зашифрованная синхронизация"
     },
     "team": {
       "title": "Команда",
-      "name": "Название команды",
-      "role": "Роль",
-      "roleOwner": "Владелец",
-      "roleAdmin": "Администратор",
-      "roleMember": "Участник",
-      "manageOnWeb": "Управление командой в веб-панели",
       "profileLocked": "Используется {{email}}",
-      "profileLockedShort": "Используется",
       "cannotLaunchLocked": "Невозможно запустить — профиль используется {{email}}",
       "createdBy": "Создано {{email}}"
     },
-    "disabled": "Отключена",
     "toast": {
       "profileSynced": "Профиль '{{name}}' успешно синхронизирован",
       "profileSyncFailed": "Не удалось синхронизировать профиль '{{name}}'",
       "profileSyncFailedWithError": "Не удалось синхронизировать профиль '{{name}}': {{error}}"
-    },
-    "enabledToast": "Синхронизация включена",
-    "disabledToast": "Синхронизация отключена",
-    "enabledDescription": "Синхронизация профиля включена",
-    "disabledDescription": "Синхронизация профиля отключена"
+    }
   },
   "integrations": {
     "title": "Интеграции",
-    "api": {
-      "title": "Локальный API",
-      "description": "Включите локальный API-сервер для внешних интеграций.",
-      "enabled": "API включён",
-      "disabled": "API выключен",
-      "port": "Порт",
-      "token": "API токен",
-      "copyToken": "Копировать токен",
-      "regenerateToken": "Перегенерировать токен"
-    },
-    "mcp": {
-      "title": "MCP сервер",
-      "description": "Включите MCP (Model Context Protocol) сервер для интеграции с AI-ассистентами.",
-      "enabled": "MCP включён",
-      "disabled": "MCP выключен",
-      "port": "Порт",
-      "token": "Токен аутентификации",
-      "tokenCopied": "Токен скопирован",
-      "url": "URL MCP сервера",
-      "urlCopied": "URL скопирован",
-      "config": "Конфигурация MCP",
-      "copyConfig": "Копировать конфигурацию",
-      "clientsLabel": "Клиенты",
-      "connected": "Подключено",
-      "add": "Добавить",
-      "addedToClient": "Добавлено в {{name}}",
-      "removedFromClient": "Удалено из {{name}}",
-      "removeAriaLabel": "Удалить из {{name}}",
-      "category": {
-        "desktopApp": "Десктоп-приложение",
-        "cli": "CLI",
-        "editor": "Редактор",
-        "editorExt": "Расширение редактора"
-      }
-    },
-    "tabApi": "Локальный API",
-    "tabMcp": "MCP (ИИ-ассистенты)",
     "apiEnableLabel": "Включить локальный API сервер",
     "apiEnableDescription": "Позволяет управлять профилями, группами и прокси через REST API.",
     "apiPortLabel": "Порт",
@@ -720,13 +592,6 @@
     "apiToggleFailed": "Не удалось переключить API сервер",
     "apiStartFailed": "Не удалось запустить API сервер",
     "apiUnknownError": "Неизвестная ошибка",
-    "tokenCopied": "Токен скопирован",
-    "mcpEnableLabel": "Включить MCP сервер (Model Context Protocol)",
-    "mcpEnableDescription": "Позволяет ИИ-ассистентам, таким как Claude Desktop, управлять браузерами.",
-    "mcpAcceptTermsFirst": "(Сначала примите условия Wayfern в Настройках)",
-    "mcpStarted": "MCP сервер запущен на порту {{port}}",
-    "mcpStopped": "MCP сервер остановлен",
-    "mcpToggleFailed": "Не удалось переключить MCP сервер",
     "openSettings": "Открыть настройки интеграций",
     "apiRunningOn": "Запущен на",
     "apiExampleRequest": "Пример запроса"
@@ -1119,9 +984,7 @@
     }
   },
   "crossOs": {
-    "viewOnly": "Этот профиль был создан на {{os}} и не поддерживается в этой системе",
-    "cannotLaunch": "Этот профиль был создан на {{os}} и не поддерживается в этой системе",
-    "cannotModify": "Невозможно изменить настройки синхронизации профиля другой ОС"
+    "viewOnly": "Этот профиль был создан на {{os}} и не поддерживается в этой системе"
   },
   "profileInfo": {
     "title": "Детали профиля",
@@ -1391,19 +1254,6 @@
       "doneButton": "Готово",
       "failedGeneric": "Не удалось импортировать конфигурацию VPN",
       "defaultName": "{{type}} VPN"
-    },
-    "management": {
-      "loading": "Загрузка VPN...",
-      "noneCreated": "Конфигураций VPN еще нет. Импортируйте или создайте одну с помощью кнопок выше.",
-      "editVpn": "Редактировать VPN",
-      "deleteVpn": "Удалить VPN",
-      "cannotDelete_one": "Невозможно удалить: используется {{count}} профилем",
-      "cannotDelete_other": "Невозможно удалить: используется {{count}} профилями",
-      "syncCannotDisable": "Нельзя отключить синхронизацию, пока этот VPN используется синхронизированными профилями",
-      "deleteSuccess": "VPN успешно удален",
-      "deleteFailed": "Не удалось удалить VPN",
-      "deleteTitle": "Удалить VPN",
-      "deleteDescription": "Это действие нельзя отменить. VPN «{{name}}» будет удален навсегда."
     }
   },
   "importProfile": {
@@ -1475,39 +1325,6 @@
       "description_one": "Вы уверены, что хотите удалить {{count}} группу? {{names}}. Профили будут перемещены в группу по умолчанию.",
       "confirmButton": "Удалить группы"
     }
-  },
-  "proxyAssignment": {
-    "title": "Назначить прокси / VPN",
-    "description_one": "Назначить прокси или VPN для {{count}} выбранного профиля.",
-    "description_other": "Назначить прокси или VPN для {{count}} выбранных профилей.",
-    "selectLabel": "Прокси / VPN",
-    "placeholder": "Выберите прокси или VPN",
-    "noProxy": "Без прокси / VPN",
-    "searchPlaceholder": "Поиск прокси или VPN...",
-    "notFound": "Прокси или VPN не найдены.",
-    "assignButton": "Назначить",
-    "success": "Прокси/VPN назначен {{count}} профилю(ям)",
-    "failed": "Не удалось назначить прокси/VPN",
-    "selectedProfilesLabel": "Выбранные профили:",
-    "assignProxyVpnLabel": "Назначить прокси / VPN:",
-    "noneOption": "Нет",
-    "noValidProfiles": "Нет выбранных допустимых профилей.",
-    "vpnGroupHeading": "VPN",
-    "failedFallback": "Не удалось назначить прокси/VPN профилям"
-  },
-  "bulkProxyAssignment": {
-    "title": "Массовое назначение прокси",
-    "description": "Вставьте по одному прокси на строку. Строка 1 → первый выбранный профиль, строка 2 → второй и т.д.",
-    "selectedProfilesLabel": "Выбранные профили:",
-    "textareaLabel": "Прокси (по одному на строку)",
-    "textareaPlaceholder": "address:port:user:pass",
-    "helperText": "По одному прокси на строку, в том же порядке, что и выбранные профили выше.",
-    "applyButton": "Применить ко всем",
-    "countMismatch": "Несоответствие: {{proxyCount}} строк прокси, но выбрано {{profileCount}} профилей.",
-    "invalidLineFormat": "Неверный формат прокси: \"{{line}}\". Ожидается: address:port:user:pass",
-    "invalidPort": "Неверный порт в \"{{line}}\". Порт должен быть 1–65535.",
-    "success": "Прокси успешно назначены {{count}} профилям.",
-    "failed": "Не удалось назначить прокси."
   },
   "groupAssignment": {
     "title": "Назначить группу",
@@ -1703,9 +1520,7 @@
     "syncTooltipDisabledWithLast": "Синхронизация отключена, последняя синхронизация {{time}}",
     "addTagsPlaceholder": "Добавить теги",
     "tagsHeader": "Теги",
-    "noteHeader": "Заметка",
-    "vpnsHeading": "VPN",
-    "createByCountryHeading": "Создать по стране"
+    "noteHeader": "Заметка"
   },
   "releaseTypeSelector": {
     "noReleaseTypes": "Нет доступных типов выпусков.",
@@ -1847,23 +1662,14 @@
     "profileLocked": "Профиль заблокирован. Сначала введите пароль.",
     "invalidProfileId": "Недействительный идентификатор профиля",
     "passwordTooShort": "Пароль должен быть не короче {{min}} символов",
-    "proxyNotFound": "Прокси не найден",
-    "groupNotFound": "Группа не найдена",
-    "vpnNotFound": "VPN не найден",
     "extensionNotFound": "Расширение не найдено",
     "extensionGroupNotFound": "Группа расширений не найдена",
-    "cannotModifyCloudManagedProxy": "Невозможно изменить синхронизацию для облачного прокси",
-    "syncLockedByProfile": "Невозможно отключить синхронизацию, пока используется синхронизированными профилями",
-    "syncNotConfigured": "Синхронизация не настроена. Войдите или настройте собственный сервер.",
     "internal": "Что-то пошло не так: {{detail}}",
     "invalidLaunchHookUrl": "Неверный URL хука запуска. Используйте полный URL http:// или https://.",
     "cookieDbLocked": "Не удалось прочитать куки — база данных заблокирована. Закройте браузер и попробуйте снова.",
     "cookieDbUnavailable": "Не удалось прочитать куки — хранилище куки недоступно.",
-    "selfHostedRequiresLogout": "Выйдите из аккаунта Donut, прежде чем настраивать собственный сервер.",
-    "fingerprintRequiresPro": "Для просмотра или редактирования отпечатка требуется активный платный план. Защита включена во все планы.",
     "proxyNotWorking": "Выбранный прокси не работает, поэтому профиль не создан.",
     "proxyPaymentRequired": "Выбранный прокси требует оплаты (402) — возможно, его подписка истекла — поэтому профиль не создан.",
-    "vpnNotWorking": "Выбранный VPN не работает, поэтому профиль не создан.",
     "camoufoxImportDeprecated": "Импорт профилей на основе Firefox (Camoufox) больше не поддерживается. Camoufox выводится из эксплуатации — используйте Wayfern."
   },
   "rail": {
@@ -1880,8 +1686,7 @@
       "keyboardShortcutsHint": "Показать все сочетания"
     },
     "network": "Сеть",
-    "integrations": "Интеграции",
-    "account": "Аккаунт"
+    "integrations": "Интеграции"
   },
   "pageTitle": {
     "proxies": "Сеть",
@@ -1890,7 +1695,6 @@
     "vpns": "Сеть",
     "settings": "Настройки",
     "integrations": "Интеграции",
-    "account": "Аккаунт",
     "import": "Импорт профиля",
     "shortcuts": "Сочетания клавиш"
   },
@@ -1917,39 +1721,6 @@
       }
     }
   },
-  "account": {
-    "refreshed": "Аккаунт обновлён",
-    "loggedOut": "Вы вышли",
-    "signedOut": "Не выполнен вход",
-    "signedOutDescription": "Войдите, чтобы включить облачную синхронизацию, зашифрованные профили и командные функции.",
-    "plan": "Тариф: {{plan}} · {{period}}",
-    "refresh": "Обновить",
-    "logout": "Выйти",
-    "signIn": "Войти",
-    "fields": {
-      "plan": "Тариф",
-      "status": "Статус",
-      "teamRole": "Роль в команде",
-      "period": "Период",
-      "device": "Устройство"
-    },
-    "tabs": {
-      "account": "Аккаунт",
-      "selfHosted": "Свой сервер"
-    },
-    "selfHosted": {
-      "title": "Свой сервер синхронизации",
-      "description": "Подключите Donut к собственному серверу donut-sync, чтобы синхронизировать профили, прокси, группы и расширения без использования облака.",
-      "disabledWhileLoggedIn": "Свой сервер синхронизации недоступен, пока вы вошли в аккаунт Donut. Выйдите из аккаунта, чтобы использовать собственный сервер.",
-      "connectionStatus": "Соединение:",
-      "statusUnknown": "Не проверено",
-      "testConnection": "Проверить соединение",
-      "disconnect": "Отключить"
-    },
-    "deviceOrdinal": "{{ordinal}} из {{count}}",
-    "automationPrimaryOnly": "Автоматизация браузера работает только на вашем основном устройстве (Устройство 1). Выйдите из аккаунта на нём, чтобы использовать её здесь.",
-    "automationActiveHere": "Автоматизация браузера активна на этом устройстве."
-  },
   "shortcutsPage": {
     "title": "Сочетания клавиш",
     "description": "Ускорьте работу с помощью этих сочетаний клавиш."
@@ -1974,11 +1745,9 @@
     "openShortcuts": "Показать сочетания клавиш",
     "importProfile": "Импортировать профиль",
     "goProfiles": "Перейти к Профилям",
-    "goProxies": "Перейти к Сети",
     "goExtensions": "Перейти к Расширениям",
     "goGroups": "Перейти к Группам",
     "goIntegrations": "Перейти к Интеграциям",
-    "goAccount": "Перейти к Аккаунту",
     "goSettings": "Перейти к Настройкам"
   },
   "closeConfirm": {
@@ -2095,6 +1864,7 @@
     "success": "Created {{count}} profiles successfully.",
     "failed": "Failed to create profiles.",
     "namePattern": "Names: {{prefix}}.01 through {{prefix}}.{{count}}",
-    "proxyCountMatch": "{{count}} proxy line(s) — matches {{count}} profile(s)."
+    "proxyCountMatch": "{{count}} proxy line(s) — matches {{count}} profile(s).",
+    "proxyCountInfo": "{{proxyCount}} proxy line(s) for {{profileCount}} profile(s). Extra proxies ignored, missing proxies left unset."
   }
 }

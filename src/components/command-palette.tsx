@@ -2,11 +2,9 @@
 
 import { useTranslation } from "react-i18next";
 import { FaDownload } from "react-icons/fa";
-import { FiWifi } from "react-icons/fi";
 import { GoGear } from "react-icons/go";
 import {
   LuCircleStop,
-  LuCloud,
   LuInfo,
   LuKeyboard,
   LuPlay,
@@ -60,11 +58,9 @@ const ICONS: Record<ShortcutId, React.ComponentType<{ className?: string }>> = {
   openShortcuts: LuKeyboard,
   importProfile: FaDownload,
   goProfiles: LuUser,
-  goProxies: FiWifi,
   goExtensions: LuPuzzle,
   goGroups: LuUsers,
   goIntegrations: LuPlug,
-  goAccount: LuCloud,
   goSettings: GoGear,
 };
 

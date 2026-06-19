@@ -6,9 +6,7 @@ import { getCurrent } from "@tauri-apps/plugin-deep-link";
 import { useOnborda } from "onborda";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { AccountPage } from "@/components/account-page";
 import { BulkCreateProfileDialog } from "@/components/bulk-create-profile-dialog";
-import { BulkProxyAssignmentDialog } from "@/components/bulk-proxy-assignment-dialog";
 import { CamoufoxConfigDialog } from "@/components/camoufox-config-dialog";
 import { CloneProfileDialog } from "@/components/clone-profile-dialog";
 import { CloseConfirmDialog } from "@/components/close-confirm-dialog";
@@ -18,7 +16,6 @@ import { CookieCopyDialog } from "@/components/cookie-copy-dialog";
 import { CookieManagementDialog } from "@/components/cookie-management-dialog";
 import { CreateProfileDialog } from "@/components/create-profile-dialog";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
-import { DeviceCodeVerifyDialog } from "@/components/device-code-verify-dialog";
 import { ExtensionGroupAssignmentDialog } from "@/components/extension-group-assignment-dialog";
 import { ExtensionManagementDialog } from "@/components/extension-management-dialog";
 import { GroupAssignmentDialog } from "@/components/group-assignment-dialog";
@@ -34,32 +31,23 @@ import {
   ProfilePasswordDialog,
 } from "@/components/profile-password-dialog";
 import { ProfileSelectorDialog } from "@/components/profile-selector-dialog";
-import { ProfileSyncDialog } from "@/components/profile-sync-dialog";
-import { ProxyAssignmentDialog } from "@/components/proxy-assignment-dialog";
 import { type AppPage, RailNav } from "@/components/rail-nav";
 import { SettingsDialog } from "@/components/settings-dialog";
 import { ShortcutsPage } from "@/components/shortcuts-page";
-import { SyncAllDialog } from "@/components/sync-all-dialog";
-import { SyncConfigDialog } from "@/components/sync-config-dialog";
-import { SyncFollowerDialog } from "@/components/sync-follower-dialog";
 import { ThankYouDialog } from "@/components/thank-you-dialog";
 import { WayfernTermsDialog } from "@/components/wayfern-terms-dialog";
 import { WelcomeDialog } from "@/components/welcome-dialog";
 import { WindowResizeWarningDialog } from "@/components/window-resize-warning-dialog";
 import { useAppUpdateNotifications } from "@/hooks/use-app-update-notifications";
-import { useCloudAuth } from "@/hooks/use-cloud-auth";
 import { useCommercialTrial } from "@/hooks/use-commercial-trial";
 import { useGroupEvents } from "@/hooks/use-group-events";
 import type { PermissionType } from "@/hooks/use-permissions";
 import { usePermissions } from "@/hooks/use-permissions";
 import { useProfileEvents } from "@/hooks/use-profile-events";
-import { useSyncSessions } from "@/hooks/use-sync-session";
 import { useUpdateNotifications } from "@/hooks/use-update-notifications";
 import { useVersionUpdater } from "@/hooks/use-version-updater";
-import { useVpnEvents } from "@/hooks/use-vpn-events";
 import { useWayfernTerms } from "@/hooks/use-wayfern-terms";
 import { translateBackendError } from "@/lib/backend-errors";
-import { getEntitlements } from "@/lib/entitlements";
 import {
   ONBOARDING_TOUR_FINISHED_EVENT,
   setOnboardingActive,
@@ -70,19 +58,8 @@ import {
   SHORTCUTS,
   type ShortcutId,
 } from "@/lib/shortcuts";
-import {
-  dismissToast,
-  showErrorToast,
-  showSuccessToast,
-  showSyncProgressToast,
-  showToast,
-} from "@/lib/toast-utils";
-import type {
-  BrowserProfile,
-  CamoufoxConfig,
-  SyncSettings,
-  WayfernConfig,
-} from "@/types";
+import { showErrorToast, showSuccessToast, showToast } from "@/lib/toast-utils";
+import type { BrowserProfile, CamoufoxConfig, WayfernConfig } from "@/types";
 
 type BrowserTypeString = "camoufox" | "wayfern";
 
@@ -199,13 +176,6 @@ export default function Home() {
     error: groupsError,
   } = useGroupEvents();
 
-  const { vpnConfigs } = useVpnEvents();
-
-  // Synchronizer sessions
-  const { getProfileSyncInfo } = useSyncSessions();
-  const [syncLeaderProfile, setSyncLeaderProfile] =
-    useState<BrowserProfile | null>(null);
-
   // Wayfern terms and commercial trial hooks
   const {
     termsAccepted,
@@ -218,36 +188,9 @@ export default function Home() {
     checkTrialStatus,
   } = useCommercialTrial();
 
-  // Cloud auth for cross-OS unlock
-  const { user: cloudUser } = useCloudAuth();
-  const crossOsUnlocked = getEntitlements(cloudUser).crossOsFingerprints;
-
-  const [selfHostedSyncConfigured, setSelfHostedSyncConfigured] =
-    useState(false);
-
-  const checkSelfHostedSync = useCallback(async () => {
-    try {
-      const settings = await invoke<SyncSettings>("get_sync_settings");
-      const hasConfig = Boolean(
-        settings.sync_server_url && settings.sync_token,
-      );
-      setSelfHostedSyncConfigured(hasConfig && !cloudUser);
-    } catch {
-      setSelfHostedSyncConfigured(false);
-    }
-  }, [cloudUser]);
-
-  const syncUnlocked = crossOsUnlocked || selfHostedSyncConfigured;
-
   const [currentPage, setCurrentPage] = useState<AppPage>("profiles");
-  const [accountDialogOpen, setAccountDialogOpen] = useState(false);
-  // Tracks which tab inside the shared proxy-management page should be active.
-  // The VPN rail item routes to the same page but pre-selects the VPN tab.
-  const [extensionManagementInitialTab, setExtensionManagementInitialTab] =
+  const [extensionManagementInitialTab, _setExtensionManagementInitialTab] =
     useState<"extensions" | "groups">("extensions");
-  const [integrationsInitialTab, setIntegrationsInitialTab] = useState<
-    "api" | "mcp"
-  >("api");
   const [createProfileDialogOpen, setCreateProfileDialogOpen] = useState(false);
   const [bulkCreateProfileDialogOpen, setBulkCreateProfileDialogOpen] =
     useState(false);
@@ -270,8 +213,6 @@ export default function Home() {
     selectedProfilesForExtensionGroup,
     setSelectedProfilesForExtensionGroup,
   ] = useState<string[]>([]);
-  const [proxyAssignmentDialogOpen, setProxyAssignmentDialogOpen] =
-    useState(false);
   const [cookieCopyDialogOpen, setCookieCopyDialogOpen] = useState(false);
   const [cookieManagementDialogOpen, setCookieManagementDialogOpen] =
     useState(false);
@@ -286,13 +227,6 @@ export default function Home() {
   const [selectedProfilesForGroup, setSelectedProfilesForGroup] = useState<
     string[]
   >([]);
-  const [selectedProfilesForProxy, setSelectedProfilesForProxy] = useState<
-    string[]
-  >([]);
-  const [bulkProxyAssignmentDialogOpen, setBulkProxyAssignmentDialogOpen] =
-    useState(false);
-  const [selectedProfilesForBulkProxy, setSelectedProfilesForBulkProxy] =
-    useState<string[]>([]);
   const [selectedProfiles, setSelectedProfiles] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [pendingUrls, setPendingUrls] = useState<PendingUrl[]>([]);
@@ -316,12 +250,6 @@ export default function Home() {
   const [showBulkDeleteConfirmation, setShowBulkDeleteConfirmation] =
     useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
-  const [syncConfigDialogOpen, setSyncConfigDialogOpen] = useState(false);
-  const [deviceCodeDialogOpen, setDeviceCodeDialogOpen] = useState(false);
-  const [syncAllDialogOpen, setSyncAllDialogOpen] = useState(false);
-  const [profileSyncDialogOpen, setProfileSyncDialogOpen] = useState(false);
-  const [currentProfileForSync, setCurrentProfileForSync] =
-    useState<BrowserProfile | null>(null);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   // Owned by page.tsx so the command palette can request opening the profile
   // info dialog. ProfilesDataTable consumes it through controlled props.
@@ -336,15 +264,11 @@ export default function Home() {
   }, []);
 
   const handleRailNavigate = useCallback((page: AppPage) => {
-    // Always reset every sub-page-able dialog before opening the next one,
-    // so navigating from one rail item to another doesn't stack two
-    // sub-pages on top of each other.
     setSettingsDialogOpen(false);
     setExtensionManagementDialogOpen(false);
     setGroupManagementDialogOpen(false);
     setIntegrationsDialogOpen(false);
     setImportProfileDialogOpen(false);
-    setAccountDialogOpen(false);
 
     setCurrentPage(page);
     switch (page) {
@@ -352,10 +276,6 @@ export default function Home() {
         break;
       case "settings":
         setSettingsDialogOpen(true);
-        break;
-      case "proxies":
-        // Stored proxy page removed — redirect to VPNs.
-        setCurrentPage("vpns");
         break;
       case "extensions":
         setExtensionManagementDialogOpen(true);
@@ -369,14 +289,7 @@ export default function Home() {
       case "import":
         setImportProfileDialogOpen(true);
         break;
-      case "vpns":
-        // Stored proxy management removed; no dialog to open.
-        break;
-      case "account":
-        setAccountDialogOpen(true);
-        break;
       case "shortcuts":
-        // Plain page render — nothing else to open.
         break;
     }
   }, []);
@@ -396,43 +309,21 @@ export default function Home() {
         case "goProfiles":
           handleRailNavigate("profiles");
           break;
-        case "goProxies": {
-          // Stored proxy management removed. Navigate to VPNs instead.
-          handleRailNavigate("vpns");
+        case "goExtensions":
+          handleRailNavigate("extensions");
           break;
-        }
-        case "goExtensions": {
-          // Mod+E: flip extensions↔groups tab inside the dialog when already there.
-          if (currentPage === "extensions") {
-            setExtensionManagementInitialTab((cur) =>
-              cur === "extensions" ? "groups" : "extensions",
-            );
-          } else {
-            handleRailNavigate("extensions");
-          }
-          break;
-        }
         case "goGroups":
           handleRailNavigate("groups");
           break;
-        case "goIntegrations": {
-          // Mod+I: flip api↔mcp tab when already on integrations.
-          if (currentPage === "integrations") {
-            setIntegrationsInitialTab((cur) => (cur === "api" ? "mcp" : "api"));
-          } else {
-            handleRailNavigate("integrations");
-          }
-          break;
-        }
-        case "goAccount":
-          handleRailNavigate("account");
+        case "goIntegrations":
+          handleRailNavigate("integrations");
           break;
         case "goSettings":
           handleRailNavigate("settings");
           break;
       }
     },
-    [handleRailNavigate, currentPage],
+    [handleRailNavigate],
   );
 
   // Ordered list the digit shortcuts and palette consume. "__all__" is index 1
@@ -783,7 +674,6 @@ export default function Home() {
       version: string;
       releaseType: string;
       proxyId?: string;
-      vpnId?: string;
       camoufoxConfig?: CamoufoxConfig;
       wayfernConfig?: WayfernConfig;
       groupId?: string;
@@ -802,7 +692,6 @@ export default function Home() {
             version: profileData.version,
             releaseType: profileData.releaseType,
             proxyId: profileData.proxyId,
-            vpnId: profileData.vpnId,
             camoufoxConfig: profileData.camoufoxConfig,
             wayfernConfig: profileData.wayfernConfig,
             groupId:
@@ -850,7 +739,7 @@ export default function Home() {
           }),
         );
         // Rethrow so the create dialog keeps itself open (its own handler
-        // skips closing on error), letting the user fix the proxy/VPN and retry.
+        // skips closing on error), letting the user fix the proxy and retry.
         throw error;
       }
     },
@@ -1077,29 +966,6 @@ export default function Home() {
     setSelectedProfilesForExtensionGroup([]);
   }, []);
 
-  const handleAssignProfilesToProxy = useCallback((profileIds: string[]) => {
-    setSelectedProfilesForProxy(profileIds);
-    setProxyAssignmentDialogOpen(true);
-  }, []);
-
-  const handleBulkProxyAssignment = useCallback(() => {
-    if (selectedProfiles.length === 0) return;
-    handleAssignProfilesToProxy(selectedProfiles);
-    setSelectedProfiles([]);
-  }, [selectedProfiles, handleAssignProfilesToProxy]);
-
-  const handleBulkProxyPasteAssignment = useCallback(() => {
-    if (selectedProfiles.length === 0) return;
-    setSelectedProfilesForBulkProxy(selectedProfiles);
-    setBulkProxyAssignmentDialogOpen(true);
-    setSelectedProfiles([]);
-  }, [selectedProfiles]);
-
-  const handleBulkProxyPasteComplete = useCallback(() => {
-    setBulkProxyAssignmentDialogOpen(false);
-    setSelectedProfilesForBulkProxy([]);
-  }, []);
-
   const handleBulkCopyCookies = useCallback(() => {
     if (selectedProfiles.length === 0) return;
     const eligibleProfiles = profiles.filter(
@@ -1156,131 +1022,9 @@ export default function Home() {
     setSelectedProfilesForGroup([]);
   }, []);
 
-  const handleProxyAssignmentComplete = useCallback(() => {
-    // No need to manually reload - useProfileEvents will handle the update
-    setProxyAssignmentDialogOpen(false);
-    setSelectedProfilesForProxy([]);
-  }, []);
-
   const handleGroupManagementComplete = useCallback(async () => {
     // No need to manually reload - useProfileEvents will handle the update
   }, []);
-
-  const handleOpenProfileSyncDialog = useCallback((profile: BrowserProfile) => {
-    setCurrentProfileForSync(profile);
-    setProfileSyncDialogOpen(true);
-  }, []);
-
-  const handleToggleProfileSync = useCallback(
-    async (profile: BrowserProfile) => {
-      try {
-        const enabling = !profile.sync_mode || profile.sync_mode === "Disabled";
-        await invoke("set_profile_sync_mode", {
-          profileId: profile.id,
-          syncMode: enabling ? "Regular" : "Disabled",
-        });
-        showSuccessToast(
-          t(enabling ? "sync.enabledToast" : "sync.disabledToast"),
-          {
-            description: t(
-              enabling ? "sync.enabledDescription" : "sync.disabledDescription",
-            ),
-          },
-        );
-      } catch (error) {
-        console.error("Failed to toggle sync:", error);
-        showErrorToast(t("errors.updateSyncSettingsFailed"));
-      }
-    },
-    [t],
-  );
-
-  useEffect(() => {
-    let unlistenStatus: (() => void) | undefined;
-    let unlistenProgress: (() => void) | undefined;
-    const profilesWithTransfer = new Set<string>();
-    void (async () => {
-      try {
-        unlistenStatus = await listen<{
-          profile_id: string;
-          status: string;
-          error?: string;
-          profile_name?: string;
-        }>("profile-sync-status", (event) => {
-          const { profile_id, status, error, profile_name } = event.payload;
-          const toastId = `sync-${profile_id}`;
-          const profile = profiles.find((p) => p.id === profile_id);
-          const name =
-            profile_name || profile?.name || t("common.labels.unknownProfile");
-
-          if (status === "synced") {
-            dismissToast(toastId);
-            if (profilesWithTransfer.has(profile_id)) {
-              profilesWithTransfer.delete(profile_id);
-              showSuccessToast(t("sync.toast.profileSynced", { name }));
-            }
-          } else if (status === "error") {
-            dismissToast(toastId);
-            profilesWithTransfer.delete(profile_id);
-            showErrorToast(
-              error
-                ? t("sync.toast.profileSyncFailedWithError", { name, error })
-                : t("sync.toast.profileSyncFailed", { name }),
-            );
-          }
-        });
-
-        unlistenProgress = await listen<{
-          profile_id: string;
-          phase: string;
-          total_files?: number;
-          total_bytes?: number;
-          completed_files?: number;
-          completed_bytes?: number;
-          speed_bytes_per_sec?: number;
-          eta_seconds?: number;
-          failed_count?: number;
-          profile_name?: string;
-        }>("profile-sync-progress", (event) => {
-          const payload = event.payload;
-          const toastId = `sync-${payload.profile_id}`;
-          const profile = profiles.find((p) => p.id === payload.profile_id);
-          const name =
-            payload.profile_name ||
-            profile?.name ||
-            t("common.labels.unknownProfile");
-
-          if (
-            payload.phase === "started" ||
-            payload.phase === "uploading" ||
-            payload.phase === "downloading"
-          ) {
-            profilesWithTransfer.add(payload.profile_id);
-            showSyncProgressToast(
-              name,
-              {
-                completed_files: payload.completed_files ?? 0,
-                total_files: payload.total_files ?? 0,
-                completed_bytes: payload.completed_bytes ?? 0,
-                total_bytes: payload.total_bytes ?? 0,
-                speed_bytes_per_sec: payload.speed_bytes_per_sec ?? 0,
-                eta_seconds: payload.eta_seconds ?? 0,
-                failed_count: payload.failed_count ?? 0,
-                phase: payload.phase,
-              },
-              { id: toastId, profileId: payload.profile_id },
-            );
-          }
-        });
-      } catch (error) {
-        console.error("Failed to listen for sync events:", error);
-      }
-    })();
-    return () => {
-      if (unlistenStatus) unlistenStatus();
-      if (unlistenProgress) unlistenProgress();
-    };
-  }, [profiles, t]);
 
   useEffect(() => {
     // Listen for URL open events and get cleanup function
@@ -1332,76 +1076,11 @@ export default function Home() {
     profiles.length,
   ]);
 
-  // E2E encryption listeners — surface password-required prompts and rollover
-  // progress so the user isn't left guessing whether sealing finished.
+  // Listen for Wayfern paid feature blocking
   useEffect(() => {
-    let unlistenRequired: (() => void) | undefined;
-    let unlistenStarted: (() => void) | undefined;
-    let unlistenProgress: (() => void) | undefined;
-    let unlistenCompleted: (() => void) | undefined;
     let unlistenWayfernBlocked: (() => void) | undefined;
 
     void (async () => {
-      unlistenRequired = await listen(
-        "profile-sync-e2e-password-required",
-        () => {
-          showToast({
-            id: "e2e-password-required",
-            type: "error",
-            title: t("encryption.required.title"),
-            description: t("encryption.required.description"),
-            duration: 12000,
-            action: {
-              label: t("encryption.required.openSettings"),
-              onClick: () => {
-                setSettingsDialogOpen(true);
-                setCurrentPage("settings");
-              },
-            },
-          });
-        },
-      );
-
-      unlistenStarted = await listen("e2e-rollover-started", () => {
-        showToast({
-          id: "e2e-rollover",
-          type: "loading",
-          title: t("encryption.rollover.startedTitle"),
-          description: t("encryption.rollover.startedDescription"),
-          duration: Number.POSITIVE_INFINITY,
-        });
-      });
-
-      unlistenProgress = await listen<{
-        stage: string;
-        done: number;
-        total: number;
-      }>("e2e-rollover-progress", (event) => {
-        const { stage, done, total } = event.payload;
-        showToast({
-          id: "e2e-rollover",
-          type: "loading",
-          title: t("encryption.rollover.progressTitle", {
-            stage: t(`encryption.rollover.stage.${stage}`),
-          }),
-          description: t("encryption.rollover.progressDescription", {
-            done,
-            total,
-          }),
-          duration: Number.POSITIVE_INFINITY,
-        });
-      });
-
-      unlistenCompleted = await listen("e2e-rollover-completed", () => {
-        showToast({
-          id: "e2e-rollover",
-          type: "success",
-          title: t("encryption.rollover.completedTitle"),
-          description: t("encryption.rollover.completedDescription"),
-          duration: 5000,
-        });
-      });
-
       unlistenWayfernBlocked = await listen("wayfern-paid-blocked", () => {
         showToast({
           id: "wayfern-paid-blocked",
@@ -1414,10 +1093,6 @@ export default function Home() {
     })();
 
     return () => {
-      unlistenRequired?.();
-      unlistenStarted?.();
-      unlistenProgress?.();
-      unlistenCompleted?.();
       unlistenWayfernBlocked?.();
     };
   }, [t]);
@@ -1483,11 +1158,6 @@ export default function Home() {
       checkAllPermissions();
     }
   }, [isInitialized, firstRunOnboarding, checkAllPermissions]);
-
-  // Check self-hosted sync config on mount and when cloud user changes
-  useEffect(() => {
-    void checkSelfHostedSync();
-  }, [checkSelfHostedSync]);
 
   // Filter data by selected group and search query
   const filteredProfiles = useMemo(() => {
@@ -1579,22 +1249,12 @@ export default function Home() {
                 onSelectedProfilesChange={setSelectedProfiles}
                 onBulkDelete={handleBulkDelete}
                 onBulkGroupAssignment={handleBulkGroupAssignment}
-                onBulkProxyAssignment={handleBulkProxyAssignment}
                 onBulkCopySelectedNames={handleBulkCopySelectedNames}
                 onBulkCopyCookies={handleBulkCopyCookies}
                 onBulkExtensionGroupAssignment={
                   handleBulkExtensionGroupAssignment
                 }
-                onBulkProxyPasteAssignment={handleBulkProxyPasteAssignment}
                 onAssignExtensionGroup={handleAssignExtensionGroup}
-                onOpenProfileSyncDialog={handleOpenProfileSyncDialog}
-                onToggleProfileSync={handleToggleProfileSync}
-                crossOsUnlocked={crossOsUnlocked}
-                syncUnlocked={syncUnlocked}
-                getProfileSyncInfo={getProfileSyncInfo}
-                onLaunchWithSync={(profile) => {
-                  setSyncLeaderProfile(profile);
-                }}
               />
             </div>
           )}
@@ -1627,7 +1287,6 @@ export default function Home() {
                 setCurrentPage("profiles");
               }}
               subPage={currentPage === "integrations"}
-              initialTab={integrationsInitialTab}
             />
           )}
 
@@ -1663,24 +1322,7 @@ export default function Home() {
                 setImportProfileDialogOpen(false);
                 setCurrentPage("profiles");
               }}
-              crossOsUnlocked={crossOsUnlocked}
               subPage={currentPage === "import"}
-            />
-          )}
-
-          {accountDialogOpen && (
-            <AccountPage
-              isOpen={accountDialogOpen}
-              onClose={() => {
-                setAccountDialogOpen(false);
-                setCurrentPage("profiles");
-              }}
-              subPage={currentPage === "account"}
-              onOpenSignIn={() => {
-                setAccountDialogOpen(false);
-                setCurrentPage("profiles");
-                setDeviceCodeDialogOpen(true);
-              }}
             />
           )}
         </main>
@@ -1693,7 +1335,6 @@ export default function Home() {
         }}
         onCreateProfile={handleCreateProfile}
         selectedGroupId={selectedGroupId}
-        crossOsUnlocked={crossOsUnlocked}
       />
 
       <BulkCreateProfileDialog
@@ -1790,23 +1431,6 @@ export default function Home() {
             pendingLaunchAfterUnlockRef.current = null;
             void launchProfile(target);
           }
-          // On set/change/remove, the profile's encryption state changed.
-          // Push that state to the sync server immediately so other devices
-          // see the new envelope before they next pull. Skip if the profile
-          // is currently running — its files would be in flux.
-          if (
-            (passwordDialogMode === "set" ||
-              passwordDialogMode === "change" ||
-              passwordDialogMode === "remove") &&
-            !runningProfiles.has(p.id) &&
-            p.sync_mode !== "Disabled"
-          ) {
-            void invoke("request_profile_sync", { profileId: p.id }).catch(
-              (err: unknown) => {
-                console.error("post-password sync failed", err);
-              },
-            );
-          }
         }}
       />
 
@@ -1823,7 +1447,6 @@ export default function Home() {
             ? runningProfiles.has(currentProfileForCamoufoxConfig.id)
             : false
         }
-        crossOsUnlocked={crossOsUnlocked}
       />
 
       <GroupAssignmentDialog
@@ -1833,7 +1456,6 @@ export default function Home() {
         }}
         selectedProfiles={selectedProfilesForGroup}
         onAssignmentComplete={handleGroupAssignmentComplete}
-        profiles={profiles}
       />
 
       <ExtensionGroupAssignmentDialog
@@ -1843,29 +1465,6 @@ export default function Home() {
         }}
         selectedProfiles={selectedProfilesForExtensionGroup}
         onAssignmentComplete={handleExtensionGroupAssignmentComplete}
-        profiles={profiles}
-      />
-
-      <ProxyAssignmentDialog
-        isOpen={proxyAssignmentDialogOpen}
-        onClose={() => {
-          setProxyAssignmentDialogOpen(false);
-        }}
-        selectedProfiles={selectedProfilesForProxy}
-        onAssignmentComplete={handleProxyAssignmentComplete}
-        profiles={profiles}
-        vpnConfigs={vpnConfigs}
-      />
-
-      <BulkProxyAssignmentDialog
-        isOpen={bulkProxyAssignmentDialogOpen}
-        onClose={() => {
-          setBulkProxyAssignmentDialogOpen(false);
-          setSelectedProfilesForBulkProxy([]);
-        }}
-        selectedProfiles={selectedProfilesForBulkProxy}
-        onAssignmentComplete={handleBulkProxyPasteComplete}
-        profiles={profiles}
       />
 
       <CookieCopyDialog
@@ -1909,57 +1508,6 @@ export default function Home() {
         profiles={profiles.map((p) => ({ id: p.id, name: p.name }))}
       />
 
-      <SyncConfigDialog
-        isOpen={syncConfigDialogOpen}
-        onClose={(loginOccurred) => {
-          setSyncConfigDialogOpen(false);
-          void checkSelfHostedSync();
-          if (loginOccurred) {
-            setSyncAllDialogOpen(true);
-          }
-        }}
-        onLoginStarted={() => {
-          // Hand the verify step off to its own dialog. We close this one
-          // first so the verify dialog isn't stacked on top of it (and
-          // can't end up stacked on top of the profile selector either).
-          setSyncConfigDialogOpen(false);
-          setDeviceCodeDialogOpen(true);
-        }}
-      />
-
-      {/* Only render while no profile-selector flow is in progress, so the
-          verify dialog never lands on top of a deep-link-triggered selector. */}
-      {pendingUrls.length === 0 && (
-        <DeviceCodeVerifyDialog
-          isOpen={deviceCodeDialogOpen}
-          onClose={(loginOccurred) => {
-            setDeviceCodeDialogOpen(false);
-            if (loginOccurred) {
-              setSyncAllDialogOpen(true);
-            }
-          }}
-        />
-      )}
-
-      <SyncAllDialog
-        isOpen={syncAllDialogOpen}
-        onClose={() => {
-          setSyncAllDialogOpen(false);
-        }}
-      />
-
-      <ProfileSyncDialog
-        isOpen={profileSyncDialogOpen}
-        onClose={() => {
-          setProfileSyncDialogOpen(false);
-          setCurrentProfileForSync(null);
-        }}
-        profile={currentProfileForSync}
-        onSyncConfigOpen={() => {
-          setSyncConfigDialogOpen(true);
-        }}
-      />
-
       {/* Wayfern Terms and Conditions Dialog - shown if terms not accepted */}
       <WayfernTermsDialog
         isOpen={!termsLoading && termsAccepted === false}
@@ -1972,8 +1520,7 @@ export default function Home() {
           !termsLoading &&
           termsAccepted === true &&
           trialStatus?.type === "Expired" &&
-          !trialAcknowledged &&
-          !crossOsUnlocked
+          !trialAcknowledged
         }
         onClose={checkTrialStatus}
       />
@@ -1986,16 +1533,6 @@ export default function Home() {
           windowResizeWarningResolver.current?.(proceed);
           windowResizeWarningResolver.current = null;
         }}
-      />
-
-      <SyncFollowerDialog
-        isOpen={syncLeaderProfile !== null}
-        onClose={() => {
-          setSyncLeaderProfile(null);
-        }}
-        leaderProfile={syncLeaderProfile}
-        allProfiles={profiles}
-        runningProfiles={runningProfiles}
       />
     </div>
   );

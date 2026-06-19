@@ -218,7 +218,6 @@
       "settings": "설정",
       "proxies": "프록시 및 VPN",
       "groups": "그룹",
-      "syncService": "계정",
       "integrations": "통합",
       "importProfile": "프로필 가져오기",
       "extensions": "확장 프로그램"
@@ -391,32 +390,11 @@
   "proxies": {
     "title": "프록시",
     "management": {
-      "description": "프로필 간에 재사용할 프록시 및 VPN 구성을 관리합니다",
-      "tabProxies": "프록시",
-      "tabVpns": "VPN",
       "create": "생성",
-      "loading": "프록시 불러오는 중...",
-      "noneCreated": "아직 생성된 프록시가 없습니다. 위의 버튼을 사용하여 첫 번째 프록시를 생성하세요.",
-      "usage": "사용량",
       "syncCol": "동기화",
-      "syncCannotDisable": "이 프록시가 동기화된 프로필에서 사용 중이므로 동기화를 비활성화할 수 없습니다",
-      "enableSync": "동기화 사용",
-      "disableSync": "동기화 사용 안 함",
-      "editProxy": "프록시 편집",
-      "deleteProxy": "프록시 삭제",
-      "cannotDelete_one": "삭제할 수 없습니다: {{count}}개 프로필에서 사용 중",
-      "cannotDelete_other": "삭제할 수 없습니다: {{count}}개 프로필에서 사용 중",
       "syncEnabled": "동기화 사용됨",
       "syncDisabled": "동기화 사용 안 함",
-      "updateSyncFailed": "동기화 업데이트 실패",
-      "deleteSuccess": "프록시가 삭제되었습니다",
-      "deleteFailed": "프록시 삭제 실패",
-      "deleteTitle": "프록시 삭제",
-      "deleteDescription": "이 작업은 취소할 수 없습니다. 프록시 \"{{name}}\"이(가) 영구적으로 삭제됩니다.",
-      "newProxy": "새 프록시",
-      "newVpn": "새 VPN",
-      "protocolCol": "프로토콜",
-      "title": "프록시 및 VPN"
+      "updateSyncFailed": "동기화 업데이트 실패"
     },
     "add": "프록시 추가",
     "edit": "프록시 편집",
@@ -581,130 +559,24 @@
   },
   "sync": {
     "mode": {
-      "title": "프로필 동기화",
-      "description": "\"{{name}}\"의 동기화 설정 관리",
       "disabled": "사용 안 함",
       "regular": "일반 동기화",
-      "encrypted": "E2E 암호화 동기화",
-      "disabledDescription": "이 프로필 동기화 없음",
-      "regularDescription": "빠른 동기화, 암호화되지 않음",
-      "encryptedDescription": "업로드 전에 암호화됩니다. 서버는 평문 데이터를 보지 않습니다.",
-      "noPasswordWarning": "E2E 비밀번호가 설정되지 않았습니다. 설정에서 비밀번호를 설정하세요.",
-      "passwordRequired": "E2E 비밀번호가 설정되지 않았습니다. 먼저 설정에서 비밀번호를 설정하세요.",
-      "enabledToast": "동기화 사용",
-      "disabledToast": "동기화 사용 안 함",
-      "syncQueued": "동기화 대기 중",
-      "syncNow": "지금 동기화",
-      "lastSynced": "마지막 동기화",
-      "notConfigured": "동기화 서비스가 구성되지 않았습니다.",
-      "configureService": "동기화 서비스 구성"
-    },
-    "title": "계정",
-    "config": {
-      "serverUrlRequired": "서버 URL을 입력하세요",
-      "connectionSuccess": "연결 성공!",
-      "serverError": "서버가 오류로 응답했습니다",
-      "connectFailed": "서버에 연결하지 못했습니다",
-      "settingsSaved": "동기화 설정이 저장되었습니다",
-      "saveFailed": "설정 저장 실패",
-      "disconnected": "동기화 연결 끊김",
-      "disconnectFailed": "연결 해제 실패"
-    },
-    "serverUrl": "서버 URL",
-    "serverUrlPlaceholder": "https://sync.example.com",
-    "token": "동기화 토큰",
-    "tokenPlaceholder": "동기화 토큰 입력",
-    "status": {
-      "connected": "연결됨",
-      "disconnected": "연결 끊김",
-      "syncing": "동기화 중...",
-      "error": "동기화 오류"
-    },
-    "description": "기기 간 프로필, 프록시 및 그룹을 동기화하려면 동기화 서버에 연결하세요.",
-    "cloud": {
-      "tabLabel": "클라우드",
-      "selfHostedTabLabel": "자체 호스팅",
-      "email": "이메일",
-      "deviceLinkInstructions": "\"로그인\"을 클릭하여 브라우저에서 로그인 페이지를 엽니다. 로그인 후 표시된 코드를 복사하여 아래에 붙여넣으세요.",
-      "openLogin": "로그인",
-      "linkCodeLabel": "로그인 코드",
-      "linkCodePlaceholder": "웹사이트에서 받은 코드를 붙여넣으세요",
-      "signInTitle": "로그인",
-      "verifyAndLogin": "확인 및 로그인",
-      "loggingIn": "로그인 중...",
-      "connected": "연결됨",
-      "plan": "플랜",
-      "profiles": "프로필",
-      "profileUsage": "{{used}} / {{limit}}",
-      "manageAccount": "계정 관리",
-      "logout": "로그아웃",
-      "logoutConfirm": "정말 로그아웃하시겠습니까? 클라우드 동기화가 중지됩니다.",
-      "loginSuccess": "로그인 성공!",
-      "logoutSuccess": "로그아웃되었습니다."
+      "encrypted": "E2E 암호화 동기화"
     },
     "team": {
       "title": "팀",
-      "name": "팀 이름",
-      "role": "역할",
-      "roleOwner": "소유자",
-      "roleAdmin": "관리자",
-      "roleMember": "구성원",
-      "manageOnWeb": "웹 대시보드에서 팀 관리",
       "profileLocked": "{{email}}이(가) 사용 중",
-      "profileLockedShort": "사용 중",
       "cannotLaunchLocked": "실행할 수 없습니다 — 프로필을 {{email}}이(가) 사용 중",
       "createdBy": "{{email}}이(가) 생성"
     },
-    "disabled": "사용 안 함",
     "toast": {
       "profileSynced": "프로필 '{{name}}'이(가) 동기화되었습니다",
       "profileSyncFailed": "프로필 '{{name}}' 동기화 실패",
       "profileSyncFailedWithError": "프로필 '{{name}}' 동기화 실패: {{error}}"
-    },
-    "enabledToast": "동기화 사용",
-    "disabledToast": "동기화 사용 안 함",
-    "enabledDescription": "프로필 동기화가 활성화되었습니다",
-    "disabledDescription": "프로필 동기화가 비활성화되었습니다"
+    }
   },
   "integrations": {
     "title": "통합",
-    "api": {
-      "title": "로컬 API",
-      "description": "외부 통합을 위한 로컬 API 서버를 활성화합니다.",
-      "enabled": "API 사용",
-      "disabled": "API 사용 안 함",
-      "port": "포트",
-      "token": "API 토큰",
-      "copyToken": "토큰 복사",
-      "regenerateToken": "토큰 재생성"
-    },
-    "mcp": {
-      "title": "MCP 서버",
-      "description": "AI 어시스턴트 통합을 위한 MCP(Model Context Protocol) 서버를 활성화합니다.",
-      "enabled": "MCP 사용",
-      "disabled": "MCP 사용 안 함",
-      "port": "포트",
-      "token": "인증 토큰",
-      "tokenCopied": "토큰 복사됨",
-      "url": "MCP 서버 URL",
-      "urlCopied": "URL 복사됨",
-      "config": "MCP 구성",
-      "copyConfig": "구성 복사",
-      "clientsLabel": "클라이언트",
-      "connected": "연결됨",
-      "add": "추가",
-      "addedToClient": "{{name}}에 추가됨",
-      "removedFromClient": "{{name}}에서 제거됨",
-      "removeAriaLabel": "{{name}}에서 제거",
-      "category": {
-        "desktopApp": "데스크탑 앱",
-        "cli": "CLI",
-        "editor": "에디터",
-        "editorExt": "에디터 확장"
-      }
-    },
-    "tabApi": "로컬 API",
-    "tabMcp": "MCP (AI 어시스턴트)",
     "apiEnableLabel": "로컬 API 서버 활성화",
     "apiEnableDescription": "REST API로 프로필, 그룹 및 프록시를 관리할 수 있도록 허용합니다.",
     "apiPortLabel": "포트",
@@ -720,13 +592,6 @@
     "apiToggleFailed": "API 서버 토글 실패",
     "apiStartFailed": "API 서버 시작 실패",
     "apiUnknownError": "알 수 없는 오류",
-    "tokenCopied": "토큰 복사됨",
-    "mcpEnableLabel": "MCP 서버 활성화 (Model Context Protocol)",
-    "mcpEnableDescription": "Claude Desktop과 같은 AI 어시스턴트가 브라우저를 제어할 수 있도록 허용합니다.",
-    "mcpAcceptTermsFirst": "(먼저 설정에서 Wayfern 약관에 동의하세요)",
-    "mcpStarted": "MCP 서버가 포트 {{port}}에서 시작되었습니다",
-    "mcpStopped": "MCP 서버가 중지되었습니다",
-    "mcpToggleFailed": "MCP 서버 토글 실패",
     "openSettings": "통합 설정 열기",
     "apiRunningOn": "실행 중",
     "apiExampleRequest": "예시 요청"
@@ -1119,9 +984,7 @@
     }
   },
   "crossOs": {
-    "viewOnly": "이 프로필은 {{os}}에서 생성되었으며 이 시스템에서는 지원되지 않습니다",
-    "cannotLaunch": "이 프로필은 {{os}}에서 생성되었으며 이 시스템에서는 지원되지 않습니다",
-    "cannotModify": "교차 OS 프로필의 동기화 설정을 수정할 수 없습니다"
+    "viewOnly": "이 프로필은 {{os}}에서 생성되었으며 이 시스템에서는 지원되지 않습니다"
   },
   "profileInfo": {
     "title": "프로필 세부 정보",
@@ -1391,19 +1254,6 @@
       "doneButton": "완료",
       "failedGeneric": "VPN 구성 가져오기 실패",
       "defaultName": "{{type}} VPN"
-    },
-    "management": {
-      "loading": "VPN 불러오는 중...",
-      "noneCreated": "아직 생성된 VPN 구성이 없습니다. 위의 버튼을 사용하여 가져오거나 생성하세요.",
-      "editVpn": "VPN 편집",
-      "deleteVpn": "VPN 삭제",
-      "cannotDelete_one": "삭제할 수 없습니다: {{count}}개 프로필에서 사용 중",
-      "cannotDelete_other": "삭제할 수 없습니다: {{count}}개 프로필에서 사용 중",
-      "syncCannotDisable": "이 VPN이 동기화된 프로필에서 사용 중이므로 동기화를 비활성화할 수 없습니다",
-      "deleteSuccess": "VPN이 삭제되었습니다",
-      "deleteFailed": "VPN 삭제 실패",
-      "deleteTitle": "VPN 삭제",
-      "deleteDescription": "이 작업은 취소할 수 없습니다. VPN \"{{name}}\"이(가) 영구적으로 삭제됩니다."
     }
   },
   "importProfile": {
@@ -1475,39 +1325,6 @@
       "description_one": "{{count}}개의 그룹을 정말 삭제하시겠습니까? {{names}}. 프로필은 기본으로 이동됩니다.",
       "confirmButton": "그룹 삭제"
     }
-  },
-  "proxyAssignment": {
-    "title": "프록시 / VPN 할당",
-    "description_one": "선택한 {{count}}개 프로필에 프록시 또는 VPN을 할당합니다.",
-    "description_other": "선택한 {{count}}개 프로필에 프록시 또는 VPN을 할당합니다.",
-    "selectLabel": "프록시 / VPN",
-    "placeholder": "프록시 또는 VPN 선택",
-    "noProxy": "프록시 / VPN 없음",
-    "searchPlaceholder": "프록시 또는 VPN 검색...",
-    "notFound": "프록시 또는 VPN을 찾을 수 없습니다.",
-    "assignButton": "할당",
-    "success": "{{count}}개 프로필에 프록시/VPN을 할당했습니다",
-    "failed": "프록시/VPN 할당 실패",
-    "selectedProfilesLabel": "선택된 프로필:",
-    "assignProxyVpnLabel": "프록시 / VPN 할당:",
-    "noneOption": "없음",
-    "noValidProfiles": "유효한 프로필이 선택되지 않았습니다.",
-    "vpnGroupHeading": "VPN",
-    "failedFallback": "프로필에 프록시/VPN 할당 실패"
-  },
-  "bulkProxyAssignment": {
-    "title": "프록시 일괄 할당",
-    "description": "줄당 하나의 프록시를 붙여넣으세요. 1번 줄 → 첫 번째 선택 프로필, 2번 줄 → 두 번째 등.",
-    "selectedProfilesLabel": "선택된 프로필:",
-    "textareaLabel": "프록시 (줄당 하나)",
-    "textareaPlaceholder": "address:port:user:pass",
-    "helperText": "위에 표시된 선택 프로필과 같은 순서로 줄당 하나의 프록시를 입력하세요.",
-    "applyButton": "모두에 적용",
-    "countMismatch": "불일치: {{proxyCount}}개 프록시 줄但对 {{profileCount}}개 프로필이 선택됨.",
-    "invalidLineFormat": "잘못된 프록시 형식: \"{{line}}\". 예상 형식: address:port:user:pass",
-    "invalidPort": "\"{{line}}\"의 포트가 잘못되었습니다. 포트는 1–65535여야 합니다.",
-    "success": "{{count}}개 프로필에 프록시를 할당했습니다.",
-    "failed": "프록시 할당에 실패했습니다."
   },
   "groupAssignment": {
     "title": "그룹 할당",
@@ -1703,9 +1520,7 @@
     "syncTooltipDisabledWithLast": "동기화 사용 안 함, 마지막 동기화 {{time}}",
     "addTagsPlaceholder": "태그 추가",
     "tagsHeader": "태그",
-    "noteHeader": "메모",
-    "vpnsHeading": "VPN",
-    "createByCountryHeading": "국가별 생성"
+    "noteHeader": "메모"
   },
   "releaseTypeSelector": {
     "noReleaseTypes": "사용 가능한 릴리스 유형이 없습니다.",
@@ -1847,23 +1662,14 @@
     "profileLocked": "프로필이 잠겨 있습니다. 먼저 비밀번호를 입력하세요.",
     "invalidProfileId": "잘못된 프로필 ID",
     "passwordTooShort": "비밀번호는 {{min}}자 이상이어야 합니다",
-    "proxyNotFound": "프록시를 찾을 수 없습니다",
-    "groupNotFound": "그룹을 찾을 수 없습니다",
-    "vpnNotFound": "VPN을 찾을 수 없습니다",
     "extensionNotFound": "확장 프로그램을 찾을 수 없습니다",
     "extensionGroupNotFound": "확장 프로그램 그룹을 찾을 수 없습니다",
-    "cannotModifyCloudManagedProxy": "클라우드 관리 프록시의 동기화는 수정할 수 없습니다",
-    "syncLockedByProfile": "동기화된 프로필에서 사용 중인 동안에는 동기화를 비활성화할 수 없습니다",
-    "syncNotConfigured": "동기화가 구성되지 않았습니다. 먼저 로그인하거나 자체 호스팅 서버를 구성하세요.",
     "internal": "오류가 발생했습니다: {{detail}}",
     "invalidLaunchHookUrl": "잘못된 실행 후크 URL입니다. 전체 http:// 또는 https:// URL을 사용하세요.",
     "cookieDbLocked": "쿠키를 읽을 수 없습니다 — 데이터베이스가 잠겨 있습니다. 브라우저를 닫고 다시 시도하세요.",
     "cookieDbUnavailable": "쿠키를 읽을 수 없습니다 — 쿠키 저장소를 사용할 수 없습니다.",
-    "selfHostedRequiresLogout": "자체 호스팅 서버를 구성하기 전에 Donut 계정에서 로그아웃하세요.",
-    "fingerprintRequiresPro": "핑거프린트를 보거나 편집하려면 활성 유료 요금제가 필요합니다. 보호 기능은 모든 요금제에 포함되어 있습니다.",
     "proxyNotWorking": "선택한 프록시가 작동하지 않아 프로필이 생성되지 않았습니다.",
     "proxyPaymentRequired": "선택한 프록시는 결제가 필요합니다(402). 구독이 만료되었을 수 있어 프로필이 생성되지 않았습니다.",
-    "vpnNotWorking": "선택한 VPN이 작동하지 않아 프로필이 생성되지 않았습니다.",
     "camoufoxImportDeprecated": "Firefox 기반(Camoufox) 프로필 가져오기는 더 이상 지원되지 않습니다. Camoufox는 지원 종료 예정입니다. 대신 Wayfern을 사용하세요."
   },
   "rail": {
@@ -1880,8 +1686,7 @@
       "keyboardShortcutsHint": "모든 단축키 보기"
     },
     "network": "네트워크",
-    "integrations": "통합",
-    "account": "계정"
+    "integrations": "통합"
   },
   "pageTitle": {
     "proxies": "네트워크",
@@ -1890,7 +1695,6 @@
     "vpns": "네트워크",
     "settings": "설정",
     "integrations": "통합",
-    "account": "계정",
     "import": "프로필 가져오기",
     "shortcuts": "키보드 단축키"
   },
@@ -1917,39 +1721,6 @@
       }
     }
   },
-  "account": {
-    "refreshed": "계정이 새로 고쳐졌습니다",
-    "loggedOut": "로그아웃됨",
-    "signedOut": "로그아웃됨",
-    "signedOutDescription": "클라우드 동기화, 암호화된 프로필 및 팀 기능을 사용하려면 로그인하세요.",
-    "plan": "플랜: {{plan}} · {{period}}",
-    "refresh": "새로 고침",
-    "logout": "로그아웃",
-    "signIn": "로그인",
-    "fields": {
-      "plan": "플랜",
-      "status": "상태",
-      "teamRole": "팀 역할",
-      "period": "결제 기간",
-      "device": "기기"
-    },
-    "tabs": {
-      "account": "계정",
-      "selfHosted": "자체 호스팅"
-    },
-    "selfHosted": {
-      "title": "자체 호스팅 동기화 서버",
-      "description": "호스팅 클라우드를 사용하지 않고 프로필, 프록시, 그룹 및 확장 프로그램을 동기화하려면 Donut을 자체 donut-sync 서버로 연결하세요.",
-      "disabledWhileLoggedIn": "Donut 계정에 로그인되어 있는 동안에는 자체 호스팅 동기화를 사용할 수 없습니다. 사용자 지정 서버를 사용하려면 로그아웃하세요.",
-      "connectionStatus": "연결:",
-      "statusUnknown": "테스트 안 됨",
-      "testConnection": "연결 테스트",
-      "disconnect": "연결 해제"
-    },
-    "deviceOrdinal": "{{count}}대 중 {{ordinal}}번째",
-    "automationPrimaryOnly": "브라우저 자동화는 기본 기기(기기 1)에서만 실행됩니다. 여기서 사용하려면 해당 기기에서 로그아웃하세요.",
-    "automationActiveHere": "이 기기에서 브라우저 자동화가 활성화되어 있습니다."
-  },
   "shortcutsPage": {
     "title": "키보드 단축키",
     "description": "이 단축키로 작업 흐름을 빠르게 하세요."
@@ -1974,11 +1745,9 @@
     "openShortcuts": "키보드 단축키 보기",
     "importProfile": "프로필 가져오기",
     "goProfiles": "프로필로 이동",
-    "goProxies": "네트워크로 이동",
     "goExtensions": "확장 프로그램으로 이동",
     "goGroups": "그룹으로 이동",
     "goIntegrations": "통합으로 이동",
-    "goAccount": "계정으로 이동",
     "goSettings": "설정으로 이동"
   },
   "closeConfirm": {
@@ -2095,6 +1864,7 @@
     "success": "Created {{count}} profiles successfully.",
     "failed": "Failed to create profiles.",
     "namePattern": "Names: {{prefix}}.01 through {{prefix}}.{{count}}",
-    "proxyCountMatch": "{{count}} proxy line(s) — matches {{count}} profile(s)."
+    "proxyCountMatch": "{{count}} proxy line(s) — matches {{count}} profile(s).",
+    "proxyCountInfo": "{{proxyCount}} proxy line(s) for {{profileCount}} profile(s). Extra proxies ignored, missing proxies left unset."
   }
 }

@@ -40,7 +40,6 @@ pub struct ApiProfile {
   pub tags: Vec<String>,
   pub is_running: bool,
   pub proxy_bypass_rules: Vec<String>,
-  pub vpn_id: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
@@ -64,7 +63,6 @@ pub struct CreateProfileRequest {
   #[serde(default)]
   pub version: Option<String>,
   pub proxy: Option<String>,
-  pub vpn_id: Option<String>,
   pub launch_hook: Option<String>,
   pub release_type: Option<String>,
   /// Camoufox fingerprint/config. Send only when `browser` is `"camoufox"`.
@@ -91,7 +89,6 @@ pub struct UpdateProfileRequest {
   // Accepting it here only to silently ignore it misled API clients.
   pub version: Option<String>,
   pub proxy: Option<String>,
-  pub vpn_id: Option<String>,
   pub launch_hook: Option<String>,
   pub release_type: Option<String>,
   #[schema(value_type = Object)]
@@ -100,8 +97,6 @@ pub struct UpdateProfileRequest {
   pub tags: Option<Vec<String>>,
   pub extension_group_id: Option<String>,
   pub proxy_bypass_rules: Option<Vec<String>>,
-  /// One of "Disabled", "Regular", "Encrypted".
-  pub sync_mode: Option<String>,
 }
 
 #[derive(Clone)]
@@ -149,49 +144,6 @@ struct UpdateProxyRequest {
   name: Option<String>,
   #[schema(value_type = Object)]
   proxy_settings: Option<ProxySettings>,
-}
-
-#[derive(Debug, Serialize, Deserialize, ToSchema)]
-struct ApiVpnResponse {
-  id: String,
-  name: String,
-  /// Always "WireGuard"
-  vpn_type: String,
-  created_at: i64,
-  last_used: Option<i64>,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-struct ApiVpnExportResponse {
-  id: String,
-  name: String,
-  /// Always "WireGuard"
-  vpn_type: String,
-  /// Raw `.conf` file content (decrypted)
-  config_data: String,
-}
-
-#[derive(Debug, Deserialize, ToSchema)]
-struct ImportVpnRequest {
-  /// Raw WireGuard `.conf` file content
-  content: String,
-  /// Original filename
-  filename: String,
-  /// Optional display name; defaults to filename-based name
-  name: Option<String>,
-}
-
-#[derive(Debug, Deserialize, ToSchema)]
-struct CreateVpnRequest {
-  name: String,
-  /// Must be "WireGuard"
-  vpn_type: String,
-  config_data: String,
-}
-
-#[derive(Debug, Deserialize, ToSchema)]
-struct UpdateVpnRequest {
-  name: String,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -270,12 +222,6 @@ struct ImportCookiesResponse {
     create_proxy,
     update_proxy,
     delete_proxy,
-    get_vpns,
-    get_vpn,
-    import_vpn,
-    create_vpn,
-    update_vpn,
-    delete_vpn,
     download_browser_api,
     get_browser_versions,
     check_browser_downloaded,
@@ -292,10 +238,6 @@ struct ImportCookiesResponse {
     ApiProxyResponse,
     CreateProxyRequest,
     UpdateProxyRequest,
-    ApiVpnResponse,
-    ImportVpnRequest,
-    CreateVpnRequest,
-    UpdateVpnRequest,
     DownloadBrowserRequest,
     DownloadBrowserResponse,
     RunProfileResponse,
@@ -310,7 +252,6 @@ struct ImportCookiesResponse {
     (name = "groups", description = "Group management endpoints"),
     (name = "tags", description = "Tag management endpoints"),
     (name = "proxies", description = "Proxy management endpoints"),
-    (name = "vpns", description = "VPN management endpoints"),
     (name = "browsers", description = "Browser management endpoints"),
     (name = "cookies", description = "Cookie management endpoints"),
   ),
@@ -405,10 +346,6 @@ impl ApiServer {
       .routes(routes!(get_tags))
       .routes(routes!(get_proxies, create_proxy))
       .routes(routes!(get_proxy, update_proxy, delete_proxy))
-      .routes(routes!(get_vpns, create_vpn))
-      .routes(routes!(import_vpn))
-      .routes(routes!(export_vpn))
-      .routes(routes!(get_vpn, update_vpn, delete_vpn))
       .routes(routes!(get_extensions))
       .routes(routes!(delete_extension_api))
       .routes(routes!(get_extension_groups))
@@ -526,8 +463,7 @@ async fn rate_limit_middleware(
   request: axum::extract::Request,
   next: Next,
 ) -> Result<Response, StatusCode> {
-  let _requests_per_hour = crate::cloud_auth::CLOUD_AUTH.requests_per_hour().await;
-  // TODO(rate-limit): enforce `_requests_per_hour` for automation routes.
+  // TODO(rate-limit): enforce per-hour automation request limit.
   Ok(next.run(request).await)
 }
 
@@ -610,7 +546,6 @@ async fn get_profiles() -> Result<Json<ApiProfilesResponse>, StatusCode> {
           tags: profile.tags.clone(),
           is_running: profile.process_id.is_some(), // Simple check based on process_id
           proxy_bypass_rules: profile.proxy_bypass_rules.clone(),
-          vpn_id: profile.vpn_id.clone(),
         })
         .collect();
 
@@ -664,7 +599,6 @@ async fn get_profile(
             tags: profile.tags.clone(),
             is_running: profile.process_id.is_some(), // Simple check based on process_id
             proxy_bypass_rules: profile.proxy_bypass_rules.clone(),
-            vpn_id: profile.vpn_id.clone(),
           },
         }))
       } else {
@@ -748,10 +682,10 @@ async fn create_profile(
     None
   };
 
-  // Reject a dead/unreachable proxy or VPN before creating the profile. A 402
+  // Reject a dead/unreachable proxy before creating the profile. A 402
   // (expired proxy subscription) maps to 402; anything else is a 400.
   if let Err(err) =
-    crate::validate_profile_network(request.proxy.as_deref(), request.vpn_id.as_deref()).await
+    crate::validate_profile_network(request.proxy.as_deref()).await
   {
     return Err(if err.contains("PROXY_PAYMENT_REQUIRED") {
       StatusCode::PAYMENT_REQUIRED
@@ -769,7 +703,7 @@ async fn create_profile(
       &version,
       request.release_type.as_deref().unwrap_or("stable"),
       request.proxy.clone(),
-      request.vpn_id.clone(),
+      None,
       camoufox_config,
       wayfern_config,
       request.group_id.clone(),
@@ -814,7 +748,6 @@ async fn create_profile(
           tags: profile.tags,
           is_running: false,
           proxy_bypass_rules: profile.proxy_bypass_rules,
-          vpn_id: profile.vpn_id,
         },
       }))
     }
@@ -848,12 +781,6 @@ async fn update_profile(
 ) -> Result<Json<ApiProfileResponse>, StatusCode> {
   let profile_manager = ProfileManager::instance();
 
-  if request.proxy.as_deref().is_some_and(|s| !s.is_empty())
-    && request.vpn_id.as_deref().is_some_and(|s| !s.is_empty())
-  {
-    return Err(StatusCode::BAD_REQUEST);
-  }
-
   // Update profile fields
   if let Some(new_name) = request.name {
     if profile_manager
@@ -883,21 +810,6 @@ async fn update_profile(
     }
   }
 
-  if let Some(vpn_id) = request.vpn_id {
-    let normalized = if vpn_id.is_empty() {
-      None
-    } else {
-      Some(vpn_id)
-    };
-    if profile_manager
-      .update_profile_vpn(state.app_handle.clone(), &id, normalized)
-      .await
-      .is_err()
-    {
-      return Err(StatusCode::BAD_REQUEST);
-    }
-  }
-
   if let Some(launch_hook) = request.launch_hook {
     let normalized = if launch_hook.trim().is_empty() {
       None
@@ -914,14 +826,6 @@ async fn update_profile(
   }
 
   if let Some(camoufox_config) = request.camoufox_config {
-    // Editing a profile's fingerprint config is part of the cross-OS fingerprint
-    // capability (GUI, API, MCP). Viewing it is free; mutating it is not.
-    if !crate::cloud_auth::CLOUD_AUTH
-      .can_use_cross_os_fingerprints()
-      .await
-    {
-      return Err(StatusCode::PAYMENT_REQUIRED);
-    }
     let config: Result<CamoufoxConfig, _> = serde_json::from_value(camoufox_config);
     match config {
       Ok(config) => {
@@ -979,15 +883,6 @@ async fn update_profile(
   if let Some(proxy_bypass_rules) = request.proxy_bypass_rules {
     if profile_manager
       .update_profile_proxy_bypass_rules(&state.app_handle, &id, proxy_bypass_rules)
-      .is_err()
-    {
-      return Err(StatusCode::BAD_REQUEST);
-    }
-  }
-
-  if let Some(sync_mode) = request.sync_mode {
-    if crate::sync::set_profile_sync_mode(state.app_handle.clone(), id.clone(), sync_mode)
-      .await
       .is_err()
     {
       return Err(StatusCode::BAD_REQUEST);
@@ -1339,243 +1234,6 @@ async fn delete_proxy(
   Err(StatusCode::GONE)
 }
 
-// API Handlers - VPNs
-
-fn vpn_to_api_response(c: &crate::vpn::VpnConfig) -> ApiVpnResponse {
-  ApiVpnResponse {
-    id: c.id.clone(),
-    name: c.name.clone(),
-    vpn_type: c.vpn_type.to_string(),
-    created_at: c.created_at,
-    last_used: c.last_used,
-  }
-}
-
-fn parse_vpn_type(s: &str) -> Option<crate::vpn::VpnType> {
-  match s.to_ascii_lowercase().as_str() {
-    "wireguard" | "wg" => Some(crate::vpn::VpnType::WireGuard),
-    _ => None,
-  }
-}
-
-#[utoipa::path(
-  get,
-  path = "/v1/vpns",
-  responses(
-    (status = 200, description = "List of all VPN configurations", body = Vec<ApiVpnResponse>),
-    (status = 401, description = "Unauthorized"),
-    (status = 500, description = "Internal server error")
-  ),
-  security(("bearer_auth" = [])),
-  tag = "vpns"
-)]
-async fn get_vpns(
-  State(_state): State<ApiServerState>,
-) -> Result<Json<Vec<ApiVpnResponse>>, StatusCode> {
-  let storage = crate::vpn::VPN_STORAGE
-    .lock()
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-  let configs = storage
-    .list_configs()
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-  Ok(Json(configs.iter().map(vpn_to_api_response).collect()))
-}
-
-#[utoipa::path(
-  get,
-  path = "/v1/vpns/{id}",
-  params(("id" = String, Path, description = "VPN configuration ID")),
-  responses(
-    (status = 200, description = "VPN configuration details", body = ApiVpnResponse),
-    (status = 401, description = "Unauthorized"),
-    (status = 404, description = "VPN configuration not found"),
-    (status = 500, description = "Internal server error")
-  ),
-  security(("bearer_auth" = [])),
-  tag = "vpns"
-)]
-async fn get_vpn(
-  Path(id): Path<String>,
-  State(_state): State<ApiServerState>,
-) -> Result<Json<ApiVpnResponse>, StatusCode> {
-  let storage = crate::vpn::VPN_STORAGE
-    .lock()
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-  let configs = storage
-    .list_configs()
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-  configs
-    .iter()
-    .find(|c| c.id == id)
-    .map(|c| Json(vpn_to_api_response(c)))
-    .ok_or(StatusCode::NOT_FOUND)
-}
-
-#[utoipa::path(
-  get,
-  path = "/v1/vpns/{id}/export",
-  params(("id" = String, Path, description = "VPN configuration ID")),
-  responses(
-    (status = 200, description = "Decrypted VPN configuration", body = ApiVpnExportResponse),
-    (status = 401, description = "Unauthorized"),
-    (status = 404, description = "VPN configuration not found"),
-    (status = 500, description = "Internal server error")
-  ),
-  security(("bearer_auth" = [])),
-  tag = "vpns"
-)]
-async fn export_vpn(
-  Path(id): Path<String>,
-  State(_state): State<ApiServerState>,
-) -> Result<Json<ApiVpnExportResponse>, StatusCode> {
-  let storage = crate::vpn::VPN_STORAGE
-    .lock()
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-  match storage.load_config(&id) {
-    Ok(config) => Ok(Json(ApiVpnExportResponse {
-      id: config.id,
-      name: config.name,
-      vpn_type: config.vpn_type.to_string(),
-      config_data: config.config_data,
-    })),
-    Err(_) => Err(StatusCode::NOT_FOUND),
-  }
-}
-
-#[utoipa::path(
-  post,
-  path = "/v1/vpns/import",
-  request_body = ImportVpnRequest,
-  responses(
-    (status = 200, description = "VPN configuration imported successfully", body = ApiVpnResponse),
-    (status = 400, description = "Invalid or unrecognized VPN config"),
-    (status = 401, description = "Unauthorized"),
-    (status = 500, description = "Internal server error")
-  ),
-  security(("bearer_auth" = [])),
-  tag = "vpns"
-)]
-async fn import_vpn(
-  State(_state): State<ApiServerState>,
-  Json(request): Json<ImportVpnRequest>,
-) -> Result<Json<ApiVpnResponse>, StatusCode> {
-  let result = {
-    let storage = crate::vpn::VPN_STORAGE
-      .lock()
-      .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    storage.import_config(&request.content, &request.filename, request.name)
-  };
-  match result {
-    Ok(config) => {
-      let _ = events::emit("vpn-configs-changed", ());
-      Ok(Json(vpn_to_api_response(&config)))
-    }
-    Err(_) => Err(StatusCode::BAD_REQUEST),
-  }
-}
-
-#[utoipa::path(
-  post,
-  path = "/v1/vpns",
-  request_body = CreateVpnRequest,
-  responses(
-    (status = 200, description = "VPN configuration created successfully", body = ApiVpnResponse),
-    (status = 400, description = "Invalid VPN config or unknown vpn_type"),
-    (status = 401, description = "Unauthorized"),
-    (status = 500, description = "Internal server error")
-  ),
-  security(("bearer_auth" = [])),
-  tag = "vpns"
-)]
-async fn create_vpn(
-  State(_state): State<ApiServerState>,
-  Json(request): Json<CreateVpnRequest>,
-) -> Result<Json<ApiVpnResponse>, StatusCode> {
-  let vpn_type = parse_vpn_type(&request.vpn_type).ok_or(StatusCode::BAD_REQUEST)?;
-  let result = {
-    let storage = crate::vpn::VPN_STORAGE
-      .lock()
-      .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    storage.create_config_manual(&request.name, vpn_type, &request.config_data)
-  };
-  match result {
-    Ok(config) => {
-      let _ = events::emit("vpn-configs-changed", ());
-      Ok(Json(vpn_to_api_response(&config)))
-    }
-    Err(_) => Err(StatusCode::BAD_REQUEST),
-  }
-}
-
-#[utoipa::path(
-  put,
-  path = "/v1/vpns/{id}",
-  params(("id" = String, Path, description = "VPN configuration ID")),
-  request_body = UpdateVpnRequest,
-  responses(
-    (status = 200, description = "VPN configuration updated successfully", body = ApiVpnResponse),
-    (status = 400, description = "Bad request"),
-    (status = 401, description = "Unauthorized"),
-    (status = 404, description = "VPN configuration not found"),
-    (status = 500, description = "Internal server error")
-  ),
-  security(("bearer_auth" = [])),
-  tag = "vpns"
-)]
-async fn update_vpn(
-  Path(id): Path<String>,
-  State(_state): State<ApiServerState>,
-  Json(request): Json<UpdateVpnRequest>,
-) -> Result<Json<ApiVpnResponse>, StatusCode> {
-  let result = {
-    let storage = crate::vpn::VPN_STORAGE
-      .lock()
-      .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    storage.update_config_name(&id, &request.name)
-  };
-  match result {
-    Ok(config) => {
-      let _ = events::emit("vpn-configs-changed", ());
-      Ok(Json(vpn_to_api_response(&config)))
-    }
-    Err(_) => Err(StatusCode::NOT_FOUND),
-  }
-}
-
-#[utoipa::path(
-  delete,
-  path = "/v1/vpns/{id}",
-  params(("id" = String, Path, description = "VPN configuration ID")),
-  responses(
-    (status = 204, description = "VPN configuration deleted successfully"),
-    (status = 401, description = "Unauthorized"),
-    (status = 404, description = "VPN configuration not found"),
-    (status = 500, description = "Internal server error")
-  ),
-  security(("bearer_auth" = [])),
-  tag = "vpns"
-)]
-async fn delete_vpn(
-  Path(id): Path<String>,
-  State(_state): State<ApiServerState>,
-) -> Result<StatusCode, StatusCode> {
-  let _ = crate::vpn_worker_runner::stop_vpn_worker_by_vpn_id(&id).await;
-
-  let result = {
-    let storage = crate::vpn::VPN_STORAGE
-      .lock()
-      .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    storage.delete_config(&id)
-  };
-  match result {
-    Ok(_) => {
-      let _ = events::emit("vpn-configs-changed", ());
-      Ok(StatusCode::NO_CONTENT)
-    }
-    Err(_) => Err(StatusCode::NOT_FOUND),
-  }
-}
-
 // Extension API endpoints
 
 #[utoipa::path(
@@ -1690,13 +1348,6 @@ async fn run_profile(
   State(state): State<ApiServerState>,
   Query(request): Query<RunProfileRequest>,
 ) -> Result<Json<RunProfileResponse>, StatusCode> {
-  if !crate::cloud_auth::CLOUD_AUTH
-    .can_use_browser_automation()
-    .await
-  {
-    return Err(StatusCode::PAYMENT_REQUIRED);
-  }
-
   let headless = request.headless.unwrap_or(false);
   let url = request.url;
 
@@ -1776,13 +1427,6 @@ async fn open_url_in_profile(
   State(state): State<ApiServerState>,
   Json(request): Json<OpenUrlRequest>,
 ) -> Result<StatusCode, StatusCode> {
-  if !crate::cloud_auth::CLOUD_AUTH
-    .can_use_browser_automation()
-    .await
-  {
-    return Err(StatusCode::PAYMENT_REQUIRED);
-  }
-
   let browser_runner = crate::browser_runner::BrowserRunner::instance();
 
   browser_runner
@@ -1816,15 +1460,6 @@ async fn kill_profile(
   Path(id): Path<String>,
   State(state): State<ApiServerState>,
 ) -> Result<StatusCode, StatusCode> {
-  // Programmatically launching and stopping profiles is a paid feature; the
-  // run/open-url handlers gate the same way.
-  if !crate::cloud_auth::CLOUD_AUTH
-    .can_use_browser_automation()
-    .await
-  {
-    return Err(StatusCode::PAYMENT_REQUIRED);
-  }
-
   let profile_manager = ProfileManager::instance();
   let profiles = profile_manager
     .list_profiles()
@@ -1888,16 +1523,6 @@ async fn import_profile_cookies(
   .await
   {
     Ok(result) => {
-      if let Some(scheduler) = crate::sync::get_global_scheduler() {
-        if let Some(profile) = profiles.iter().find(|p| p.id.to_string() == id) {
-          if profile.is_sync_enabled() {
-            let pid = id.clone();
-            tauri::async_runtime::spawn(async move {
-              scheduler.queue_profile_sync(pid).await;
-            });
-          }
-        }
-      }
       Ok(Json(ImportCookiesResponse {
         cookies_imported: result.cookies_imported,
         cookies_replaced: result.cookies_replaced,
@@ -2032,7 +1657,7 @@ pub struct WayfernTokenResponse {
 async fn get_wayfern_token(
   State(_state): State<ApiServerState>,
 ) -> Result<Json<WayfernTokenResponse>, StatusCode> {
-  let token = crate::cloud_auth::CLOUD_AUTH.get_wayfern_token().await;
+  let token: Option<String> = None;
   Ok(Json(WayfernTokenResponse { token }))
 }
 
@@ -2052,12 +1677,7 @@ async fn get_wayfern_token(
 async fn refresh_wayfern_token(
   State(_state): State<ApiServerState>,
 ) -> Result<Json<WayfernTokenResponse>, (StatusCode, String)> {
-  crate::cloud_auth::CLOUD_AUTH
-    .request_wayfern_token()
-    .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
-
-  let token = crate::cloud_auth::CLOUD_AUTH.get_wayfern_token().await;
+  let token: Option<String> = None;
   Ok(Json(WayfernTokenResponse { token }))
 }
 

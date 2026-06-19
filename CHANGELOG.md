@@ -1,7 +1,27 @@
 # Changelog
 
 
-## v0.26.0 (2026-06-08)
+## v0.27.1 (2026-06-19)
+
+### Features
+
+- remove cloud sync, cloud auth, MCP server
+- remove VPN (frontend + backend)
+- remove donut-sync NestJS service
+- remove account page, entitlements, backend errors
+- remove sync/cloud-auth/VPN/proxy-assignment dialogs
+- remove human typing, VPN integration tests
+- re-enable Camoufox config dialog unconditionally
+- clean up test commands, lint targets, script references
+- strip VPN fields from API profile requests/responses
+- strip pro subscription gating (frontend + backend)
+- remove obsolete TypeScript hooks (cloud auth, sync sessions, VPN events)
+
+### Maintenance
+
+- chore: version bump to 0.27.1
+- chore: update AGENTS.md component count
+- chore: remove dead code for cloud sync pipeline
 
 ### Features
 

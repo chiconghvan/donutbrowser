@@ -200,33 +200,17 @@ impl BrowserRunner {
       });
 
       // Always start a local proxy for Camoufox (for traffic monitoring and geoip support)
-      let mut upstream_proxy = self
+      let upstream_proxy = self
         .resolve_launch_proxy(profile)
         .await
         .map_err(|e| -> Box<dyn std::error::Error + Send + Sync> { e.into() })?;
 
-      // If profile has a VPN instead of proxy, start VPN worker and use it as upstream
-      if upstream_proxy.is_none() {
-        if let Some(ref vpn_id) = profile.vpn_id {
-          match crate::vpn_worker_runner::start_vpn_worker(vpn_id).await {
-            Ok(vpn_worker) => {
-              if let Some(port) = vpn_worker.local_port {
-                upstream_proxy = Some(ProxySettings {
-                  proxy_type: "socks5".to_string(),
-                  host: "127.0.0.1".to_string(),
-                  port,
-                  username: None,
-                  password: None,
-                });
-                log::info!("VPN worker started for Camoufox profile on port {}", port);
-              }
-            }
-            Err(e) => {
-              return Err(format!("Failed to start VPN worker: {e}").into());
-            }
-          }
-        }
-      }
+      // TODO: VPN worker support removed (vpn_worker_runner module deleted)
+      // if upstream_proxy.is_none() {
+      //   if let Some(ref vpn_id) = profile.vpn_id {
+      //     match crate::vpn_worker_runner::start_vpn_worker(vpn_id).await { ... }
+      //   }
+      // }
 
       log::info!(
         "Starting local proxy for Camoufox profile: {} (upstream: {})",
@@ -466,33 +450,17 @@ impl BrowserRunner {
       });
 
       // Always start a local proxy for Wayfern (for traffic monitoring and geoip support)
-      let mut upstream_proxy = self
+      let upstream_proxy = self
         .resolve_launch_proxy(profile)
         .await
         .map_err(|e| -> Box<dyn std::error::Error + Send + Sync> { e.into() })?;
 
-      // If profile has a VPN instead of proxy, start VPN worker and use it as upstream
-      if upstream_proxy.is_none() {
-        if let Some(ref vpn_id) = profile.vpn_id {
-          match crate::vpn_worker_runner::start_vpn_worker(vpn_id).await {
-            Ok(vpn_worker) => {
-              if let Some(port) = vpn_worker.local_port {
-                upstream_proxy = Some(ProxySettings {
-                  proxy_type: "socks5".to_string(),
-                  host: "127.0.0.1".to_string(),
-                  port,
-                  username: None,
-                  password: None,
-                });
-                log::info!("VPN worker started for Wayfern profile on port {}", port);
-              }
-            }
-            Err(e) => {
-              return Err(format!("Failed to start VPN worker: {e}").into());
-            }
-          }
-        }
-      }
+      // TODO: VPN worker support removed (vpn_worker_runner module deleted)
+      // if upstream_proxy.is_none() {
+      //   if let Some(ref vpn_id) = profile.vpn_id {
+      //     match crate::vpn_worker_runner::start_vpn_worker(vpn_id).await { ... }
+      //   }
+      // }
 
       log::info!(
         "Starting local proxy for Wayfern profile: {} (upstream: {})",
@@ -2294,15 +2262,6 @@ pub async fn launch_browser_profile_impl(
   // Team lock check: if profile is sync-enabled and user is on a team, acquire lock
   crate::team_lock::acquire_team_lock_if_needed(&profile).await?;
 
-  // Notify sync scheduler that profile is now running and queue sync for when it stops
-  if let Some(scheduler) = crate::sync::get_global_scheduler() {
-    let pid = profile.id.to_string();
-    scheduler.mark_profile_running(&pid).await;
-    if profile.is_sync_enabled() {
-      scheduler.queue_profile_sync(pid).await;
-    }
-  }
-
   let browser_runner = BrowserRunner::instance();
 
   // Resolve the most up-to-date profile from disk by ID to avoid using stale proxy_id/browser state
@@ -2432,13 +2391,6 @@ pub async fn kill_browser_profile(
 
       // Release team lock if applicable
       crate::team_lock::release_team_lock_if_needed(&profile).await;
-
-      // Notify sync scheduler that profile stopped (sync was queued at launch)
-      if let Some(scheduler) = crate::sync::get_global_scheduler() {
-        scheduler
-          .mark_profile_stopped(&profile.id.to_string())
-          .await;
-      }
 
       // Auto-update non-running profiles and cleanup unused binaries
       let browser_for_update = profile.browser.clone();

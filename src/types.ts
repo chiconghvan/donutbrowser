@@ -70,54 +70,6 @@ export type SyncMode = "Disabled" | "Regular" | "Encrypted";
 
 export type SyncStatus = "Disabled" | "Syncing" | "Synced" | "Error";
 
-export interface SyncSettings {
-  sync_server_url?: string;
-  sync_token?: string;
-}
-
-/**
- * Capability/limit set derived from the plan by the backend. Features are gated
- * on these flags instead of a single "is paid?" check, so a plan like the future
- * "starter" tier (cross-OS fingerprints + cloud backup, no automation) is just
- * data. Mirrors `apps/backend/src/plans/entitlements.ts`. Resolve via
- * `getEntitlements()` — the desktop populates it, but it stays optional for
- * safety on older state.
- */
-export interface Entitlements {
-  active: boolean;
-  browserAutomation: boolean;
-  crossOsFingerprints: boolean;
-  cloudBackup: boolean;
-  teamCollaboration: boolean;
-  profileLimit: number;
-  requestsPerHour: number;
-}
-
-export interface CloudUser {
-  id: string;
-  email: string;
-  plan: string;
-  planPeriod: string | null;
-  subscriptionStatus: string;
-  profileLimit: number;
-  cloudProfilesUsed: number;
-  proxyBandwidthLimitMb: number;
-  proxyBandwidthUsedMb: number;
-  proxyBandwidthExtraMb: number;
-  teamId?: string;
-  teamName?: string;
-  teamRole?: string;
-  // This device's position among the user's active devices (oldest = 1).
-  // Ordinal 1 / isPrimaryDevice === true is the only device that can run
-  // browser automation. Optional: older backends omit them.
-  deviceOrdinal?: number | null;
-  deviceCount?: number | null;
-  isPrimaryDevice?: boolean | null;
-  // Plan-derived capabilities. The desktop resolves this before handing CloudUser
-  // to the UI; optional to stay safe on older cached state.
-  entitlements?: Entitlements;
-}
-
 export interface ProfileLockInfo {
   profileId: string;
   lockedBy: string;
@@ -125,31 +77,6 @@ export interface ProfileLockInfo {
   lockedAt: string;
   expiresAt?: string;
 }
-
-export interface CloudAuthState {
-  user: CloudUser;
-  logged_in_at: string;
-}
-
-export interface ProfileSyncStatusEvent {
-  profile_id: string;
-  status: "disabled" | "syncing" | "synced" | "error" | "pending";
-}
-
-export interface ProxyCheckResult {
-  ip: string;
-  city?: string;
-  country?: string;
-  country_code?: string;
-  timestamp: number;
-  is_valid: boolean;
-}
-
-export function isSyncEnabled(profile: BrowserProfile): boolean {
-  return profile.sync_mode != null && profile.sync_mode !== "Disabled";
-}
-
-export const CLOUD_PROXY_ID = "cloud-included-proxy";
 
 export interface StoredProxy {
   id: string;
@@ -542,17 +469,15 @@ export interface WayfernLaunchResult {
 }
 
 // Synchronizer types
-export interface SyncFollowerState {
-  profile_id: string;
-  profile_name: string;
-  failed_at_url: string | null;
-}
-
 export interface SyncSessionInfo {
   id: string;
   leader_profile_id: string;
   leader_profile_name: string;
-  followers: SyncFollowerState[];
+  followers: {
+    profile_id: string;
+    profile_name: string;
+    failed_at_url: string | null;
+  }[];
 }
 
 // Traffic stats types
@@ -706,21 +631,4 @@ export interface VpnConfig {
   last_used?: number;
   sync_enabled?: boolean;
   last_sync?: number;
-}
-
-export interface VpnImportResult {
-  success: boolean;
-  vpn_id?: string;
-  vpn_type?: VpnType;
-  name: string;
-  error?: string;
-}
-
-export interface VpnStatus {
-  connected: boolean;
-  vpn_id: string;
-  connected_at?: number;
-  bytes_sent?: number;
-  bytes_received?: number;
-  last_handshake?: number;
 }

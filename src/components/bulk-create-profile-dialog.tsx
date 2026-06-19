@@ -156,15 +156,11 @@ export function BulkCreateProfileDialog({
     if (profileCount < 1) return false;
     if (!getCreatableVersion(selectedBrowser)) return false;
     if (isCreating) return false;
-    // If no proxies at all — allowed (all profiles get no proxy)
     return true;
   }, [profileCount, selectedBrowser, getCreatableVersion, isCreating]);
 
-  const countMismatch =
-    proxyLines.length > 0 && proxyLines.length !== profileCount;
-
   const handleCreate = async () => {
-    if (!canCreate || countMismatch) return;
+    if (!canCreate) return;
 
     const versionInfo = getCreatableVersion(selectedBrowser);
     if (!versionInfo) return;
@@ -389,17 +385,11 @@ export function BulkCreateProfileDialog({
               </div>
 
               {proxyLines.length > 0 && (
-                <p
-                  className={`text-xs ${countMismatch ? "text-destructive" : "text-muted-foreground"}`}
-                >
-                  {countMismatch
-                    ? t("bulkCreateProfile.countMismatch", {
-                        proxyCount: proxyLines.length,
-                        profileCount,
-                      })
-                    : t("bulkCreateProfile.proxyCountMatch", {
-                        count: proxyLines.length,
-                      })}
+                <p className="text-xs text-muted-foreground">
+                  {t("bulkCreateProfile.proxyCountInfo", {
+                    proxyCount: proxyLines.length,
+                    profileCount,
+                  })}
                 </p>
               )}
             </div>
@@ -417,7 +407,7 @@ export function BulkCreateProfileDialog({
                   void handleCreate();
                 }}
                 isLoading={isCreating}
-                disabled={!canCreate || countMismatch}
+                disabled={!canCreate}
               >
                 {t("bulkCreateProfile.createButton", { count: profileCount })}
               </LoadingButton>

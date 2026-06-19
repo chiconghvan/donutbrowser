@@ -540,8 +540,6 @@ impl ProfileManager {
     // Save profile with new name
     self.save_profile(&profile)?;
 
-    crate::sync::queue_profile_sync_if_eligible(&profile);
-
     // Keep tag suggestions up to date after name change (rebuild from all profiles)
     let _ = crate::tag_manager::TAG_MANAGER.lock().map(|tm| {
       let _ = tm.rebuild_from_profiles(&self.list_profiles().unwrap_or_default());
@@ -557,7 +555,7 @@ impl ProfileManager {
 
   pub fn delete_profile(
     &self,
-    app_handle: &tauri::AppHandle,
+    _app_handle: &tauri::AppHandle,
     profile_id: &str,
   ) -> Result<(), Box<dyn std::error::Error>> {
     log::info!("Attempting to delete profile with ID: {profile_id}");
@@ -577,9 +575,6 @@ impl ProfileManager {
         "Cannot delete profile while browser is running. Please stop the browser first.".into(),
       );
     }
-
-    // Remember sync mode before deleting local files
-    let was_sync_enabled = profile.is_sync_enabled();
 
     let profiles_dir = self.get_profiles_dir();
     let profile_uuid_dir = profiles_dir.join(profile.id.to_string());
@@ -602,30 +597,6 @@ impl ProfileManager {
       profile_id
     );
 
-    // If sync was enabled, also delete from S3
-    if was_sync_enabled {
-      let profile_id_owned = profile_id.to_string();
-      let app_handle_clone = app_handle.clone();
-      tauri::async_runtime::spawn(async move {
-        match crate::sync::SyncEngine::create_from_settings(&app_handle_clone).await {
-          Ok(engine) => {
-            if let Err(e) = engine.delete_profile(&profile_id_owned).await {
-              log::warn!(
-                "Failed to delete profile {} from sync: {}",
-                profile_id_owned,
-                e
-              );
-            } else {
-              log::info!("Profile {} deleted from S3 sync storage", profile_id_owned);
-            }
-          }
-          Err(e) => {
-            log::debug!("Sync not configured, skipping remote deletion: {}", e);
-          }
-        }
-      });
-    }
-
     // Rebuild tag suggestions after deletion
     let _ = crate::tag_manager::TAG_MANAGER.lock().map(|tm| {
       let _ = tm.rebuild_from_profiles(&self.list_profiles().unwrap_or_default());
@@ -646,6 +617,7 @@ impl ProfileManager {
 
   /// Delete a profile from the local filesystem only, without triggering remote sync deletion.
   /// Used when a profile was deleted on another device and the local copy should be cleaned up.
+  #[allow(dead_code)]
   pub fn delete_profile_local_only(
     &self,
     profile_id: &str,
@@ -747,21 +719,6 @@ impl ProfileManager {
       profile.group_id = group_id.clone();
       profile.updated_at = Some(crate::proxy_manager::now_secs());
       self.save_profile(&profile)?;
-
-      crate::sync::queue_profile_sync_if_eligible(&profile);
-
-      // Auto-enable sync for new group if profile has sync enabled
-      if profile.is_sync_enabled() {
-        if let Some(ref new_group_id) = group_id {
-          let group_id_clone = new_group_id.clone();
-          tauri::async_runtime::spawn(async move {
-            let _ = crate::sync::enable_group_sync_if_needed(&group_id_clone).await;
-            if let Some(scheduler) = crate::sync::get_global_scheduler() {
-              scheduler.queue_group_sync(group_id_clone).await;
-            }
-          });
-        }
-      }
     }
 
     // Rebuild tag suggestions after group changes just in case
@@ -805,8 +762,6 @@ impl ProfileManager {
     // Save profile
     self.save_profile(&profile)?;
 
-    crate::sync::queue_profile_sync_if_eligible(&profile);
-
     // Update global tag suggestions from all profiles
     let _ = crate::tag_manager::TAG_MANAGER.lock().map(|tm| {
       let _ = tm.rebuild_from_profiles(&self.list_profiles().unwrap_or_default());
@@ -842,8 +797,6 @@ impl ProfileManager {
     // Save profile
     self.save_profile(&profile)?;
 
-    crate::sync::queue_profile_sync_if_eligible(&profile);
-
     // Emit profile note update event
     if let Err(e) = events::emit_empty("profiles-changed") {
       log::warn!("Warning: Failed to emit profiles-changed event: {e}");
@@ -870,8 +823,6 @@ impl ProfileManager {
     profile.updated_at = Some(crate::proxy_manager::now_secs());
 
     self.save_profile(&profile)?;
-
-    crate::sync::queue_profile_sync_if_eligible(&profile);
 
     if let Err(e) = events::emit("profile-updated", &profile) {
       log::warn!("Warning: Failed to emit profile update event: {e}");
@@ -903,7 +854,7 @@ impl ProfileManager {
 
     self.save_profile(&profile)?;
 
-    crate::sync::queue_profile_sync_if_eligible(&profile);
+
 
     if let Err(e) = events::emit_empty("profiles-changed") {
       log::warn!("Warning: Failed to emit profiles-changed event: {e}");
@@ -930,7 +881,7 @@ impl ProfileManager {
 
     self.save_profile(&profile)?;
 
-    crate::sync::queue_profile_sync_if_eligible(&profile);
+
 
     if let Err(e) = events::emit_empty("profiles-changed") {
       log::warn!("Warning: Failed to emit profiles-changed event: {e}");
@@ -941,11 +892,10 @@ impl ProfileManager {
 
   pub fn delete_multiple_profiles(
     &self,
-    app_handle: &tauri::AppHandle,
+    _app_handle: &tauri::AppHandle,
     profile_ids: Vec<String>,
   ) -> Result<(), Box<dyn std::error::Error>> {
     let profiles = self.list_profiles()?;
-    let mut sync_enabled_ids: Vec<String> = Vec::new();
 
     for profile_id in profile_ids {
       let profile_uuid = uuid::Uuid::parse_str(&profile_id)
@@ -966,11 +916,6 @@ impl ProfileManager {
         );
       }
 
-      // Track sync-enabled profiles for remote deletion
-      if profile.is_sync_enabled() {
-        sync_enabled_ids.push(profile_id.clone());
-      }
-
       // Delete the profile
       let profiles_dir = self.get_profiles_dir();
       let profile_uuid_dir = profiles_dir.join(profile.id.to_string());
@@ -978,20 +923,6 @@ impl ProfileManager {
       if profile_uuid_dir.exists() {
         std::fs::remove_dir_all(&profile_uuid_dir)?;
       }
-    }
-
-    // Delete sync-enabled profiles from S3
-    if !sync_enabled_ids.is_empty() {
-      let app_handle_clone = app_handle.clone();
-      tauri::async_runtime::spawn(async move {
-        if let Ok(engine) = crate::sync::SyncEngine::create_from_settings(&app_handle_clone).await {
-          for profile_id in sync_enabled_ids {
-            if let Err(e) = engine.delete_profile(&profile_id).await {
-              log::warn!("Failed to delete profile {} from sync: {}", profile_id, e);
-            }
-          }
-        }
-      });
     }
 
     // Emit profile deletion event
@@ -1177,7 +1108,7 @@ impl ProfileManager {
         format!("Failed to save profile: {e}").into()
       })?;
 
-    crate::sync::queue_profile_sync_if_eligible(&profile);
+
 
     log::info!(
       "Camoufox configuration updated for profile '{}' (ID: {}).",
@@ -1239,7 +1170,7 @@ impl ProfileManager {
         format!("Failed to save profile: {e}").into()
       })?;
 
-    crate::sync::queue_profile_sync_if_eligible(&profile);
+
 
     log::info!(
       "Wayfern configuration updated for profile '{}' (ID: {}).",
@@ -1295,7 +1226,7 @@ impl ProfileManager {
         format!("Failed to save profile: {e}").into()
       })?;
 
-    crate::sync::queue_profile_sync_if_eligible(&profile);
+
 
     if let Err(e) = events::emit("profile-updated", &profile) {
       log::warn!("Warning: Failed to emit profile update event: {e}");
@@ -1308,6 +1239,7 @@ impl ProfileManager {
     Ok(profile)
   }
 
+  #[allow(dead_code)]
   pub async fn update_profile_vpn(
     &self,
     _app_handle: tauri::AppHandle,
@@ -1344,18 +1276,6 @@ impl ProfileManager {
         format!("Failed to save profile: {e}").into()
       })?;
 
-    crate::sync::queue_profile_sync_if_eligible(&profile);
-
-    // Auto-enable sync for the new VPN if profile has sync enabled.
-    if profile.is_sync_enabled() {
-      if let Some(ref new_vpn_id) = vpn_id {
-        let _ = crate::sync::enable_vpn_sync_if_needed(new_vpn_id).await;
-        if let Some(scheduler) = crate::sync::get_global_scheduler() {
-          scheduler.queue_vpn_sync(new_vpn_id.clone()).await;
-        }
-      }
-    }
-
     if let Err(e) = events::emit("profile-updated", &profile) {
       log::warn!("Warning: Failed to emit profile update event: {e}");
     }
@@ -1384,21 +1304,7 @@ impl ProfileManager {
     profile.updated_at = Some(crate::proxy_manager::now_secs());
     self.save_profile(&profile)?;
 
-    crate::sync::queue_profile_sync_if_eligible(&profile);
 
-    // Auto-enable sync for the new extension group if profile has sync
-    // enabled. The helper is sync internally; we fire-and-forget through
-    // the async runtime so any I/O doesn't block this caller.
-    if profile.is_sync_enabled() {
-      if let Some(new_group_id) = extension_group_id {
-        tauri::async_runtime::spawn(async move {
-          let _ = crate::sync::enable_extension_group_sync_if_needed(&new_group_id).await;
-          if let Some(scheduler) = crate::sync::get_global_scheduler() {
-            scheduler.queue_extension_group_sync(new_group_id).await;
-          }
-        });
-      }
-    }
 
     if let Err(e) = events::emit("profile-updated", &profile) {
       log::warn!("Failed to emit profile update event: {e}");
@@ -2323,6 +2229,7 @@ pub async fn update_profile_proxy(
 }
 
 #[tauri::command]
+#[allow(dead_code)]
 pub async fn update_profile_vpn(
   app_handle: tauri::AppHandle,
   profile_id: String,
@@ -2457,21 +2364,14 @@ pub async fn create_browser_profile_new(
   dns_blocklist: Option<String>,
   launch_hook: Option<String>,
 ) -> Result<BrowserProfile, String> {
-  let fingerprint_os = camoufox_config
+  let _fingerprint_os = camoufox_config
     .as_ref()
     .and_then(|c| c.os.as_deref())
     .or_else(|| wayfern_config.as_ref().and_then(|c| c.os.as_deref()));
 
-  if !crate::cloud_auth::CLOUD_AUTH
-    .is_fingerprint_os_allowed(fingerprint_os)
-    .await
-  {
-    return Err("Fingerprint OS spoofing requires an active Pro subscription".to_string());
-  }
-
   // A dead/unreachable proxy or VPN (or a 402 from an expired proxy
   // subscription) cancels creation with a translatable error.
-  crate::validate_profile_network(proxy_id.as_deref(), vpn_id.as_deref()).await?;
+  crate::validate_profile_network(proxy_id.as_deref()).await?;
 
   let browser_type =
     BrowserType::from_str(&browser_str).map_err(|e| format!("Invalid browser type: {e}"))?;
@@ -2550,21 +2450,6 @@ pub async fn update_camoufox_config(
   profile_id: String,
   config: CamoufoxConfig,
 ) -> Result<(), String> {
-  if config.fingerprint.is_some()
-    && !crate::cloud_auth::CLOUD_AUTH
-      .can_use_cross_os_fingerprints()
-      .await
-  {
-    return Err(serde_json::json!({ "code": "FINGERPRINT_REQUIRES_PRO" }).to_string());
-  }
-
-  if !crate::cloud_auth::CLOUD_AUTH
-    .is_fingerprint_os_allowed(config.os.as_deref())
-    .await
-  {
-    return Err("Fingerprint OS spoofing requires an active Pro subscription".to_string());
-  }
-
   let profile_manager = ProfileManager::instance();
   profile_manager
     .update_camoufox_config(app_handle, &profile_id, config)
@@ -2578,21 +2463,6 @@ pub async fn update_wayfern_config(
   profile_id: String,
   config: WayfernConfig,
 ) -> Result<(), String> {
-  if config.fingerprint.is_some()
-    && !crate::cloud_auth::CLOUD_AUTH
-      .can_use_cross_os_fingerprints()
-      .await
-  {
-    return Err(serde_json::json!({ "code": "FINGERPRINT_REQUIRES_PRO" }).to_string());
-  }
-
-  if !crate::cloud_auth::CLOUD_AUTH
-    .is_fingerprint_os_allowed(config.os.as_deref())
-    .await
-  {
-    return Err("Fingerprint OS spoofing requires an active Pro subscription".to_string());
-  }
-
   let profile_manager = ProfileManager::instance();
   profile_manager
     .update_wayfern_config(app_handle, &profile_id, config)

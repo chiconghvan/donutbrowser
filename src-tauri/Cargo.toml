@@ -1,6 +1,6 @@
 [package]
 name = "donutbrowser"
-version = "0.26.2"
+version = "0.27.1"
 description = "Simple Yet Powerful Anti-Detect Browser"
 authors = ["zhom@github"]
 edition = "2021"
@@ -153,14 +153,6 @@ serial_test = "3"
 [[test]]
 name = "donut_proxy_integration"
 path = "tests/donut_proxy_integration.rs"
-
-[[test]]
-name = "sync_e2e"
-path = "tests/sync_e2e.rs"
-
-[[test]]
-name = "vpn_integration"
-path = "tests/vpn_integration.rs"
 
 [profile.dev]
 codegen-units = 256
