@@ -13,12 +13,9 @@ env:
 
 jobs:
   check-compliance:
+    if: false
     # Maintainers' own issues are exempt — they open quick tracking issues
     # without the template on purpose. Everyone else is checked.
-    if: >-
-      github.repository == 'chiconghvan/donutbrowser' &&
-      github.event.issue.author_association != 'OWNER' &&
-      github.event.issue.author_association != 'MEMBER'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository

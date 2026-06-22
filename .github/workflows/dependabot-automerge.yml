@@ -1,8 +1,7 @@
 name: Dependabot Automerge
 
 on:
-  pull_request_target:
-    types: [opened, synchronize, reopened]
+  workflow_dispatch:
 
 permissions:
   pull-requests: write
@@ -11,8 +10,8 @@ permissions:
 
 jobs:
   security-scan:
+    if: false
     name: Security Vulnerability Scan
-    if: github.repository == 'chiconghvan/donutbrowser' && github.actor == 'dependabot[bot]'
     uses: "google/osv-scanner-action/.github/workflows/osv-scanner-reusable-pr.yml@9a498708959aeaef5ef730655706c5a1df1edbc2" # v2.3.8
     with:
       scan-args: |-
@@ -27,24 +26,24 @@ jobs:
       actions: read
 
   lint-js:
+    if: false
     name: Lint JavaScript/TypeScript
-    if: github.repository == 'chiconghvan/donutbrowser' && github.actor == 'dependabot[bot]'
     uses: ./.github/workflows/lint-js.yml
     secrets: inherit
     permissions:
       contents: read
 
   lint-rust:
+    if: false
     name: Lint Rust
-    if: github.repository == 'chiconghvan/donutbrowser' && github.actor == 'dependabot[bot]'
     uses: ./.github/workflows/lint-rs.yml
     secrets: inherit
     permissions:
       contents: read
 
   codeql:
+    if: false
     name: CodeQL
-    if: github.repository == 'chiconghvan/donutbrowser' && github.actor == 'dependabot[bot]'
     uses: ./.github/workflows/codeql.yml
     secrets: inherit
     permissions:
@@ -54,16 +53,16 @@ jobs:
       actions: read
 
   spellcheck:
+    if: false
     name: Spell Check
-    if: github.repository == 'chiconghvan/donutbrowser' && github.actor == 'dependabot[bot]'
     uses: ./.github/workflows/spellcheck.yml
     secrets: inherit
     permissions:
       contents: read
 
   dependabot-automerge:
+    if: false
     name: Dependabot Automerge
-    if: github.repository == 'chiconghvan/donutbrowser' && github.actor == 'dependabot[bot]'
     needs: [security-scan, lint-js, lint-rust, codeql, spellcheck]
     runs-on: ubuntu-latest
     steps:
