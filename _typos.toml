@@ -10,5 +10,6 @@ extend-exclude = [
 
 [default.extend-words]
 DBE = "DBE"
+PN = "PN"
 nd = "nd"
 PNGs = "PNGs"
