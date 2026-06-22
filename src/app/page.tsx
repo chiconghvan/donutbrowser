@@ -1278,6 +1278,7 @@ export default function Home() {
                   handleBulkExtensionGroupAssignment
                 }
                 onAssignExtensionGroup={handleAssignExtensionGroup}
+                crossOsUnlocked={true}
               />
             </div>
           )}
@@ -1346,6 +1347,7 @@ export default function Home() {
                 setCurrentPage("profiles");
               }}
               subPage={currentPage === "import"}
+              crossOsUnlocked={true}
             />
           )}
         </main>
@@ -1358,6 +1360,7 @@ export default function Home() {
         }}
         onCreateProfile={handleCreateProfile}
         selectedGroupId={selectedGroupId}
+        crossOsUnlocked={true}
       />
 
       <BulkCreateProfileDialog
@@ -1470,6 +1473,7 @@ export default function Home() {
             ? runningProfiles.has(currentProfileForCamoufoxConfig.id)
             : false
         }
+        crossOsUnlocked={true}
       />
 
       <GroupAssignmentDialog
