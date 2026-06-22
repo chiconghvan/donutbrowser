@@ -170,6 +170,8 @@ pub struct ToastPayload {
 #[derive(Debug, Serialize, ToSchema)]
 struct RunProfileResponse {
   profile_id: String,
+  name: String,
+  proxy: Option<String>,
   remote_debugging_port: u16,
   headless: bool,
 }
@@ -1394,6 +1396,8 @@ async fn run_profile(
   {
     Ok(updated_profile) => Ok(Json(RunProfileResponse {
       profile_id: updated_profile.id.to_string(),
+      name: updated_profile.name.clone(),
+      proxy: updated_profile.proxy.clone(),
       remote_debugging_port,
       headless,
     })),

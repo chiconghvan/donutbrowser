@@ -235,10 +235,14 @@ Response:
 ```json
 {
   "profile_id": "uuid",
+  "name": "My Profile",
+  "proxy": "http://user:pass@host:port",
   "remote_debugging_port": 9222,
   "headless": false
 }
 ```
+
+`proxy` is `null` if no proxy is configured.
 
 #### `POST /v1/profiles/{id}/kill`
 
