@@ -2415,8 +2415,25 @@ export function ProfilesDataTable({
         },
       },
       {
+        // Hidden, sort-only column so profiles can be sorted by creation date
+        // without showing a Created column in the table (issue #454). Kept
+        // hidden via columnVisibility; sorting still works on hidden columns.
+        id: "created_at",
+        accessorFn: (row) => row.created_at ?? 0,
+        enableSorting: true,
+        enableHiding: true,
+        sortingFn: "basic",
+        header: () => null,
+        cell: () => null,
+      },
+      {
         accessorKey: "name",
-        size: 130,
+        // The only column without a fixed width: table-fixed hands it all
+        // remaining space as the window grows or shrinks.
+        meta: { flexWidth: true },
+        // The Name header doubles as the sort control: clicking opens a menu to
+        // sort by name (A–Z / Z–A) or by creation date (newest / oldest), so
+        // creation-date sorting needs no visible column.
         header: ({ table }) => {
           const meta = table.options.meta as TableMeta;
           const sort = table.getState().sorting[0];
@@ -2874,6 +2891,18 @@ export function ProfilesDataTable({
     [t, setProfileForInfoDialog],
   );
 
+  // Low-priority columns leave the table as the container narrows (most
+  // expendable first); their data stays reachable via the profile info
+  // dialog. Visibility (not CSS hiding) so table-fixed reclaims the width.
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({ created_at: false });
+
+  // Content columns grow proportionally with the container but never drop
+  // below the compact-layout floor; the name column takes the remainder.
+  // Computed in px from the observed container width because fixed table
+  // layout ignores max()/calc() column widths.
+  const [containerWidth, setContainerWidth] = React.useState(0);
+
   const table = useReactTable({
     data: profiles,
     columns,
@@ -2904,16 +2933,32 @@ export function ProfilesDataTable({
   useScrollFade(scrollParentRef);
 
   React.useEffect(() => {
-    const map: Record<string, number> = {};
-    for (let i = 0; i < sortedRows.length; i++) {
-      map[sortedRows[i].id] = i;
-    }
-    idToIndexRef.current = map;
-    sortedRowsRef.current = sortedRows;
-    scrollParentRefForDrag.current = scrollParentRef.current;
-    onDragMoveRef.current = onDragPointerMove;
-    onDragEndRef.current = endDrag;
-  }, [sortedRows, onDragPointerMove, endDrag]);
+    const el = scrollParentRef.current;
+    if (!el) return;
+    const update = () => {
+      const w = el.clientWidth;
+      setContainerWidth(Math.round(w / 8) * 8);
+      setColumnVisibility((prev) => {
+        const next: VisibilityState = {
+          // Always hidden — sort-only column (issue #454).
+          created_at: false,
+          dns: w >= 768,
+          ext: w >= 672,
+          note: w >= 576,
+          tags: w >= 512,
+        };
+        return Object.keys(next).every((k) => prev[k] === next[k])
+          ? prev
+          : next;
+      });
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => {
+      ro.disconnect();
+    };
+  }, []);
 
   // Compact 36px row from the redesign spec; estimateSize must match the
   // actual rendered row height or virtualizer placement drifts under scroll.

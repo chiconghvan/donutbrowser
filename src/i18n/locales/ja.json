@@ -327,9 +327,21 @@
     "launchHook": {
       "placeholder": "https://example.com/track-launch"
     },
+    "bulkRun": {
+      "confirmTitle": "{{count}} 個のプロファイルを実行しますか？",
+      "confirmDescription": "{{count}} 個のプロファイルを一度に起動すると、システムリソースを大量に消費する可能性があります。続行しますか？",
+      "confirmButton": "{{count}} 個を実行",
+      "noneToRun": "実行する選択中のプロファイルがありません。"
+    },
+    "bulkStop": {
+      "confirmTitle": "{{count}} 個のプロファイルを停止しますか？",
+      "confirmDescription": "実行中の {{count}} 個のプロファイルを停止しますか？",
+      "confirmButton": "{{count}} 個を停止",
+      "noneToStop": "停止する選択中のプロファイルがありません。"
+    },
     "sort": {
-      "nameAsc": "名前 (A–Z)",
-      "nameDesc": "名前 (Z–A)",
+      "nameAsc": "名前 (A→Z)",
+      "nameDesc": "名前 (Z→A)",
       "newest": "新しい順",
       "oldest": "古い順"
     }
@@ -1055,7 +1067,8 @@
       "proxy": "プロキシ",
       "vpn": "VPN",
       "cookieCount": "保存された Cookie",
-      "localDataTransfer": "ローカルデータ転送量"
+      "localDataTransfer": "ローカルデータ転送量",
+      "created": "作成日"
     },
     "values": {
       "none": "なし",
@@ -1064,7 +1077,8 @@
       "yes": "はい",
       "activeNow": "現在アクティブ",
       "direct": "直接",
-      "loading": "読み込み中…"
+      "loading": "読み込み中…",
+      "unknown": "不明"
     },
     "network": {
       "bypassRules": "プロキシバイパスルール",

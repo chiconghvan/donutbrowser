@@ -327,11 +327,23 @@
     "launchHook": {
       "placeholder": "https://example.com/track-launch"
     },
+    "bulkRun": {
+      "confirmTitle": "Запустить {{count}} профилей?",
+      "confirmDescription": "Одновременный запуск {{count}} профилей может потребовать много системных ресурсов. Продолжить?",
+      "confirmButton": "Запустить {{count}}",
+      "noneToRun": "Нет выбранных профилей для запуска."
+    },
+    "bulkStop": {
+      "confirmTitle": "Остановить {{count}} профилей?",
+      "confirmDescription": "Остановить {{count}} запущенных профилей?",
+      "confirmButton": "Остановить {{count}}",
+      "noneToStop": "Нет выбранных профилей для остановки."
+    },
     "sort": {
-      "nameAsc": "Имя (A–Z)",
-      "nameDesc": "Имя (Z–A)",
-      "newest": "Новые",
-      "oldest": "Старые"
+      "nameAsc": "Имя (А–Я)",
+      "nameDesc": "Имя (Я–А)",
+      "newest": "Сначала новые",
+      "oldest": "Сначала старые"
     }
   },
   "createProfile": {
@@ -1055,7 +1067,8 @@
       "proxy": "ПРОКСИ",
       "vpn": "VPN",
       "cookieCount": "Хранится Cookie",
-      "localDataTransfer": "Локальный трафик"
+      "localDataTransfer": "Локальный трафик",
+      "created": "Создан"
     },
     "values": {
       "none": "Нет",
@@ -1064,7 +1077,8 @@
       "yes": "Да",
       "activeNow": "Сейчас активен",
       "direct": "Без прокси",
-      "loading": "Загрузка…"
+      "loading": "Загрузка…",
+      "unknown": "Неизвестно"
     },
     "network": {
       "bypassRules": "Правила обхода прокси",

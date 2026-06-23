@@ -327,11 +327,23 @@
     "launchHook": {
       "placeholder": "https://example.com/track-launch"
     },
+    "bulkRun": {
+      "confirmTitle": "Executar {{count}} perfis?",
+      "confirmDescription": "Iniciar {{count}} perfis de uma vez pode consumir muitos recursos do sistema. Continuar?",
+      "confirmButton": "Executar {{count}}",
+      "noneToRun": "Nenhum perfil selecionado para executar."
+    },
+    "bulkStop": {
+      "confirmTitle": "Parar {{count}} perfis?",
+      "confirmDescription": "Parar {{count}} perfis em execução?",
+      "confirmButton": "Parar {{count}}",
+      "noneToStop": "Nenhum perfil selecionado para parar."
+    },
     "sort": {
       "nameAsc": "Nome (A–Z)",
       "nameDesc": "Nome (Z–A)",
-      "newest": "Mais recente",
-      "oldest": "Mais antigo"
+      "newest": "Mais recentes primeiro",
+      "oldest": "Mais antigos primeiro"
     }
   },
   "createProfile": {
@@ -1055,7 +1067,8 @@
       "proxy": "PROXY",
       "vpn": "VPN",
       "cookieCount": "Cookies armazenados",
-      "localDataTransfer": "Transferência de dados local"
+      "localDataTransfer": "Transferência de dados local",
+      "created": "Criado em"
     },
     "values": {
       "none": "Nenhum",
@@ -1064,7 +1077,8 @@
       "yes": "Sim",
       "activeNow": "Ativo agora",
       "direct": "Direto",
-      "loading": "Carregando…"
+      "loading": "Carregando…",
+      "unknown": "Desconhecido"
     },
     "network": {
       "bypassRules": "Regras de Bypass de Proxy",
