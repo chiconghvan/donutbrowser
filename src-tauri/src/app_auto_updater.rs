@@ -132,20 +132,21 @@ impl AppAutoUpdater {
 
   /// Check if running a nightly build based on environment variable
   pub fn is_nightly_build() -> bool {
-    // If STABLE_RELEASE env var is set at compile time, it's a stable build
-    if option_env!("STABLE_RELEASE").is_some() {
-      return false;
-    }
-
-    // Also check if the current version starts with "nightly-"
     let current_version = Self::get_current_version();
+
+    // The BUILD_VERSION format is the most reliable indicator of build type
+    if current_version.starts_with('v') {
+      return false; // v0.27.8 → stable release
+    }
     if current_version.starts_with("nightly-") {
-      return true;
+      return true; // nightly-2026-06-23-... → nightly build
+    }
+    if current_version.starts_with("dev-") {
+      return false; // dev-0.27.8 → local dev build, don't auto-update
     }
 
-    // If STABLE_RELEASE is not set and version doesn't start with "nightly-",
-    // it's still considered a nightly build (dev builds, main branch builds, etc.)
-    true
+    // Fallback: STABLE_RELEASE compile-time env (may be unreliable with cargo cache)
+    option_env!("STABLE_RELEASE").is_none()
   }
 
   /// Get current app version from build-time injection
@@ -313,23 +314,19 @@ impl AppAutoUpdater {
         // Different commit hashes mean we should update
         let should_update = new_hash != current_hash;
         log::info!("Nightly comparison: current_hash={current_hash}, new_hash={new_hash}, should_update={should_update}");
-        return should_update;
-      }
-
-      // If current version doesn't have nightly prefix but we're in nightly mode,
-      // this could be a dev build or stable build upgrading to nightly
-      if !current_version.starts_with("nightly-") {
-        log::info!("Upgrading from non-nightly to nightly: {new_version}");
-        return true;
+        should_update
+      } else {
+        // If current version doesn't have nightly prefix but we're in nightly mode,
+        // don't auto-upgrade — the build type detection was likely wrong.
+        log::info!("Cannot determine update path: current={current_version}, new={new_version}, is_nightly=true");
+        false
       }
     } else {
       // For stable builds, use semantic versioning comparison
       let should_update = self.is_version_newer(new_version, current_version);
       log::info!("Stable comparison: {new_version} > {current_version} = {should_update}");
-      return should_update;
+      should_update
     }
-
-    false
   }
 
   /// Compare semantic versions (returns true if version1 > version2)
@@ -1832,8 +1829,8 @@ mod tests {
     assert!(updater.should_update("nightly-abc123", "nightly-def456", true));
     assert!(!updater.should_update("nightly-abc123", "nightly-abc123", true));
 
-    // Upgrade from stable to nightly
-    assert!(updater.should_update("v1.0.0", "nightly-abc123", true));
+    // Should NOT auto-upgrade from stable to nightly (build type mismatch)
+    assert!(!updater.should_update("v1.0.0", "nightly-abc123", true));
 
     // Don't upgrade dev, ever
     assert!(!updater.should_update("dev-0.1.0", "nightly-xyz987", false));

@@ -20,61 +20,78 @@ $ErrorActionPreference = "Stop"
 $rootDir = Split-Path -Parent $PSScriptRoot
 $tauriDir = Join-Path $rootDir "src-tauri"
 
-Write-Host "=== Donut Browser — NSIS Installer Build ===" -ForegroundColor Cyan
+Write-Host
+Write-Host "  =======================================================" -ForegroundColor Cyan
+Write-Host "     Donut Browser -- NSIS Installer Build" -ForegroundColor Cyan
+Write-Host "  =======================================================" -ForegroundColor Cyan
+Write-Host
 
-# Step 1: Switch to MSVC toolchain
-Write-Host "[1/4] Setting MSVC toolchain..." -ForegroundColor Yellow
-rustup default stable-x86_64-pc-windows-msvc
+# -- [1/4] MSVC toolchain -------------------------------------------
+Write-Host "  >> [1/4] Setting MSVC toolchain..." -ForegroundColor Yellow
+$prevPref = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
+rustup default stable-x86_64-pc-windows-msvc 2>&1 | Out-Null
+$ErrorActionPreference = $prevPref
+if ($LASTEXITCODE -ne 0) { throw "Failed to set MSVC toolchain" }
+Write-Host "     [OK]" -ForegroundColor Green
+Write-Host
 
-# Step 2: Prebuild proxy binary (unless skipped)
+# -- [2/4] Proxy binary ----------------------------------------------
 if (-not $SkipProxyPrebuild) {
-    Write-Host "[2/4] Prebuilding donut-proxy binary..." -ForegroundColor Yellow
+    Write-Host "  >> [2/4] Prebuilding donut-proxy..." -ForegroundColor Yellow
     Push-Location $tauriDir
     try {
-        cargo build --bin donut-proxy --release 2>&1
+        cargo build --bin donut-proxy --release --quiet 2>&1
         if ($LASTEXITCODE -ne 0) { throw "Proxy build failed" }
+        Write-Host "     [OK] donut-proxy built" -ForegroundColor Green
     } finally {
         Pop-Location
     }
 } else {
-    Write-Host "[2/4] Skipping proxy prebuild" -ForegroundColor Green
+    Write-Host "  >> [2/4] Proxy prebuild: skipped" -ForegroundColor Green
 }
+Write-Host
 
-# Step 3: Build Tauri — NSIS installer + EXE
-Write-Host "[3/4] Building Tauri (NSIS installer + EXE)..." -ForegroundColor Yellow
-
-# Stop release donut-proxy sidecars before Tauri copies externalBin to target\release.
-# If target\release\donut-proxy.exe is running, Windows denies overwrite with code 5.
+# -- Stop locked proxy before Tauri copies externalBin --------------
 $releaseProxyPath = Join-Path $tauriDir "target\release\donut-proxy.exe"
 $lockedProxies = Get-Process donut-proxy -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $releaseProxyPath }
 if ($lockedProxies) {
-    Write-Host "Stopping locked donut-proxy process(es): $($lockedProxies.Id -join ', ')" -ForegroundColor Yellow
+    Write-Host "     [i] Stopping locked proxy PID $($lockedProxies.Id -join ', ')" -ForegroundColor Yellow
     $lockedProxies | Stop-Process -Force -Confirm:$false
+    Write-Host
 }
 
-# --bundles nsis builds EXE + NSIS setup. Tauri v2 on Windows accepts msi/nsis only.
-# Chạy từ project root (không cd src-tauri) — đúng theo skill
-pnpm --prefix $rootDir exec tauri build --bundles nsis 2>&1
-if ($LASTEXITCODE -ne 0) { throw "Tauri build failed" }
+# -- [3/4] Tauri build ----------------------------------------------
+Write-Host "  >> [3/4] Building Tauri (NSIS installer + EXE)..." -ForegroundColor Yellow
+Write-Host
 
-# Step 4: Show output
+$env:STABLE_RELEASE = "1"
+
+$prevPref2 = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
+pnpm --prefix $rootDir exec tauri build --bundles nsis 2>&1 | ForEach-Object { Write-Host "$_" }
+$ErrorActionPreference = $prevPref2
+if ($LASTEXITCODE -ne 0) { throw "Tauri build failed" }
+Write-Host
+
+# -- [4/4] Results --------------------------------------------------
+Write-Host "  >> [4/4] Build complete!" -ForegroundColor Cyan
 $exePath = Join-Path $tauriDir "target\release\donutbrowser.exe"
 $nsisDir = Join-Path $tauriDir "target\release\bundle\nsis"
 $nsisPattern = "Donut_*_x64-setup.exe"
 
-Write-Host "[4/4] Done!" -ForegroundColor Cyan
-
 if (Test-Path $exePath) {
     $size = (Get-Item $exePath).Length / 1MB
-    Write-Host "      Portable EXE: $exePath" -ForegroundColor White
-    Write-Host "      Size: $([math]::Round($size, 1)) MB" -ForegroundColor White
+    Write-Host "        Portable EXE: $exePath" -ForegroundColor White
+    Write-Host "        Size: $([math]::Round($size, 1)) MB" -ForegroundColor White
 }
 
 $nsisSetup = Get-ChildItem -Path $nsisDir -Filter $nsisPattern -ErrorAction SilentlyContinue
 if ($nsisSetup) {
     $size = $nsisSetup.Length / 1MB
-    Write-Host "      NSIS Setup: $($nsisSetup.FullName)" -ForegroundColor White
-    Write-Host "      Size: $([math]::Round($size, 1)) MB" -ForegroundColor White
+    Write-Host "        NSIS Setup: $($nsisSetup.FullName)" -ForegroundColor White
+    Write-Host "        Size: $([math]::Round($size, 1)) MB" -ForegroundColor White
 } else {
-    Write-Host "      NSIS Setup: (not found in $nsisDir)" -ForegroundColor Red
+    Write-Host "        NSIS Setup: (not found)" -ForegroundColor Red
 }
+Write-Host

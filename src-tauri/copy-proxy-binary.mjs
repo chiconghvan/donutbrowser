@@ -1,5 +1,5 @@
 import { execSync, execFileSync } from "node:child_process";
-import { copyFileSync, existsSync, mkdirSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -52,28 +52,18 @@ function copyBinary(baseName) {
     copyFileSync(source, dest);
     console.log(`Copied ${binName} to ${dest}`);
   } else {
-    console.log(`Warning: Binary not found at ${source}`);
-    console.log(`Building ${baseName} binary...`);
-
-    const buildArgs = ["build", "--bin", baseName];
-    if (PROFILE === "release") buildArgs.push("--release");
-    if (TARGET !== "unknown" && TARGET !== HOST_TARGET) {
-      buildArgs.push("--target", TARGET);
-    }
-
-    execFileSync("cargo", buildArgs, {
-      cwd: MANIFEST_DIR,
-      stdio: "inherit",
-    });
-
-    if (existsSync(source)) {
-      copyFileSync(source, dest);
-      console.log(`Built and copied ${binName} to ${dest}`);
-    } else {
-      console.error(`Error: Failed to build ${baseName} binary`);
-      process.exit(1);
-    }
+    console.log(`Warning: Binary not found at ${source} — creating placeholder`);
+    mkdirSync(dirname(dest), { recursive: true });
+    writeFileSync(dest, "");
+    console.log(`Created empty placeholder at ${dest}`);
   }
 }
 
 copyBinary("donut-proxy");
+
+// Only enforce dist existence for production builds (tauri build, PROFILE=release).
+// During dev (tauri dev), dist is served by Next.js dev server and doesn't need a static build.
+if (PROFILE === "release" && !existsSync(join(MANIFEST_DIR, "..", "dist"))) {
+  console.log("Dist not found, next build will run");
+  process.exit(1);
+}

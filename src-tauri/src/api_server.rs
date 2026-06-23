@@ -227,6 +227,12 @@ struct ImportCookiesResponse {
     download_browser_api,
     get_browser_versions,
     check_browser_downloaded,
+    get_extensions,
+    delete_extension_api,
+    get_extension_groups,
+    delete_extension_group_api,
+    get_wayfern_token,
+    refresh_wayfern_token,
   ),
   components(schemas(
     ApiProfile,
@@ -248,6 +254,7 @@ struct ImportCookiesResponse {
     ImportCookiesRequest,
     ImportCookiesResponse,
     ProxySettings,
+    WayfernTokenResponse,
   )),
   tags(
     (name = "profiles", description = "Profile management endpoints"),
@@ -256,6 +263,8 @@ struct ImportCookiesResponse {
     (name = "proxies", description = "Proxy management endpoints"),
     (name = "browsers", description = "Browser management endpoints"),
     (name = "cookies", description = "Cookie management endpoints"),
+    (name = "extensions", description = "Extension management endpoints"),
+    (name = "wayfern", description = "Wayfern token management endpoints"),
   ),
   modifiers(&SecurityAddon),
 )]

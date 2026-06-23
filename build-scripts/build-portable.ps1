@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Build Donut Browser portable EXE only — fastest build.
+    Build Donut Browser portable EXE only -- fastest build.
 .DESCRIPTION
     Builds only the standalone portable executable, skipping all installers
     (NSIS/DEB/RPM/AppImage/DMG). Saves ~7-13 min over full build.
@@ -19,51 +19,70 @@ $ErrorActionPreference = "Stop"
 $rootDir = Split-Path -Parent $PSScriptRoot
 $tauriDir = Join-Path $rootDir "src-tauri"
 
-Write-Host "=== Donut Browser — Portable EXE Build ===" -ForegroundColor Cyan
+Write-Host
+Write-Host "  =======================================================" -ForegroundColor Cyan
+Write-Host "     Donut Browser -- Portable EXE Build" -ForegroundColor Cyan
+Write-Host "  =======================================================" -ForegroundColor Cyan
+Write-Host
 
-# Step 1: Switch to MSVC toolchain
-Write-Host "[1/4] Setting MSVC toolchain..." -ForegroundColor Yellow
-rustup default stable-x86_64-pc-windows-msvc
+# -- [1/4] MSVC toolchain -------------------------------------------
+Write-Host "  >> [1/4] Setting MSVC toolchain..." -ForegroundColor Yellow
+$prevPref = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
+rustup default stable-x86_64-pc-windows-msvc 2>&1 | Out-Null
+$ErrorActionPreference = $prevPref
+if ($LASTEXITCODE -ne 0) { throw "Failed to set MSVC toolchain" }
+Write-Host "     [OK]" -ForegroundColor Green
+Write-Host
 
-# Step 2: Prebuild proxy binary (unless skipped)
+# -- [2/4] Proxy binary ----------------------------------------------
 if (-not $SkipProxyPrebuild) {
-    Write-Host "[2/4] Prebuilding donut-proxy binary..." -ForegroundColor Yellow
+    Write-Host "  >> [2/4] Prebuilding donut-proxy..." -ForegroundColor Yellow
     Push-Location $tauriDir
     try {
-        cargo build --bin donut-proxy --release 2>&1
+        cargo build --bin donut-proxy --release --quiet 2>&1
         if ($LASTEXITCODE -ne 0) { throw "Proxy build failed" }
+        Write-Host "     [OK] donut-proxy built" -ForegroundColor Green
     } finally {
         Pop-Location
     }
 } else {
-    Write-Host "[2/4] Skipping proxy prebuild" -ForegroundColor Green
+    Write-Host "  >> [2/4] Proxy prebuild: skipped" -ForegroundColor Green
 }
+Write-Host
 
-# Step 3: Build Tauri — portable EXE only
-Write-Host "[3/4] Building Tauri (portable EXE only)..." -ForegroundColor Yellow
-
-# Stop release donut-proxy sidecars before Tauri copies externalBin to target\release.
-# If target\release\donut-proxy.exe is running, Windows denies overwrite with code 5.
+# -- Stop locked proxy before Tauri copies externalBin --------------
 $releaseProxyPath = Join-Path $tauriDir "target\release\donut-proxy.exe"
 $lockedProxies = Get-Process donut-proxy -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $releaseProxyPath }
 if ($lockedProxies) {
-    Write-Host "Stopping locked donut-proxy process(es): $($lockedProxies.Id -join ', ')" -ForegroundColor Yellow
+    Write-Host "     [i] Stopping locked proxy PID $($lockedProxies.Id -join ', ')" -ForegroundColor Yellow
     $lockedProxies | Stop-Process -Force -Confirm:$false
+    Write-Host
 }
 
-# --no-bundle builds the release executable without installers.
-# Chạy từ project root (không cd src-tauri) — đúng theo skill
-pnpm --prefix $rootDir exec tauri build --no-bundle 2>&1
-if ($LASTEXITCODE -ne 0) { throw "Tauri build failed" }
+# -- [3/4] Tauri build ----------------------------------------------
+Write-Host "  >> [3/4] Building Tauri (portable EXE only)..." -ForegroundColor Yellow
+Write-Host
 
-# Step 4: Show output
+$env:STABLE_RELEASE = "1"
+
+$prevPref2 = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
+pnpm --prefix $rootDir exec tauri build --no-bundle 2>&1 | ForEach-Object { Write-Host "$_" }
+$ErrorActionPreference = $prevPref2
+if ($LASTEXITCODE -ne 0) { throw "Tauri build failed" }
+Write-Host
+
+# -- [4/4] Results --------------------------------------------------
+Write-Host "  >> [4/4] Build complete!" -ForegroundColor Cyan
+
 $exePath = Join-Path $tauriDir "target\release\donutbrowser.exe"
 if (Test-Path $exePath) {
     $size = (Get-Item $exePath).Length / 1MB
-    Write-Host "[4/4] Done! Portable EXE:" -ForegroundColor Cyan
-    Write-Host "      $exePath" -ForegroundColor White
-    Write-Host "      Size: $([math]::Round($size, 1)) MB" -ForegroundColor White
+    Write-Host "        Portable EXE: $exePath" -ForegroundColor White
+    Write-Host "        Size: $([math]::Round($size, 1)) MB" -ForegroundColor White
 } else {
-    Write-Host "[4/4] WARNING: EXE not found at expected path!" -ForegroundColor Red
+    Write-Host "        WARNING: EXE not found!" -ForegroundColor Red
     exit 1
 }
+Write-Host
