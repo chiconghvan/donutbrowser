@@ -1,6 +1,14 @@
 # Changelog
 
 
+## v0.27.8 (2026-06-23)
+
+### Maintenance
+
+- chore: version bump to 0.27.8
+- chore: make GitHub release windows-only
+
+
 ## v0.27.5 (2026-06-19)
 
 ### Maintenance
