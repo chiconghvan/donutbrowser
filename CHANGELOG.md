@@ -1,6 +1,21 @@
 # Changelog
 
 
+## v0.27.9 (2026-06-23)
+
+### Bug Fixes
+
+- fix: auto-update falsely prompting nightly build on stable release
+- fix: CI changelog job failing (GITHUB_TOKEN PR restriction)
+- fix: CI deploy/docker jobs failing on missing secrets
+- fix: rolling-release macOS matrix failing without Apple cert secrets
+
+### Maintenance
+
+- chore: version bump to 0.27.9
+- chore: restrict CI to Windows-only builds
+
+
 ## v0.27.8 (2026-06-23)
 
 ### Maintenance
