@@ -1,6 +1,24 @@
 # Changelog
 
 
+## v0.27.11 (2026-06-25)
+
+### Features
+
+- add browser cache management backend with browser cache persistence support
+- add settings UI for browser cache controls and related translations
+
+### Bug Fixes
+
+- fix: app updater nightly detection and release handling
+
+### Maintenance
+
+- chore: expand release workflow for multi-platform builds
+- chore: update release-trigger behavior for tag workflows
+- chore: bump version to 0.27.11
+
+
 ## v0.27.10 (2026-06-25)
 
 ### Maintenance
