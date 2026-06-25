@@ -7,6 +7,16 @@
 
 - chore: prepare v0.27.10 release
 
+### Bug Fixes
+
+- fix: nightly build test to match dev build handling
+
+### Maintenance
+
+- chore: release workflow builds macOS, Linux, and Windows
+- chore: version bump to 0.27.10
+- chore: disable legacy Windows-only release-build tag trigger
+
 
 ## v0.27.9 (2026-06-23)
 
@@ -663,4 +673,3 @@ Note: created manually due to CI issue
 - chore: issues get stale after 30 days
 - chore: better issue validation
 - chore: update flake.nix for v0.18.0 [skip ci] (#247)
-
