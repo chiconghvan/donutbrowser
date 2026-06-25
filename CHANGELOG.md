@@ -1,6 +1,13 @@
 # Changelog
 
 
+## v0.27.10 (2026-06-25)
+
+### Maintenance
+
+- chore: prepare v0.27.10 release
+
+
 ## v0.27.9 (2026-06-23)
 
 ### Bug Fixes
