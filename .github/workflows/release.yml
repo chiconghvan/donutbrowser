@@ -81,7 +81,7 @@ jobs:
             args: "--target aarch64-apple-darwin --verbose"
             arch: "aarch64"
             target: "aarch64-apple-darwin"
-          - platform: "macos-15-intel"
+          - platform: "macos-latest"
             args: "--target x86_64-apple-darwin --verbose"
             arch: "x86_64"
             target: "x86_64-apple-darwin"
@@ -120,10 +120,11 @@ jobs:
           targets: ${{ matrix.target }}
 
       - name: Install dependencies (Ubuntu only)
-        if: startsWith(matrix.platform, 'ubuntu-')
+        if: matrix.platform == 'ubuntu-22.04' || matrix.platform == 'ubuntu-22.04-arm'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
+            libgtk-3-dev \
             build-essential \
             curl \
             file \
