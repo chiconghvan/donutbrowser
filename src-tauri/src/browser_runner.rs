@@ -1419,6 +1419,8 @@ impl BrowserRunner {
         );
       }
 
+      crate::browser_cache::clear_profile_cache_after_close(profile).await;
+
       if profile.password_protected {
         // Await the re-encryption so the queued sync (released later by
         // `mark_profile_stopped` in `kill_browser`) sees fresh ciphertext on
@@ -1763,6 +1765,8 @@ impl BrowserRunner {
           payload.is_running
         );
       }
+
+      crate::browser_cache::clear_profile_cache_after_close(profile).await;
 
       if profile.password_protected {
         // Await the re-encryption so the queued sync (released later by

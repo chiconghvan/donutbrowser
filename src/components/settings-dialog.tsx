@@ -68,6 +68,7 @@ interface AppSettings {
   api_token?: string;
   disable_auto_updates?: boolean;
   keep_decrypted_profiles_in_ram?: boolean;
+  clear_cache_after_browser_close?: boolean;
 }
 
 interface DataDirSettings {
@@ -111,6 +112,7 @@ export function SettingsDialog({
     api_enabled: false,
     api_port: 10108,
     api_token: undefined,
+    clear_cache_after_browser_close: true,
   });
   const [originalSettings, setOriginalSettings] = useState<AppSettings>({
     set_as_default_browser: false,
@@ -119,6 +121,7 @@ export function SettingsDialog({
     api_enabled: false,
     api_port: 10108,
     api_token: undefined,
+    clear_cache_after_browser_close: true,
   });
   const [customThemeState, setCustomThemeState] = useState<CustomThemeState>({
     selectedThemeId: null,
@@ -1272,6 +1275,30 @@ export function SettingsDialog({
                   </Label>
                   <p className="text-xs text-muted-foreground">
                     {t("settings.keepDecryptedProfilesInRamDescription")}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-x-3 p-3 rounded-lg border">
+                <Checkbox
+                  id="clear-cache-after-browser-close"
+                  checked={settings.clear_cache_after_browser_close ?? true}
+                  onCheckedChange={(checked) => {
+                    updateSetting(
+                      "clear_cache_after_browser_close",
+                      checked as boolean,
+                    );
+                  }}
+                />
+                <div className="space-y-1">
+                  <Label
+                    htmlFor="clear-cache-after-browser-close"
+                    className="text-sm font-medium"
+                  >
+                    {t("settings.clearCacheAfterBrowserClose")}
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    {t("settings.clearCacheAfterBrowserCloseDescription")}
                   </p>
                 </div>
               </div>

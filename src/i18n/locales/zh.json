@@ -207,7 +207,9 @@
     "disableAutoUpdates": "禁用应用自动更新",
     "disableAutoUpdatesDescription": "阻止应用程序自动检查和安装 Donut Browser 更新。浏览器更新不受影响。",
     "keepDecryptedProfilesInRam": "在内存中保留已解密的配置文件",
-    "keepDecryptedProfilesInRamDescription": "在启动之间保留密码保护配置文件的已解密内存副本,以便更快地启动。无论如何磁盘上的副本始终保持加密。"
+    "keepDecryptedProfilesInRamDescription": "在启动之间保留密码保护配置文件的已解密内存副本,以便更快地启动。无论如何磁盘上的副本始终保持加密。",
+    "clearCacheAfterBrowserClose": "关闭后清除浏览器缓存",
+    "clearCacheAfterBrowserCloseDescription": "在每个配置文件关闭后删除浏览器缓存文件以减少磁盘占用。Cookie、登录数据和会话会保留。"
   },
   "header": {
     "searchPlaceholder": "搜索配置文件...",

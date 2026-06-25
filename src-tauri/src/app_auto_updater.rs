@@ -1779,13 +1779,19 @@ mod tests {
 
   #[test]
   fn test_is_nightly_build() {
-    // This will depend on whether STABLE_RELEASE is set during test compilation
     let is_nightly = AppAutoUpdater::is_nightly_build();
-    log::info!("Is nightly build: {is_nightly}");
+    let current_version = AppAutoUpdater::get_current_version();
+    let expected = if current_version.starts_with('v') {
+      false
+    } else if current_version.starts_with("nightly-") {
+      true
+    } else if current_version.starts_with("dev-") {
+      false
+    } else {
+      option_env!("STABLE_RELEASE").is_none()
+    };
 
-    // The result should be true for test builds since STABLE_RELEASE is not set
-    // unless the test is run in a stable release environment
-    assert!(is_nightly || option_env!("STABLE_RELEASE").is_some());
+    assert_eq!(is_nightly, expected);
   }
 
   #[test]

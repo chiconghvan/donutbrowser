@@ -46,6 +46,10 @@ pub struct AppSettings {
   /// copy is always re-encrypted regardless of this flag.
   #[serde(default)]
   pub keep_decrypted_profiles_in_ram: bool,
+  /// Deletes browser cache files after a profile closes while preserving
+  /// cookies, sessions, and other persistent site data.
+  #[serde(default = "default_clear_cache_after_browser_close")]
+  pub clear_cache_after_browser_close: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -69,6 +73,10 @@ fn default_api_port() -> u16 {
   10108
 }
 
+fn default_clear_cache_after_browser_close() -> bool {
+  true
+}
+
 impl Default for AppSettings {
   fn default() -> Self {
     Self {
@@ -84,6 +92,7 @@ impl Default for AppSettings {
       onboarding_completed: false,
       disable_auto_updates: false,
       keep_decrypted_profiles_in_ram: false,
+      clear_cache_after_browser_close: true,
     }
   }
 }
@@ -553,6 +562,7 @@ mod tests {
       onboarding_completed: false,
       disable_auto_updates: false,
       keep_decrypted_profiles_in_ram: false,
+      clear_cache_after_browser_close: true,
     };
 
     let save_result = manager.save_settings(&test_settings);
@@ -570,6 +580,16 @@ mod tests {
       loaded_settings.theme, "dark",
       "Loaded theme should match saved"
     );
+    assert!(
+      loaded_settings.clear_cache_after_browser_close,
+      "Loaded cache cleanup setting should match saved"
+    );
+  }
+
+  #[test]
+  fn test_clear_cache_after_browser_close_defaults_true() {
+    let settings: AppSettings = serde_json::from_str("{}").unwrap();
+    assert!(settings.clear_cache_after_browser_close);
   }
 
   #[test]

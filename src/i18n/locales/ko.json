@@ -207,7 +207,9 @@
     "disableAutoUpdates": "앱 자동 업데이트 사용 안 함",
     "disableAutoUpdatesDescription": "Donut Browser 업데이트를 앱이 자동으로 확인하고 설치하지 않도록 합니다. 브라우저 업데이트는 영향을 받지 않습니다.",
     "keepDecryptedProfilesInRam": "복호화된 프로필을 RAM에 유지",
-    "keepDecryptedProfilesInRamDescription": "비밀번호로 보호된 프로필의 복호화된 RAM 사본을 실행 사이에 유지하여 시작 속도를 높입니다. 디스크의 사본은 그대로 암호화된 상태로 유지됩니다."
+    "keepDecryptedProfilesInRamDescription": "비밀번호로 보호된 프로필의 복호화된 RAM 사본을 실행 사이에 유지하여 시작 속도를 높입니다. 디스크의 사본은 그대로 암호화된 상태로 유지됩니다.",
+    "clearCacheAfterBrowserClose": "브라우저 종료 후 캐시 지우기",
+    "clearCacheAfterBrowserCloseDescription": "각 프로필이 닫힌 후 브라우저 캐시 파일을 삭제하여 디스크 사용량을 줄입니다. 쿠키, 로그인 데이터 및 세션은 보존됩니다."
   },
   "header": {
     "searchPlaceholder": "프로필 검색...",

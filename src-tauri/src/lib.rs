@@ -21,6 +21,7 @@ mod app_auto_updater;
 pub mod app_dirs;
 mod auto_updater;
 mod browser;
+mod browser_cache;
 mod browser_runner;
 mod browser_version_manager;
 pub mod camoufox;
@@ -1110,6 +1111,10 @@ pub fn run() {
                       profile.name,
                       is_running
                     );
+                  }
+
+                  if !is_running {
+                    crate::browser_cache::clear_profile_cache_after_close(&profile).await;
                   }
 
                   // Re-encrypt password-protected profiles when the browser

@@ -207,7 +207,9 @@
     "disableAutoUpdates": "Disable App Auto Updates",
     "disableAutoUpdatesDescription": "Prevent the app from automatically checking and installing Donut Browser updates. Browser updates are not affected.",
     "keepDecryptedProfilesInRam": "Keep Decrypted Profiles In RAM",
-    "keepDecryptedProfilesInRamDescription": "Preserve the decrypted in-RAM copy of password-protected profiles between launches for faster startup. The on-disk copy stays encrypted regardless."
+    "keepDecryptedProfilesInRamDescription": "Preserve the decrypted in-RAM copy of password-protected profiles between launches for faster startup. The on-disk copy stays encrypted regardless.",
+    "clearCacheAfterBrowserClose": "Clear browser cache after close",
+    "clearCacheAfterBrowserCloseDescription": "Delete browser cache files after each profile closes to reduce disk usage. Cookies, login data, and sessions are preserved."
   },
   "header": {
     "searchPlaceholder": "Search profiles...",
