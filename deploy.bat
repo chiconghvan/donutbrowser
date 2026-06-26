@@ -71,9 +71,7 @@ if errorlevel 1 (
   if /I "!TAG_COMMIT!"=="!HEAD_COMMIT!" (
     echo Tag %RELEASE_TAG% already exists on this commit, skipping tag creation
   ) else (
-    echo Tag %RELEASE_TAG% exists but points to a different commit
-    popd
-    exit /b 1
+    echo Tag %RELEASE_TAG% exists but points to a different commit, skipping tag creation
   )
 )
 
