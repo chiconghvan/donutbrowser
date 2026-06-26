@@ -326,6 +326,12 @@
     "passwordProtectedBadge": "Được bảo vệ bằng mật khẩu",
     "launchHook": {
       "placeholder": "https://example.com/track-launch"
+    },
+    "sort": {
+      "nameAsc": "Tên (A–Z)",
+      "nameDesc": "Tên (Z–A)",
+      "newest": "Mới nhất",
+      "oldest": "Cũ nhất"
     }
   },
   "createProfile": {

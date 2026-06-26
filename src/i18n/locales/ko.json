@@ -326,6 +326,12 @@
     "passwordProtectedBadge": "비밀번호 보호됨",
     "launchHook": {
       "placeholder": "https://example.com/track-launch"
+    },
+    "sort": {
+      "nameAsc": "이름 (A–Z)",
+      "nameDesc": "이름 (Z–A)",
+      "newest": "최신순",
+      "oldest": "오래된순"
     }
   },
   "createProfile": {

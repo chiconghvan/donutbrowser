@@ -326,6 +326,12 @@
     "passwordProtectedBadge": "Защищено паролем",
     "launchHook": {
       "placeholder": "https://example.com/track-launch"
+    },
+    "sort": {
+      "nameAsc": "Имя (A–Z)",
+      "nameDesc": "Имя (Z–A)",
+      "newest": "Новые",
+      "oldest": "Старые"
     }
   },
   "createProfile": {

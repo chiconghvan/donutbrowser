@@ -8,6 +8,7 @@ import {
   type RowSelectionState,
   type SortingState,
   useReactTable,
+  type VisibilityState,
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { invoke } from "@tauri-apps/api/core";
@@ -52,6 +53,12 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Popover,
   PopoverContent,
@@ -1084,6 +1091,8 @@ export function ProfilesDataTable({
   const { t } = useTranslation();
   const { getTableSorting, updateSorting, isLoaded } = useTableSorting();
   const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({ created_at: false });
 
   // Sync external selectedProfiles with table's row selection state
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
@@ -2408,23 +2417,69 @@ export function ProfilesDataTable({
       {
         accessorKey: "name",
         size: 130,
-        header: ({ column, table }) => {
+        header: ({ table }) => {
           const meta = table.options.meta as TableMeta;
+          const sort = table.getState().sorting[0];
+          const isActive = (id: string, desc: boolean) =>
+            sort?.id === id && !!sort.desc === desc;
           return (
-            <Button
-              variant="ghost"
-              onClick={() => {
-                column.toggleSorting(column.getIsSorted() === "asc");
-              }}
-              className="justify-start p-0 h-auto font-semibold text-left cursor-pointer"
-            >
-              {meta.t("common.labels.name")}
-              {column.getIsSorted() === "asc" ? (
-                <LuChevronUp className="ml-2 size-4" />
-              ) : column.getIsSorted() === "desc" ? (
-                <LuChevronDown className="ml-2 size-4" />
-              ) : null}
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="justify-start p-0 h-auto font-semibold text-left cursor-pointer"
+                >
+                  {meta.t("common.labels.name")}
+                  {isActive("name", false) ? (
+                    <LuChevronUp className="ml-2 size-4" />
+                  ) : isActive("name", true) ? (
+                    <LuChevronDown className="ml-2 size-4" />
+                  ) : (
+                    <LuChevronDown className="ml-2 size-4 opacity-50" />
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem
+                  onClick={() =>
+                    table.setSorting([{ id: "name", desc: false }])
+                  }
+                >
+                  {isActive("name", false) && (
+                    <LuCheck className="mr-2 size-3.5" />
+                  )}
+                  {meta.t("profiles.sort.nameAsc")}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => table.setSorting([{ id: "name", desc: true }])}
+                >
+                  {isActive("name", true) && (
+                    <LuCheck className="mr-2 size-3.5" />
+                  )}
+                  {meta.t("profiles.sort.nameDesc")}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() =>
+                    table.setSorting([{ id: "created_at", desc: true }])
+                  }
+                >
+                  {isActive("created_at", true) && (
+                    <LuCheck className="mr-2 size-3.5" />
+                  )}
+                  {meta.t("profiles.sort.newest")}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() =>
+                    table.setSorting([{ id: "created_at", desc: false }])
+                  }
+                >
+                  {isActive("created_at", false) && (
+                    <LuCheck className="mr-2 size-3.5" />
+                  )}
+                  {meta.t("profiles.sort.oldest")}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           );
         },
         enableSorting: true,
@@ -2806,6 +2861,15 @@ export function ProfilesDataTable({
           );
         },
       },
+      {
+        id: "created_at",
+        accessorFn: (row) => row.created_at ?? 0,
+        enableSorting: true,
+        enableHiding: true,
+        sortingFn: "basic",
+        header: () => null,
+        cell: () => null,
+      },
     ],
     [t, setProfileForInfoDialog],
   );
@@ -2816,8 +2880,10 @@ export function ProfilesDataTable({
     state: {
       sorting,
       rowSelection,
+      columnVisibility,
     },
     onSortingChange: handleSortingChange,
+    onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: handleRowSelectionChange,
     enableRowSelection: (row) => {
       const profile = row.original;

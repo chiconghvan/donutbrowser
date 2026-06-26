@@ -326,6 +326,12 @@
     "passwordProtectedBadge": "Protegido por Contraseña",
     "launchHook": {
       "placeholder": "https://example.com/track-launch"
+    },
+    "sort": {
+      "nameAsc": "Nombre (A–Z)",
+      "nameDesc": "Nombre (Z–A)",
+      "newest": "Más reciente",
+      "oldest": "Más antiguo"
     }
   },
   "createProfile": {

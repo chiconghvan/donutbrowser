@@ -1,6 +1,17 @@
 # Changelog
 
 
+## v0.27.18 (2026-06-27)
+
+### Features
+
+- add profile sorting with dropdown sort menu (Name A–Z, Name Z–A, Newest, Oldest)
+
+### Maintenance
+
+- chore: bump version to 0.27.18
+
+
 ## v0.27.16 (2026-06-26)
 
 ### Bug Fixes

@@ -326,6 +326,12 @@
     "passwordProtectedBadge": "密码保护",
     "launchHook": {
       "placeholder": "https://example.com/track-launch"
+    },
+    "sort": {
+      "nameAsc": "名称 (A–Z)",
+      "nameDesc": "名称 (Z–A)",
+      "newest": "最新",
+      "oldest": "最旧"
     }
   },
   "createProfile": {

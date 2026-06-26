@@ -21,6 +21,9 @@ export interface BrowserProfile {
   launch_hook?: string;
   process_id?: number;
   last_launch?: number;
+  /** Profile creation timestamp (epoch seconds, UTC). Undefined for legacy
+   * profiles created before this field existed. */
+  created_at?: number;
   release_type: string; // "stable" or "nightly"
   camoufox_config?: CamoufoxConfig; // Camoufox configuration
   wayfern_config?: WayfernConfig; // Wayfern configuration
