@@ -19,6 +19,8 @@ if not defined BRANCH (
 
 set "RELEASE_TAG=v%VERSION%"
 set "NOTES_FILE=%TEMP%\donutbrowser-release-notes-%VERSION%.md"
+set "TAG_COMMIT="
+set "HEAD_COMMIT="
 
 powershell -NoProfile -Command ^
   "$version = '%VERSION%';" ^
@@ -38,18 +40,41 @@ if errorlevel 1 (
 
 git add -A
 
-git commit --no-verify -m "release: v%VERSION%"
-if errorlevel 1 (
-  echo Commit failed
+git diff --cached --quiet
+set "DIFF_STATUS=%ERRORLEVEL%"
+if "%DIFF_STATUS%"=="1" (
+  git commit --no-verify -m "release: v%VERSION%"
+  if errorlevel 1 (
+    echo Commit failed
+    popd
+    exit /b 1
+  )
+) else if not "%DIFF_STATUS%"=="0" (
+  echo Failed to inspect staged changes
   popd
   exit /b 1
+) else (
+  echo No changes to commit, skipping commit
 )
 
-git tag -a "v%VERSION%" -m "v%VERSION%"
+git rev-parse -q --verify "refs/tags/%RELEASE_TAG%" >nul 2>&1
 if errorlevel 1 (
-  echo Tag creation failed
-  popd
-  exit /b 1
+  git tag -a "v%VERSION%" -m "v%VERSION%"
+  if errorlevel 1 (
+    echo Tag creation failed
+    popd
+    exit /b 1
+  )
+) else (
+  for /f "delims=" %%I in ('git rev-list -n 1 "%RELEASE_TAG%"') do set "TAG_COMMIT=%%I"
+  for /f "delims=" %%I in ('git rev-parse HEAD') do set "HEAD_COMMIT=%%I"
+  if /I "!TAG_COMMIT!"=="!HEAD_COMMIT!" (
+    echo Tag %RELEASE_TAG% already exists on this commit, skipping tag creation
+  ) else (
+    echo Tag %RELEASE_TAG% exists but points to a different commit
+    popd
+    exit /b 1
+  )
 )
 
 git push origin "%BRANCH%" --tags
