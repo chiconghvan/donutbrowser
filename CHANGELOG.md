@@ -1,6 +1,19 @@
 # Changelog
 
 
+## v0.27.15 (2026-06-26)
+
+### Bug Fixes
+
+- fix macOS codesign failure by switching to ad-hoc signing identity
+- fix deploy.bat re-run failures with idempotent skip-logic
+- untrack deploy.bat from git (local deploy script)
+
+### Maintenance
+
+- chore: bump version to 0.27.15
+
+
 ## v0.27.14 (2026-06-26)
 
 ### Features
