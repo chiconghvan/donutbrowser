@@ -263,8 +263,10 @@ export function ProfileInfoDialog({
   if (!profile) return null;
 
   const ProfileIcon = getProfileIcon(profile);
-  const isCamoufoxOrWayfern =
-    profile.browser === "camoufox" || profile.browser === "wayfern";
+  const isAntiDetectBrowser =
+    profile.browser === "camoufox" ||
+    profile.browser === "wayfern" ||
+    profile.browser === "cloak";
   const isDeleteDisabled = isRunning;
 
   const proxyStr = profile.proxy ?? null;
@@ -362,7 +364,7 @@ export function ProfileInfoDialog({
       disabled: isDisabled || !crossOsUnlocked,
       proBadge: !crossOsUnlocked,
       runningBadge: isRunning,
-      hidden: !isCamoufoxOrWayfern || !onConfigureCamoufox,
+      hidden: !isAntiDetectBrowser || !onConfigureCamoufox,
     },
     {
       icon: <LuUsers className="size-4" />,
@@ -384,7 +386,7 @@ export function ProfileInfoDialog({
       disabled: isDisabled,
       runningBadge: isRunning,
       hidden:
-        !isCamoufoxOrWayfern ||
+        !isAntiDetectBrowser ||
         profile.ephemeral === true ||
         !onCopyCookiesToProfile,
     },
@@ -398,7 +400,7 @@ export function ProfileInfoDialog({
       disabled: isDisabled,
       runningBadge: isRunning,
       hidden:
-        !isCamoufoxOrWayfern ||
+        !isAntiDetectBrowser ||
         profile.ephemeral === true ||
         !onOpenCookieManagement,
     },

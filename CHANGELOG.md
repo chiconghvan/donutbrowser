@@ -1,16 +1,27 @@
 # Changelog
 
 
+## v0.27.16 (2026-06-26)
+
+### Bug Fixes
+
+- fix Cloak fingerprint tab not showing in profile info dialog
+- remove unused APPLE_SIGNING_IDENTITY secret from release workflow
+
+### Maintenance
+
+- chore: bump version to 0.27.16
+
+
 ## v0.27.15 (2026-06-26)
 
 ### Bug Fixes
 
-- fix macOS codesign failure by switching to ad-hoc signing identity
-- fix deploy.bat re-run failures with idempotent skip-logic
-- untrack deploy.bat from git (local deploy script)
+- fix macOS codesign failure on CI by switching to ad-hoc signing identity
 
 ### Maintenance
 
+- untrack deploy.bat from version control (local deploy script)
 - chore: bump version to 0.27.15
 
 
@@ -20,34 +31,27 @@
 
 - add Cloak browser support across profile creation, bulk creation, browser launch, and startup downloads
 - add a dedicated Cloak configuration form and translations
+- add CDP timeout configuration for profile launch
+- add browser cache management with persistence support and settings UI
+- add API client module and extend REST API server endpoints
+- add bulk create error toast for better user feedback
+- extend browser downloader for multi-browser binary acquisition
+- add browser version manager
 
 ### Bug Fixes
 
-- show Cloak fingerprint/config details in the profile info dialog
+- show Cloak fingerprint and config details in profile info dialog
+- fix release workflow runner labels for correct multi-platform builds
+- fix CI secrets handling across release and docker workflows
 - separate development and release frontend output so portable builds do not reuse dev cache
 - clean stale frontend dist before portable packaging and rebuild the frontend fresh
+- fix app updater nightly detection and release handling
 
 ### Maintenance
 
-- chore: bump version to 0.27.14
-
-
-## v0.27.11 (2026-06-25)
-
-### Features
-
-- add browser cache management backend with browser cache persistence support
-- add settings UI for browser cache controls and related translations
-
-### Bug Fixes
-
-- fix: app updater nightly detection and release handling
-
-### Maintenance
-
-- chore: expand release workflow for multi-platform builds
+- chore: expand release workflow for multi-platform matrix builds
 - chore: update release-trigger behavior for tag workflows
-- chore: bump version to 0.27.11
+- chore: bump version to 0.27.14
 
 
 ## v0.27.10 (2026-06-25)
