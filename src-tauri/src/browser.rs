@@ -15,6 +15,7 @@ pub struct ProxySettings {
 pub enum BrowserType {
   Camoufox,
   Wayfern,
+  Cloak,
 }
 
 impl BrowserType {
@@ -22,6 +23,7 @@ impl BrowserType {
     match self {
       BrowserType::Camoufox => "camoufox",
       BrowserType::Wayfern => "wayfern",
+      BrowserType::Cloak => "cloak",
     }
   }
 
@@ -29,6 +31,7 @@ impl BrowserType {
     match s {
       "camoufox" => Ok(BrowserType::Camoufox),
       "wayfern" => Ok(BrowserType::Wayfern),
+      "cloak" => Ok(BrowserType::Cloak),
       _ => Err(format!("Unknown browser type: {s}")),
     }
   }
@@ -204,7 +207,7 @@ mod macos {
       .find(|entry| {
         let binding = entry.file_name();
         let name = binding.to_string_lossy();
-        name.contains("Chromium") || name == "Wayfern"
+        name.contains("Chromium") || name == "Wayfern" || name.contains("Cloak")
       })
       .map(|entry| entry.path())
       .ok_or("No Wayfern executable found in MacOS directory")?;
@@ -298,6 +301,15 @@ mod linux {
         install_dir.join("wayfern").join("chrome"),
         install_dir.join("chrome-linux").join("chrome"),
       ],
+      BrowserType::Cloak => vec![
+        install_dir.join("cloakbrowser"),
+        install_dir.join("cloak"),
+        install_dir.join("chrome"),
+        install_dir.join("chromium"),
+        install_dir.join("cloakbrowser").join("cloakbrowser"),
+        install_dir.join("cloakbrowser").join("chrome"),
+        install_dir.join("chrome-linux").join("chrome"),
+      ],
       _ => vec![],
     };
 
@@ -351,6 +363,15 @@ mod linux {
         install_dir.join("wayfern"),
         install_dir.join("wayfern").join("chromium"),
         install_dir.join("wayfern").join("chrome"),
+        install_dir.join("chrome-linux").join("chrome"),
+      ],
+      BrowserType::Cloak => vec![
+        install_dir.join("cloakbrowser"),
+        install_dir.join("cloak"),
+        install_dir.join("chrome"),
+        install_dir.join("chromium"),
+        install_dir.join("cloakbrowser").join("cloakbrowser"),
+        install_dir.join("cloakbrowser").join("chrome"),
         install_dir.join("chrome-linux").join("chrome"),
       ],
       _ => vec![],
@@ -443,6 +464,16 @@ mod windows {
         install_dir.join("wayfern").join("chrome.exe"),
         install_dir.join("chrome-win").join("chrome.exe"),
       ],
+      BrowserType::Cloak => vec![
+        install_dir.join("cloakbrowser.exe"),
+        install_dir.join("cloak.exe"),
+        install_dir.join("chrome.exe"),
+        install_dir.join("chromium.exe"),
+        install_dir.join("bin").join("cloakbrowser.exe"),
+        install_dir.join("cloakbrowser").join("cloakbrowser.exe"),
+        install_dir.join("cloakbrowser").join("chrome.exe"),
+        install_dir.join("chrome-win").join("chrome.exe"),
+      ],
       _ => vec![],
     };
 
@@ -462,7 +493,11 @@ mod windows {
             .unwrap_or_default()
             .to_string_lossy()
             .to_lowercase();
-          if name.contains("chromium") || name.contains("chrome") || name.contains("wayfern") {
+          if name.contains("chromium")
+            || name.contains("chrome")
+            || name.contains("wayfern")
+            || name.contains("cloak")
+          {
             return Ok(path);
           }
         }
@@ -520,6 +555,16 @@ mod windows {
         install_dir.join("wayfern").join("chrome.exe"),
         install_dir.join("chrome-win").join("chrome.exe"),
       ],
+      BrowserType::Cloak => vec![
+        install_dir.join("cloakbrowser.exe"),
+        install_dir.join("cloak.exe"),
+        install_dir.join("chrome.exe"),
+        install_dir.join("chromium.exe"),
+        install_dir.join("bin").join("cloakbrowser.exe"),
+        install_dir.join("cloakbrowser").join("cloakbrowser.exe"),
+        install_dir.join("cloakbrowser").join("chrome.exe"),
+        install_dir.join("chrome-win").join("chrome.exe"),
+      ],
       _ => vec![],
     };
 
@@ -540,7 +585,11 @@ mod windows {
             .unwrap_or_default()
             .to_string_lossy()
             .to_lowercase();
-          if name.contains("chromium") || name.contains("chrome") || name.contains("wayfern") {
+          if name.contains("chromium")
+            || name.contains("chrome")
+            || name.contains("wayfern")
+            || name.contains("cloak")
+          {
             return true;
           }
         }
@@ -651,6 +700,109 @@ pub struct WayfernBrowser;
 impl WayfernBrowser {
   pub fn new() -> Self {
     Self
+  }
+}
+
+/// Cloak is a Chromium-based anti-detect browser with fingerprint launch flags.
+pub struct CloakBrowser;
+
+impl CloakBrowser {
+  pub fn new() -> Self {
+    Self
+  }
+}
+
+impl Browser for CloakBrowser {
+  fn get_executable_path(&self, install_dir: &Path) -> Result<PathBuf, Box<dyn std::error::Error>> {
+    #[cfg(target_os = "macos")]
+    return macos::get_wayfern_executable_path(install_dir);
+
+    #[cfg(target_os = "linux")]
+    return linux::get_chromium_executable_path(install_dir, &BrowserType::Cloak);
+
+    #[cfg(target_os = "windows")]
+    return windows::get_chromium_executable_path(install_dir, &BrowserType::Cloak);
+
+    #[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
+    Err("Unsupported platform".into())
+  }
+
+  fn create_launch_args(
+    &self,
+    profile_path: &str,
+    proxy_settings: Option<&ProxySettings>,
+    url: Option<String>,
+    remote_debugging_port: Option<u16>,
+    headless: bool,
+  ) -> Result<Vec<String>, Box<dyn std::error::Error>> {
+    let mut args = vec![
+      format!("--user-data-dir={profile_path}"),
+      "--no-first-run".to_string(),
+      "--no-default-browser-check".to_string(),
+      "--disable-background-mode".to_string(),
+      "--disable-component-update".to_string(),
+      "--disable-background-timer-throttling".to_string(),
+      "--crash-server-url=".to_string(),
+      "--disable-updater".to_string(),
+      "--disable-session-crashed-bubble".to_string(),
+      "--hide-crash-restore-bubble".to_string(),
+      "--disable-infobars".to_string(),
+      "--disable-features=DialMediaRouteProvider,DnsOverHttps,AsyncDns,Prefetch,PrefetchProxy,SpeculationRulesPrefetchFuture,NoStatePrefetch".to_string(),
+      "--use-mock-keychain".to_string(),
+      "--password-store=basic".to_string(),
+    ];
+
+    if let Some(port) = remote_debugging_port {
+      args.push("--remote-debugging-address=127.0.0.1".to_string());
+      args.push(format!("--remote-debugging-port={port}"));
+    }
+
+    if headless {
+      args.push("--headless=new".to_string());
+    }
+
+    if let Some(proxy) = proxy_settings {
+      args.push(format!(
+        "--proxy-server=http://{}:{}",
+        proxy.host, proxy.port
+      ));
+    }
+
+    if let Some(url) = url {
+      args.push(url);
+    }
+
+    Ok(args)
+  }
+
+  fn is_version_downloaded(&self, version: &str, binaries_dir: &Path) -> bool {
+    let install_dir = binaries_dir.join("cloak").join(version);
+
+    #[cfg(target_os = "macos")]
+    return macos::is_wayfern_version_downloaded(&install_dir);
+
+    #[cfg(target_os = "linux")]
+    return linux::is_chromium_version_downloaded(&install_dir, &BrowserType::Cloak);
+
+    #[cfg(target_os = "windows")]
+    return windows::is_chromium_version_downloaded(&install_dir, &BrowserType::Cloak);
+
+    #[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
+    false
+  }
+
+  fn prepare_executable(&self, executable_path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    #[cfg(target_os = "macos")]
+    return macos::prepare_executable(executable_path);
+
+    #[cfg(target_os = "linux")]
+    return linux::prepare_executable(executable_path);
+
+    #[cfg(target_os = "windows")]
+    return windows::prepare_executable(executable_path);
+
+    #[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
+    Err("Unsupported platform".into())
   }
 }
 
@@ -767,6 +919,7 @@ impl BrowserFactory {
     match browser_type {
       BrowserType::Camoufox => Box::new(CamoufoxBrowser::new()),
       BrowserType::Wayfern => Box::new(WayfernBrowser::new()),
+      BrowserType::Cloak => Box::new(CloakBrowser::new()),
     }
   }
 }
@@ -860,6 +1013,7 @@ mod tests {
     // Test as_str
     assert_eq!(BrowserType::Camoufox.as_str(), "camoufox");
     assert_eq!(BrowserType::Wayfern.as_str(), "wayfern");
+    assert_eq!(BrowserType::Cloak.as_str(), "cloak");
 
     // Test from_str
     assert_eq!(
@@ -869,6 +1023,10 @@ mod tests {
     assert_eq!(
       BrowserType::from_str("wayfern").expect("wayfern should be valid"),
       BrowserType::Wayfern
+    );
+    assert_eq!(
+      BrowserType::from_str("cloak").expect("cloak should be valid"),
+      BrowserType::Cloak
     );
 
     // Test invalid browser type - these should properly fail
@@ -1107,6 +1265,52 @@ mod tests {
       !wayfern_browser.is_version_downloaded("9.9.9", binaries_dir),
       "Non-existent Wayfern version should not be detected as downloaded"
     );
+
+    let cloak_dir = binaries_dir.join("cloak").join("1.0.0");
+    fs::create_dir_all(&cloak_dir).expect("Failed to create cloak directory");
+
+    #[cfg(target_os = "macos")]
+    {
+      let cloak_app_dir = cloak_dir.join("Cloak.app");
+      fs::create_dir_all(cloak_app_dir.join("Contents").join("MacOS"))
+        .expect("Failed to create Cloak.app structure");
+      fs::write(
+        cloak_app_dir.join("Contents").join("MacOS").join("Cloak"),
+        "mock executable",
+      )
+      .expect("Failed to write mock Cloak executable");
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+      let executable_path = cloak_dir.join("cloakbrowser");
+      fs::write(&executable_path, "mock executable")
+        .expect("Failed to write mock cloak executable");
+      use std::os::unix::fs::PermissionsExt;
+      let mut permissions = executable_path
+        .metadata()
+        .expect("Failed to get cloak metadata")
+        .permissions();
+      permissions.set_mode(0o755);
+      fs::set_permissions(&executable_path, permissions).expect("Failed to set cloak permissions");
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+      let executable_path = cloak_dir.join("cloakbrowser.exe");
+      fs::write(&executable_path, b"MZmock executable")
+        .expect("Failed to write mock cloakbrowser.exe");
+    }
+
+    let cloak_browser = CloakBrowser::new();
+    assert!(
+      cloak_browser.is_version_downloaded("1.0.0", binaries_dir),
+      "Cloak version should be detected as downloaded"
+    );
+    assert!(
+      !cloak_browser.is_version_downloaded("9.9.9", binaries_dir),
+      "Non-existent Cloak version should not be detected as downloaded"
+    );
   }
 
   #[test]
@@ -1205,6 +1409,7 @@ mod tests {
       release_type: "stable".to_string(),
       camoufox_config: None,
       wayfern_config: None,
+      cloak_config: None,
       group_id: None,
       tags: Vec::new(),
       note: None,
@@ -1229,6 +1434,76 @@ mod tests {
       profiles_dir
         .join("12345678-1234-1234-1234-123456789abc")
         .join("profile")
+    );
+  }
+
+  #[test]
+  fn test_cloak_launch_args() {
+    let browser = CloakBrowser::new();
+    let args = browser
+      .create_launch_args(
+        "/path/to/profile",
+        None,
+        Some("https://example.com".to_string()),
+        Some(9222),
+        true,
+      )
+      .expect("Failed to create launch args for Cloak");
+
+    assert!(args.contains(&"--user-data-dir=/path/to/profile".to_string()));
+    assert!(args.contains(&"--remote-debugging-address=127.0.0.1".to_string()));
+    assert!(args.contains(&"--remote-debugging-port=9222".to_string()));
+    assert!(args.contains(&"--headless=new".to_string()));
+    assert_eq!(args.last().map(String::as_str), Some("https://example.com"));
+  }
+
+  #[test]
+  fn test_browser_profile_serde_round_trips_cloak_config() {
+    use crate::profile::BrowserProfile;
+    let profile = BrowserProfile {
+      id: uuid::Uuid::parse_str("12345678-1234-1234-1234-123456789abc").unwrap(),
+      name: "cloak profile".to_string(),
+      browser: "cloak".to_string(),
+      version: "1.0.0".to_string(),
+      proxy: None,
+      vpn_id: None,
+      launch_hook: None,
+      process_id: None,
+      last_launch: None,
+      release_type: "stable".to_string(),
+      camoufox_config: None,
+      wayfern_config: None,
+      cloak_config: Some(crate::cloak_manager::CloakConfig {
+        fingerprint_seed: Some("12345".to_string()),
+        platform: Some("windows".to_string()),
+        ..Default::default()
+      }),
+      group_id: None,
+      tags: Vec::new(),
+      note: None,
+      sync_mode: crate::profile::types::SyncMode::Disabled,
+      encryption_salt: None,
+      last_sync: None,
+      host_os: None,
+      ephemeral: false,
+      extension_group_id: None,
+      proxy_bypass_rules: Vec::new(),
+      created_by_id: None,
+      created_by_email: None,
+      dns_blocklist: None,
+      password_protected: false,
+      created_at: None,
+      updated_at: None,
+    };
+
+    let json = serde_json::to_string(&profile).expect("profile should serialize");
+    let deserialized: BrowserProfile =
+      serde_json::from_str(&json).expect("profile should deserialize");
+    assert_eq!(
+      deserialized
+        .cloak_config
+        .and_then(|config| config.fingerprint_seed),
+      Some("12345".to_string())
     );
   }
 }

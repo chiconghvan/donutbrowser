@@ -380,7 +380,9 @@
       "description": "디스크에 저장된 프로필 데이터를 암호화합니다. 실행하려면 필요합니다."
     },
     "downloadingSubtitle": "다운로드 중…",
-    "browsersDownloading": "브라우저를 아직 다운로드하는 중입니다. 다운로드가 완료되면 프로필을 만들 수 있습니다."
+    "browsersDownloading": "브라우저를 아직 다운로드하는 중입니다. 다운로드가 완료되면 프로필을 만들 수 있습니다.",
+    "cloakLabel": "Cloak Browser",
+    "cloakSubtitle": "Powered by Cloak"
   },
   "deleteDialog": {
     "title": "프로필 삭제",
@@ -680,6 +682,39 @@
     "shared": {
       "browserBehavior": "브라우저 동작",
       "allowAddonsOpenTabs": "브라우저 확장 프로그램이 새 탭을 자동으로 열도록 허용"
+    },
+    "cloak": {
+      "title": "Cloak Configuration",
+      "seed": "Fingerprint Seed",
+      "platform": "Platform",
+      "platforms": {
+        "windows": "Windows",
+        "macos": "macOS",
+        "linux": "Linux"
+      },
+      "timezone": "Timezone",
+      "locale": "Locale",
+      "userAgent": "User Agent",
+      "screenWidth": "Screen Width",
+      "screenHeight": "Screen Height",
+      "hardwareConcurrency": "Hardware Concurrency",
+      "gpuVendor": "GPU Vendor",
+      "gpuRenderer": "GPU Renderer",
+      "humanPreset": "Humanization Preset",
+      "presets": {
+        "default": "Default",
+        "careful": "Careful"
+      },
+      "colorScheme": "Color Scheme",
+      "colorSchemes": {
+        "noPreference": "No preference",
+        "light": "Light",
+        "dark": "Dark"
+      },
+      "humanize": "Humanize interactions",
+      "headless": "Headless",
+      "geoip": "GeoIP",
+      "launchArgs": "Launch Arguments"
     }
   },
   "cookies": {
@@ -851,7 +886,8 @@
     "loadVpnConfigsFailed": "VPN 구성 불러오기 실패: {{error}}",
     "setupVpnListenersFailed": "VPN 이벤트 리스너 설정 실패: {{error}}",
     "themeNotFound": "Tokyo Night 테마를 찾을 수 없습니다",
-    "setProfilePasswordFailed": "프로필 비밀번호 설정 실패: {{error}}"
+    "setProfilePasswordFailed": "프로필 비밀번호 설정 실패: {{error}}",
+    "updateCloakConfigFailed": "Failed to update cloak config: {{error}}"
   },
   "browser": {
     "camoufox": "Camoufox",

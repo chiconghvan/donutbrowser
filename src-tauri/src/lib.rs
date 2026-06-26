@@ -50,6 +50,7 @@ mod wayfern_manager;
 mod wayfern_terms;
 // mod theme_detector; // removed: theme detection handled in webview via CSS prefers-color-scheme
 
+mod cloak_manager;
 mod commercial_license;
 mod cookie_manager;
 pub mod events;
@@ -65,9 +66,9 @@ use browser_runner::{
 use profile::manager::{
   check_browser_status, clone_profile, create_browser_profile_new, create_browser_profiles_bulk,
   delete_profile, list_browser_profiles, rename_profile, update_camoufox_config,
-  update_profile_dns_blocklist, update_profile_launch_hook, update_profile_note,
-  update_profile_proxy, update_profile_proxy_bypass_rules, update_profile_tags,
-  update_wayfern_config,
+  update_cloak_config, update_profile_dns_blocklist, update_profile_launch_hook,
+  update_profile_note, update_profile_proxy, update_profile_proxy_bypass_rules,
+  update_profile_tags, update_wayfern_config,
 };
 
 use profile::password::{
@@ -403,6 +404,7 @@ async fn generate_sample_fingerprint(
     release_type: "stable".to_string(),
     camoufox_config: None,
     wayfern_config: None,
+    cloak_config: None,
     group_id: None,
     tags: Vec::new(),
     note: None,
@@ -1261,6 +1263,7 @@ pub fn run() {
       ensure_all_binaries_exist,
       ensure_active_browsers_downloaded,
       update_camoufox_config,
+      update_cloak_config,
       update_wayfern_config,
       generate_sample_fingerprint,
       get_profile_groups,

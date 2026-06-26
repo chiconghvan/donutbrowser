@@ -380,7 +380,9 @@
       "description": "Chiffre les données du profil sur disque. Requis au lancement."
     },
     "downloadingSubtitle": "Téléchargement…",
-    "browsersDownloading": "Les navigateurs sont encore en cours de téléchargement. La création de profils sera disponible une fois un téléchargement terminé."
+    "browsersDownloading": "Les navigateurs sont encore en cours de téléchargement. La création de profils sera disponible une fois un téléchargement terminé.",
+    "cloakLabel": "Cloak Browser",
+    "cloakSubtitle": "Powered by Cloak"
   },
   "deleteDialog": {
     "title": "Supprimer le profil",
@@ -680,6 +682,39 @@
     "shared": {
       "browserBehavior": "Comportement du navigateur",
       "allowAddonsOpenTabs": "Autoriser les modules complémentaires à ouvrir automatiquement de nouveaux onglets"
+    },
+    "cloak": {
+      "title": "Cloak Configuration",
+      "seed": "Fingerprint Seed",
+      "platform": "Platform",
+      "platforms": {
+        "windows": "Windows",
+        "macos": "macOS",
+        "linux": "Linux"
+      },
+      "timezone": "Timezone",
+      "locale": "Locale",
+      "userAgent": "User Agent",
+      "screenWidth": "Screen Width",
+      "screenHeight": "Screen Height",
+      "hardwareConcurrency": "Hardware Concurrency",
+      "gpuVendor": "GPU Vendor",
+      "gpuRenderer": "GPU Renderer",
+      "humanPreset": "Humanization Preset",
+      "presets": {
+        "default": "Default",
+        "careful": "Careful"
+      },
+      "colorScheme": "Color Scheme",
+      "colorSchemes": {
+        "noPreference": "No preference",
+        "light": "Light",
+        "dark": "Dark"
+      },
+      "humanize": "Humanize interactions",
+      "headless": "Headless",
+      "geoip": "GeoIP",
+      "launchArgs": "Launch Arguments"
     }
   },
   "cookies": {
@@ -851,7 +886,8 @@
     "loadVpnConfigsFailed": "Échec du chargement des configurations VPN : {{error}}",
     "setupVpnListenersFailed": "Échec de la configuration des écouteurs d’événements VPN : {{error}}",
     "themeNotFound": "Thème Tokyo Night introuvable",
-    "setProfilePasswordFailed": "Échec de la définition du mot de passe du profil : {{error}}"
+    "setProfilePasswordFailed": "Échec de la définition du mot de passe du profil : {{error}}",
+    "updateCloakConfigFailed": "Failed to update cloak config: {{error}}"
   },
   "browser": {
     "camoufox": "Camoufox",

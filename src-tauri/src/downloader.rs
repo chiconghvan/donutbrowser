@@ -188,6 +188,31 @@ impl Downloader {
 
         Ok(download_url)
       }
+      BrowserType::Cloak => {
+        let releases = self
+          .api_client
+          .fetch_cloak_releases_with_caching(true)
+          .await?;
+
+        let release = releases
+          .iter()
+          .find(|r| r.tag_name == version)
+          .or_else(|| {
+            log::info!(
+              "Cloak: requested version {version} not found, using latest compatible release"
+            );
+            releases.first()
+          })
+          .ok_or("No compatible Cloak releases found".to_string())?;
+
+        let (os, arch) = Self::get_platform_info();
+        let asset_url = Self::find_cloak_asset(&release.assets, &os, &arch).ok_or(format!(
+          "No compatible asset found for Cloak version {} on {os}/{arch}",
+          release.tag_name
+        ))?;
+
+        Ok(asset_url)
+      }
     }
   }
 
@@ -259,6 +284,18 @@ impl Downloader {
       );
       None
     }
+  }
+
+  pub(crate) fn find_cloak_asset(
+    assets: &[crate::browser::GithubAsset],
+    os: &str,
+    arch: &str,
+  ) -> Option<String> {
+    let expected = crate::api_client::ApiClient::cloak_asset_name_for_platform(os, arch)?;
+    assets
+      .iter()
+      .find(|asset| asset.name.eq_ignore_ascii_case(expected))
+      .map(|asset| asset.browser_download_url.clone())
   }
 
   /// Ensure version.json exists in the Camoufox installation directory.
@@ -599,6 +636,21 @@ impl Downloader {
         Ok(releases) if !releases.is_empty() && releases[0].tag_name != version => {
           log::info!(
             "Camoufox: requested {version}, using available {}",
+            releases[0].tag_name
+          );
+          releases[0].tag_name.clone()
+        }
+        _ => version,
+      }
+    } else if browser_str == "cloak" {
+      match self
+        .api_client
+        .fetch_cloak_releases_with_caching(true)
+        .await
+      {
+        Ok(releases) if !releases.is_empty() && releases[0].tag_name != version => {
+          log::info!(
+            "Cloak: requested {version}, using available {}",
             releases[0].tag_name
           );
           releases[0].tag_name.clone()
@@ -1219,6 +1271,44 @@ mod tests {
 
     // Cleanup so we don't leak global state into other tests.
     clear_download_state_for_browser("camoufox");
+  }
+
+  #[test]
+  fn test_find_cloak_asset_selects_platform_asset() {
+    let assets = vec![
+      crate::browser::GithubAsset {
+        name: "cloakbrowser-windows-x64.zip".to_string(),
+        browser_download_url: "https://example.com/windows.zip".to_string(),
+        size: 1,
+        download_count: None,
+        id: None,
+        node_id: None,
+        label: None,
+        content_type: None,
+        state: None,
+        created_at: None,
+        updated_at: None,
+      },
+      crate::browser::GithubAsset {
+        name: "cloakbrowser-linux-x64.tar.gz".to_string(),
+        browser_download_url: "https://example.com/linux.tar.gz".to_string(),
+        size: 1,
+        download_count: None,
+        id: None,
+        node_id: None,
+        label: None,
+        content_type: None,
+        state: None,
+        created_at: None,
+        updated_at: None,
+      },
+    ];
+
+    assert_eq!(
+      Downloader::find_cloak_asset(&assets, "linux", "x64").as_deref(),
+      Some("https://example.com/linux.tar.gz")
+    );
+    assert!(Downloader::find_cloak_asset(&assets, "windows", "arm64").is_none());
   }
 }
 

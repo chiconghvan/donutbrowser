@@ -380,7 +380,9 @@
       "description": "Шифрует данные профиля на диске. Требуется для запуска."
     },
     "downloadingSubtitle": "Загрузка…",
-    "browsersDownloading": "Браузеры ещё загружаются. Создание профилей станет доступно после завершения загрузки."
+    "browsersDownloading": "Браузеры ещё загружаются. Создание профилей станет доступно после завершения загрузки.",
+    "cloakLabel": "Cloak Browser",
+    "cloakSubtitle": "Powered by Cloak"
   },
   "deleteDialog": {
     "title": "Удалить профиль",
@@ -680,6 +682,39 @@
     "shared": {
       "browserBehavior": "Поведение браузера",
       "allowAddonsOpenTabs": "Разрешить расширениям браузера автоматически открывать новые вкладки"
+    },
+    "cloak": {
+      "title": "Cloak Configuration",
+      "seed": "Fingerprint Seed",
+      "platform": "Platform",
+      "platforms": {
+        "windows": "Windows",
+        "macos": "macOS",
+        "linux": "Linux"
+      },
+      "timezone": "Timezone",
+      "locale": "Locale",
+      "userAgent": "User Agent",
+      "screenWidth": "Screen Width",
+      "screenHeight": "Screen Height",
+      "hardwareConcurrency": "Hardware Concurrency",
+      "gpuVendor": "GPU Vendor",
+      "gpuRenderer": "GPU Renderer",
+      "humanPreset": "Humanization Preset",
+      "presets": {
+        "default": "Default",
+        "careful": "Careful"
+      },
+      "colorScheme": "Color Scheme",
+      "colorSchemes": {
+        "noPreference": "No preference",
+        "light": "Light",
+        "dark": "Dark"
+      },
+      "humanize": "Humanize interactions",
+      "headless": "Headless",
+      "geoip": "GeoIP",
+      "launchArgs": "Launch Arguments"
     }
   },
   "cookies": {
@@ -851,7 +886,8 @@
     "loadVpnConfigsFailed": "Не удалось загрузить конфигурации VPN: {{error}}",
     "setupVpnListenersFailed": "Не удалось настроить слушатели событий VPN: {{error}}",
     "themeNotFound": "Тема Tokyo Night не найдена",
-    "setProfilePasswordFailed": "Не удалось установить пароль профиля: {{error}}"
+    "setProfilePasswordFailed": "Не удалось установить пароль профиля: {{error}}",
+    "updateCloakConfigFailed": "Failed to update cloak config: {{error}}"
   },
   "browser": {
     "camoufox": "Camoufox",

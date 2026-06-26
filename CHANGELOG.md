@@ -1,6 +1,24 @@
 # Changelog
 
 
+## v0.27.14 (2026-06-26)
+
+### Features
+
+- add Cloak browser support across profile creation, bulk creation, browser launch, and startup downloads
+- add a dedicated Cloak configuration form and translations
+
+### Bug Fixes
+
+- show Cloak fingerprint/config details in the profile info dialog
+- separate development and release frontend output so portable builds do not reuse dev cache
+- clean stale frontend dist before portable packaging and rebuild the frontend fresh
+
+### Maintenance
+
+- chore: bump version to 0.27.14
+
+
 ## v0.27.11 (2026-06-25)
 
 ### Features

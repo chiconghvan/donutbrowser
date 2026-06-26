@@ -60,9 +60,14 @@ import {
   type ShortcutId,
 } from "@/lib/shortcuts";
 import { showErrorToast, showSuccessToast, showToast } from "@/lib/toast-utils";
-import type { BrowserProfile, CamoufoxConfig, WayfernConfig } from "@/types";
+import type {
+  BrowserProfile,
+  CamoufoxConfig,
+  CloakConfig,
+  WayfernConfig,
+} from "@/types";
 
-type BrowserTypeString = "camoufox" | "wayfern";
+type BrowserTypeString = "camoufox" | "wayfern" | "cloak";
 
 interface PendingUrl {
   id: string;
@@ -673,6 +678,25 @@ export default function Home() {
     [t],
   );
 
+  const handleSaveCloakConfig = useCallback(
+    async (profile: BrowserProfile, config: CloakConfig) => {
+      try {
+        await invoke("update_cloak_config", {
+          profileId: profile.id,
+          config,
+        });
+        setCamoufoxConfigDialogOpen(false);
+      } catch (err: unknown) {
+        console.error("Failed to update cloak config:", err);
+        showErrorToast(
+          t("errors.updateCloakConfigFailed", { error: JSON.stringify(err) }),
+        );
+        throw err;
+      }
+    },
+    [t],
+  );
+
   const handleCreateProfile = useCallback(
     async (profileData: {
       name: string;
@@ -682,6 +706,7 @@ export default function Home() {
       proxyId?: string;
       camoufoxConfig?: CamoufoxConfig;
       wayfernConfig?: WayfernConfig;
+      cloakConfig?: CloakConfig;
       groupId?: string;
       extensionGroupId?: string;
       ephemeral?: boolean;
@@ -700,6 +725,7 @@ export default function Home() {
             proxyId: profileData.proxyId,
             camoufoxConfig: profileData.camoufoxConfig,
             wayfernConfig: profileData.wayfernConfig,
+            cloakConfig: profileData.cloakConfig,
             groupId:
               profileData.groupId ??
               (selectedGroupId && selectedGroupId !== "__all__"
@@ -993,7 +1019,9 @@ export default function Home() {
     const eligibleProfiles = profiles.filter(
       (p) =>
         selectedProfiles.includes(p.id) &&
-        (p.browser === "wayfern" || p.browser === "camoufox"),
+        (p.browser === "wayfern" ||
+          p.browser === "camoufox" ||
+          p.browser === "cloak"),
     );
     if (eligibleProfiles.length === 0) {
       showErrorToast(t("errors.cookieCopyUnsupportedBrowser"));
@@ -1119,12 +1147,15 @@ export default function Home() {
     };
   }, [t]);
 
-  // Show warning for non-wayfern/camoufox profiles (support ending March 15, 2026)
+  // Show warning for non-wayfern/camoufox/cloak profiles (support ending March 15, 2026)
   useEffect(() => {
     if (profiles.length === 0) return;
 
     const unsupportedProfiles = profiles.filter(
-      (p) => p.browser !== "wayfern" && p.browser !== "camoufox",
+      (p) =>
+        p.browser !== "wayfern" &&
+        p.browser !== "camoufox" &&
+        p.browser !== "cloak",
     );
 
     if (unsupportedProfiles.length > 0) {
@@ -1468,6 +1499,7 @@ export default function Home() {
         profile={currentProfileForCamoufoxConfig}
         onSave={handleSaveCamoufoxConfig}
         onSaveWayfern={handleSaveWayfernConfig}
+        onSaveCloak={handleSaveCloakConfig}
         isRunning={
           currentProfileForCamoufoxConfig
             ? runningProfiles.has(currentProfileForCamoufoxConfig.id)

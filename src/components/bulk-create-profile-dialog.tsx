@@ -24,7 +24,7 @@ import type { BrowserReleaseTypes } from "@/types";
 
 import { RippleButton } from "./ui/ripple";
 
-type BrowserTypeString = "camoufox" | "wayfern";
+type BrowserTypeString = "camoufox" | "wayfern" | "cloak";
 
 interface BulkCreateProfileDialogProps {
   isOpen: boolean;
@@ -57,7 +57,9 @@ export function BulkCreateProfileDialog({
   const [proxyText, setProxyText] = useState("");
   const [isCreating, setIsCreating] = useState(false);
 
-  const [releaseTypes, setReleaseTypes] = useState<BrowserReleaseTypes>();
+  const [releaseTypesByBrowser, setReleaseTypesByBrowser] = useState<
+    Partial<Record<BrowserTypeString, BrowserReleaseTypes>>
+  >({});
   const [isLoadingReleaseTypes, setIsLoadingReleaseTypes] = useState(false);
   const loadingBrowserRef = useRef<string | null>(null);
 
@@ -82,7 +84,10 @@ export function BulkCreateProfileDialog({
         if (loadingBrowserRef.current === browser) {
           const filtered: BrowserReleaseTypes = {};
           if (rawReleaseTypes.stable) filtered.stable = rawReleaseTypes.stable;
-          setReleaseTypes(filtered);
+          setReleaseTypesByBrowser((prev) => ({
+            ...prev,
+            [browser as BrowserTypeString]: filtered,
+          }));
         }
       } catch (error) {
         console.error(`Failed to load release types for ${browser}:`, error);
@@ -91,7 +96,10 @@ export function BulkCreateProfileDialog({
           if (loadingBrowserRef.current === browser && downloaded.length > 0) {
             const fallback: BrowserReleaseTypes = {};
             fallback.stable = downloaded[0];
-            setReleaseTypes(fallback);
+            setReleaseTypesByBrowser((prev) => ({
+              ...prev,
+              [browser as BrowserTypeString]: fallback,
+            }));
           }
         } catch {
           // ignore
@@ -110,19 +118,27 @@ export function BulkCreateProfileDialog({
     if (isOpen) {
       void loadDownloadedVersions("wayfern");
       void loadDownloadedVersions("camoufox");
+      void loadDownloadedVersions("cloak");
       void loadReleaseTypes("wayfern");
       void loadReleaseTypes("camoufox");
+      void loadReleaseTypes("cloak");
     }
   }, [isOpen, loadReleaseTypes, loadDownloadedVersions]);
 
-  const getBestAvailableVersion = useCallback(() => {
-    if (!releaseTypes?.stable) return null;
-    return { version: releaseTypes.stable, releaseType: "stable" as const };
-  }, [releaseTypes]);
+  const getBestAvailableVersion = useCallback(
+    (browserType: BrowserTypeString) => {
+      const releaseTypes = releaseTypesByBrowser[browserType];
+      if (!releaseTypes?.stable) return null;
+      return { version: releaseTypes.stable, releaseType: "stable" as const };
+    },
+    [releaseTypesByBrowser],
+  );
 
   const getCreatableVersion = useCallback(
     (browserType: string) => {
-      const bestVersion = getBestAvailableVersion();
+      const bestVersion = getBestAvailableVersion(
+        browserType as BrowserTypeString,
+      );
       if (bestVersion && isVersionDownloaded(bestVersion.version)) {
         return bestVersion;
       }
@@ -205,13 +221,15 @@ export function BulkCreateProfileDialog({
     setSelectedBrowser("wayfern");
     setProfileCount(1);
     setProxyText("");
-    setReleaseTypes({});
+    setReleaseTypesByBrowser({});
     setIsLoadingReleaseTypes(false);
     onClose();
   };
 
   const handleDownload = async (browserStr: string) => {
-    const versionInfo = getBestAvailableVersion();
+    const versionInfo = getBestAvailableVersion(
+      browserStr as BrowserTypeString,
+    );
     if (!versionInfo) return;
     try {
       await downloadBrowser(browserStr, versionInfo.version);
@@ -233,7 +251,9 @@ export function BulkCreateProfileDialog({
                   browser:
                     selectedBrowser === "wayfern"
                       ? t("createProfile.chromiumLabel")
-                      : t("createProfile.firefoxLabel"),
+                      : selectedBrowser === "cloak"
+                        ? t("createProfile.cloakLabel")
+                        : t("createProfile.firefoxLabel"),
                 })}
           </DialogTitle>
         </DialogHeader>
@@ -274,6 +294,39 @@ export function BulkCreateProfileDialog({
                 </div>
               </Button>
 
+              {/* Cloak */}
+              <Button
+                onClick={() => {
+                  handleBrowserSelect("cloak");
+                }}
+                disabled={!getCreatableVersion("cloak")}
+                className="flex gap-3 justify-start items-center p-4 w-full h-16 border-2 transition-colors hover:border-primary/50"
+                variant="outline"
+              >
+                <div className="flex justify-center items-center size-8">
+                  {isBrowserDownloading("cloak") ? (
+                    <LuLoaderCircle className="size-6 animate-spin" />
+                  ) : (
+                    (() => {
+                      const IconComponent = getBrowserIcon("cloak");
+                      return IconComponent ? (
+                        <IconComponent className="size-6" />
+                      ) : null;
+                    })()
+                  )}
+                </div>
+                <div className="text-left">
+                  <div className="font-medium">
+                    {t("createProfile.cloakLabel")}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {isBrowserDownloading("cloak")
+                      ? t("createProfile.downloadingSubtitle")
+                      : t("createProfile.cloakSubtitle")}
+                  </div>
+                </div>
+              </Button>
+
               {/* Camoufox (Firefox) */}
               <Button
                 onClick={() => {
@@ -308,6 +361,7 @@ export function BulkCreateProfileDialog({
               </Button>
 
               {!getCreatableVersion("wayfern") &&
+                !getCreatableVersion("cloak") &&
                 !getCreatableVersion("camoufox") && (
                   <p className="pt-2 text-sm text-center text-muted-foreground">
                     {t("createProfile.browsersDownloading")}
@@ -327,6 +381,22 @@ export function BulkCreateProfileDialog({
                     ? t("createProfile.downloadingButton")
                     : t("createProfile.downloadButton", {
                         browser: t("createProfile.chromiumLabel"),
+                      })}
+                </Button>
+              )}
+              {!getCreatableVersion("cloak") && !isLoadingReleaseTypes && (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    void handleDownload("cloak");
+                  }}
+                  disabled={isBrowserDownloading("cloak")}
+                >
+                  {isBrowserDownloading("cloak")
+                    ? t("createProfile.downloadingButton")
+                    : t("createProfile.downloadButton", {
+                        browser: t("createProfile.cloakLabel"),
                       })}
                 </Button>
               )}

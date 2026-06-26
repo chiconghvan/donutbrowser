@@ -66,6 +66,7 @@ nodecar/nodecar-bin
 # local-only Rust config and scratch
 .cargo/
 plans/
+deploy.bat
 
 # generated artifacts
 scripts/test-playwright-rust/target/

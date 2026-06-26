@@ -380,7 +380,9 @@
       "description": "加密磁盘上的配置文件数据。启动时需要密码。"
     },
     "downloadingSubtitle": "正在下载…",
-    "browsersDownloading": "浏览器仍在下载中。下载完成后即可创建配置文件。"
+    "browsersDownloading": "浏览器仍在下载中。下载完成后即可创建配置文件。",
+    "cloakLabel": "Cloak Browser",
+    "cloakSubtitle": "Powered by Cloak"
   },
   "deleteDialog": {
     "title": "删除配置文件",
@@ -680,6 +682,39 @@
     "shared": {
       "browserBehavior": "浏览器行为",
       "allowAddonsOpenTabs": "允许浏览器附加组件自动打开新标签页"
+    },
+    "cloak": {
+      "title": "Cloak Configuration",
+      "seed": "Fingerprint Seed",
+      "platform": "Platform",
+      "platforms": {
+        "windows": "Windows",
+        "macos": "macOS",
+        "linux": "Linux"
+      },
+      "timezone": "Timezone",
+      "locale": "Locale",
+      "userAgent": "User Agent",
+      "screenWidth": "Screen Width",
+      "screenHeight": "Screen Height",
+      "hardwareConcurrency": "Hardware Concurrency",
+      "gpuVendor": "GPU Vendor",
+      "gpuRenderer": "GPU Renderer",
+      "humanPreset": "Humanization Preset",
+      "presets": {
+        "default": "Default",
+        "careful": "Careful"
+      },
+      "colorScheme": "Color Scheme",
+      "colorSchemes": {
+        "noPreference": "No preference",
+        "light": "Light",
+        "dark": "Dark"
+      },
+      "humanize": "Humanize interactions",
+      "headless": "Headless",
+      "geoip": "GeoIP",
+      "launchArgs": "Launch Arguments"
     }
   },
   "cookies": {
@@ -851,7 +886,8 @@
     "loadVpnConfigsFailed": "加载 VPN 配置失败: {{error}}",
     "setupVpnListenersFailed": "设置 VPN 事件监听器失败: {{error}}",
     "themeNotFound": "未找到 Tokyo Night 主题",
-    "setProfilePasswordFailed": "设置配置文件密码失败: {{error}}"
+    "setProfilePasswordFailed": "设置配置文件密码失败: {{error}}",
+    "updateCloakConfigFailed": "Failed to update cloak config: {{error}}"
   },
   "browser": {
     "camoufox": "Camoufox",

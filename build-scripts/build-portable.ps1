@@ -17,6 +17,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $rootDir = Split-Path -Parent $PSScriptRoot
+[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
 $tauriDir = Join-Path $rootDir "src-tauri"
 
 Write-Host
@@ -27,11 +28,14 @@ Write-Host
 
 # -- [1/4] MSVC toolchain -------------------------------------------
 Write-Host "  >> [1/4] Setting MSVC toolchain..." -ForegroundColor Yellow
-$prevPref = $ErrorActionPreference
-$ErrorActionPreference = "Continue"
-rustup default stable-x86_64-pc-windows-msvc 2>&1 | Out-Null
-$ErrorActionPreference = $prevPref
-if ($LASTEXITCODE -ne 0) { throw "Failed to set MSVC toolchain" }
+$activeToolchain = & rustup show active-toolchain 2>$null
+if (-not ($activeToolchain -match "stable-x86_64-pc-windows-msvc")) {
+    $prevPref = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    rustup default stable-x86_64-pc-windows-msvc 2>&1 | Out-Null
+    $ErrorActionPreference = $prevPref
+    if ($LASTEXITCODE -ne 0) { throw "Failed to set MSVC toolchain" }
+}
 Write-Host "     [OK]" -ForegroundColor Green
 Write-Host
 
@@ -51,6 +55,34 @@ if (-not $SkipProxyPrebuild) {
 }
 Write-Host
 
+# -- [2.5/4] Clean stale frontend dist -------------------------------
+Write-Host "  >> [2.5/4] Cleaning stale frontend dist..." -ForegroundColor Yellow
+$distDir = Join-Path $rootDir "dist"
+if (Test-Path $distDir) {
+    Remove-Item -LiteralPath $distDir -Recurse -Force
+    Write-Host "     [OK] Removed old dist" -ForegroundColor Green
+} else {
+    Write-Host "     [OK] No stale dist found" -ForegroundColor Green
+}
+Write-Host
+
+# -- [3/4] Frontend build ------------------------------------------
+Write-Host "  >> [3/4] Building frontend export..." -ForegroundColor Yellow
+Write-Host
+
+$env:STABLE_RELEASE = "1"
+Push-Location $rootDir
+try {
+    $prevPref3 = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    pnpm.cmd exec next build
+    $ErrorActionPreference = $prevPref3
+    if ($LASTEXITCODE -ne 0) { throw "Frontend build failed" }
+} finally {
+    Pop-Location
+}
+Write-Host
+
 # -- Stop locked proxy before Tauri copies externalBin --------------
 $releaseProxyPath = Join-Path $tauriDir "target\release\donut-proxy.exe"
 $lockedProxies = Get-Process donut-proxy -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $releaseProxyPath }
@@ -60,21 +92,19 @@ if ($lockedProxies) {
     Write-Host
 }
 
-# -- [3/4] Tauri build ----------------------------------------------
-Write-Host "  >> [3/4] Building Tauri (portable EXE only)..." -ForegroundColor Yellow
+# -- [4/4] Tauri build ----------------------------------------------
+Write-Host "  >> [4/4] Building Tauri (portable EXE only)..." -ForegroundColor Yellow
 Write-Host
-
-$env:STABLE_RELEASE = "1"
 
 $prevPref2 = $ErrorActionPreference
 $ErrorActionPreference = "Continue"
-pnpm --prefix $rootDir exec tauri build --no-bundle 2>&1 | ForEach-Object { Write-Host "$_" }
+pnpm.cmd --prefix $rootDir exec tauri build --no-bundle
 $ErrorActionPreference = $prevPref2
 if ($LASTEXITCODE -ne 0) { throw "Tauri build failed" }
 Write-Host
 
-# -- [4/4] Results --------------------------------------------------
-Write-Host "  >> [4/4] Build complete!" -ForegroundColor Cyan
+# -- [5/5] Results --------------------------------------------------
+Write-Host "  >> [5/5] Build complete!" -ForegroundColor Cyan
 
 $exePath = Join-Path $tauriDir "target\release\donutbrowser.exe"
 if (Test-Path $exePath) {

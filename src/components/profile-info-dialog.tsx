@@ -32,6 +32,7 @@ import {
   LuUsers,
   LuX,
 } from "react-icons/lu";
+import { CloakConfigForm } from "@/components/cloak-config-form";
 import { SharedCamoufoxConfigForm } from "@/components/shared-camoufox-config-form";
 import { Button } from "@/components/ui/button";
 import {
@@ -66,6 +67,7 @@ import { cn } from "@/lib/utils";
 import type {
   BrowserProfile,
   CamoufoxConfig,
+  CloakConfig,
   ProfileGroup,
   StoredProxy,
   VpnConfig,
@@ -1685,6 +1687,9 @@ function FingerprintSectionInline({
   const [camoufoxConfig, setCamoufoxConfig] = React.useState<CamoufoxConfig>(
     () => profile.camoufox_config ?? {},
   );
+  const [cloakConfig, setCloakConfig] = React.useState<CloakConfig>(
+    () => profile.cloak_config ?? {},
+  );
   const [wayfernConfig, setWayfernConfig] = React.useState<WayfernConfig>(
     () => profile.wayfern_config ?? {},
   );
@@ -1696,15 +1701,17 @@ function FingerprintSectionInline({
   // in the dialog) reset the local form state to match.
   React.useEffect(() => {
     setCamoufoxConfig(profile.camoufox_config ?? {});
+    setCloakConfig(profile.cloak_config ?? {});
     setWayfernConfig(profile.wayfern_config ?? {});
     setError(null);
     setSuccess(null);
-  }, [profile.camoufox_config, profile.wayfern_config]);
+  }, [profile.camoufox_config, profile.cloak_config, profile.wayfern_config]);
 
   const isCamoufox = profile.browser === "camoufox";
   const isWayfern = profile.browser === "wayfern";
+  const isCloak = profile.browser === "cloak";
 
-  if (!isCamoufox && !isWayfern) {
+  if (!isCamoufox && !isWayfern && !isCloak) {
     return (
       <div className="flex flex-col gap-3">
         <div className="flex items-center gap-2 text-sm font-semibold">
@@ -1718,10 +1725,9 @@ function FingerprintSectionInline({
     );
   }
 
-  // Viewing and editing fingerprints both require an active paid plan
-  // (`crossOsUnlocked` is that paid flag here). Render a locked state instead of
-  // the editor so free users can neither see nor change the fingerprint.
-  if (!crossOsUnlocked) {
+  // Camoufox and Wayfern keep the existing paid-plan lock. Cloak should still
+  // expose its config in read-only form so the profile details are visible.
+  if (!crossOsUnlocked && (isCamoufox || isWayfern)) {
     return (
       <div className="flex flex-col items-center gap-3 rounded-lg border p-6 text-center">
         <LuLock className="size-4 shrink-0 text-muted-foreground" />
@@ -1743,6 +1749,10 @@ function FingerprintSectionInline({
     setWayfernConfig((prev) => ({ ...prev, [key]: value }));
     setSuccess(null);
   };
+  const onCloakChange = (key: keyof CloakConfig, value: unknown) => {
+    setCloakConfig((prev) => ({ ...prev, [key]: value }));
+    setSuccess(null);
+  };
 
   const onSave = async () => {
     setIsSaving(true);
@@ -1753,6 +1763,11 @@ function FingerprintSectionInline({
         await invoke("update_camoufox_config", {
           profileId: profile.id,
           config: camoufoxConfig,
+        });
+      } else if (isCloak) {
+        await invoke("update_cloak_config", {
+          profileId: profile.id,
+          config: cloakConfig,
         });
       } else {
         await invoke("update_wayfern_config", {
@@ -1772,10 +1787,14 @@ function FingerprintSectionInline({
 
   const initial = isCamoufox
     ? JSON.stringify(profile.camoufox_config ?? {})
-    : JSON.stringify(profile.wayfern_config ?? {});
+    : isCloak
+      ? JSON.stringify(profile.cloak_config ?? {})
+      : JSON.stringify(profile.wayfern_config ?? {});
   const current = isCamoufox
     ? JSON.stringify(camoufoxConfig)
-    : JSON.stringify(wayfernConfig);
+    : isCloak
+      ? JSON.stringify(cloakConfig)
+      : JSON.stringify(wayfernConfig);
   const dirty = current !== initial;
 
   return (
@@ -1812,6 +1831,13 @@ function FingerprintSectionInline({
           profileBrowser={profile.browser}
         />
       )}
+      {isCloak && (
+        <CloakConfigForm
+          config={cloakConfig}
+          onConfigChange={onCloakChange}
+          readOnly={isDisabled}
+        />
+      )}
 
       {error && <p className="text-xs text-destructive">{error}</p>}
       {success && !error && <p className="text-xs text-success">{success}</p>}
@@ -1834,6 +1860,7 @@ function FingerprintSectionInline({
             className="h-7 text-xs"
             onClick={() => {
               setCamoufoxConfig(profile.camoufox_config ?? {});
+              setCloakConfig(profile.cloak_config ?? {});
               setWayfernConfig(profile.wayfern_config ?? {});
               setError(null);
               setSuccess(null);

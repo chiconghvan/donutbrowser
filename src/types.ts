@@ -24,6 +24,7 @@ export interface BrowserProfile {
   release_type: string; // "stable" or "nightly"
   camoufox_config?: CamoufoxConfig; // Camoufox configuration
   wayfern_config?: WayfernConfig; // Wayfern configuration
+  cloak_config?: CloakConfig; // Cloak Browser configuration
   group_id?: string; // Reference to profile group
   tags?: string[];
   note?: string; // User note
@@ -466,6 +467,29 @@ export interface WayfernLaunchResult {
   profilePath?: string;
   url?: string;
   cdp_port?: number;
+}
+
+export type CloakPlatform = "windows" | "macos" | "linux";
+export type CloakHumanPreset = "default" | "careful";
+export type CloakColorScheme = "light" | "dark" | "no-preference";
+
+export interface CloakConfig {
+  fingerprint_seed?: string;
+  platform?: CloakPlatform;
+  timezone?: string;
+  locale?: string;
+  user_agent?: string;
+  screen_width?: number;
+  screen_height?: number;
+  gpu_vendor?: string;
+  gpu_renderer?: string;
+  hardware_concurrency?: number;
+  humanize?: boolean;
+  human_preset?: CloakHumanPreset;
+  headless?: boolean;
+  geoip?: boolean;
+  color_scheme?: CloakColorScheme;
+  launch_args?: string[];
 }
 
 // Synchronizer types

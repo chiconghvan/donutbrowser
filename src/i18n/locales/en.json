@@ -373,6 +373,8 @@
     "chromiumSubtitle": "Powered by Wayfern",
     "firefoxLabel": "Firefox",
     "firefoxSubtitle": "Powered by Camoufox",
+    "cloakLabel": "Cloak Browser",
+    "cloakSubtitle": "Powered by Cloak",
     "camoufoxWarning": "Firefox (Camoufox) is maintained by a third-party organization. For production use, please use Chromium.",
     "platformUnavailable": "{{browser}} is not available on your platform yet.",
     "passwordProtect": {
@@ -677,6 +679,39 @@
         "webgl": "Block WebGL"
       }
     },
+    "cloak": {
+      "title": "Cloak Configuration",
+      "seed": "Fingerprint Seed",
+      "platform": "Platform",
+      "platforms": {
+        "windows": "Windows",
+        "macos": "macOS",
+        "linux": "Linux"
+      },
+      "timezone": "Timezone",
+      "locale": "Locale",
+      "userAgent": "User Agent",
+      "screenWidth": "Screen Width",
+      "screenHeight": "Screen Height",
+      "hardwareConcurrency": "Hardware Concurrency",
+      "gpuVendor": "GPU Vendor",
+      "gpuRenderer": "GPU Renderer",
+      "humanPreset": "Humanization Preset",
+      "presets": {
+        "default": "Default",
+        "careful": "Careful"
+      },
+      "colorScheme": "Color Scheme",
+      "colorSchemes": {
+        "noPreference": "No preference",
+        "light": "Light",
+        "dark": "Dark"
+      },
+      "humanize": "Humanize interactions",
+      "headless": "Headless",
+      "geoip": "GeoIP",
+      "launchArgs": "Launch Arguments"
+    },
     "shared": {
       "browserBehavior": "Browser Behavior",
       "allowAddonsOpenTabs": "Allow browser addons to open new tabs automatically"
@@ -830,6 +865,7 @@
     "noProfilesForUrl": "No profiles available. Please create a profile first before opening URLs.",
     "updateCamoufoxConfigFailed": "Failed to update camoufox config: {{error}}",
     "updateWayfernConfigFailed": "Failed to update wayfern config: {{error}}",
+    "updateCloakConfigFailed": "Failed to update cloak config: {{error}}",
     "createProfileFailed": "Failed to create profile: {{error}}",
     "launchBrowserFailed": "Failed to launch browser: {{error}}",
     "cannotDeleteRunningProfile": "Cannot delete profile while browser is running. Please stop the browser first.",

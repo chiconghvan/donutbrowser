@@ -5,6 +5,7 @@ use std::fs::{self, create_dir_all};
 use std::path::Path;
 
 use crate::camoufox_manager::CamoufoxConfig;
+use crate::cloak_manager::CloakConfig;
 use crate::downloaded_browsers_registry::DownloadedBrowsersRegistry;
 use crate::profile::types::{get_host_os, BrowserProfile, SyncMode};
 use crate::profile::ProfileManager;
@@ -25,6 +26,7 @@ fn map_browser_type(browser: &str) -> &str {
   // recognize and REJECT them. Everything else maps to Wayfern.
   match browser {
     "firefox" | "firefox-developer" | "zen" | "camoufox" => "camoufox",
+    "cloak" | "cloakbrowser" => "cloak",
     _ => "wayfern",
   }
 }
@@ -233,6 +235,7 @@ impl ProfileImporter {
     proxy_id: Option<String>,
     _camoufox_config: Option<CamoufoxConfig>,
     wayfern_config: Option<WayfernConfig>,
+    cloak_config: Option<CloakConfig>,
   ) -> Result<(), Box<dyn std::error::Error>> {
     let source_path = Path::new(source_path);
     if !source_path.exists() {
@@ -264,6 +267,11 @@ impl ProfileImporter {
     // Camoufox import is removed; only Wayfern profiles are imported now, so the
     // imported profile never carries a Camoufox config.
     let final_camoufox_config: Option<CamoufoxConfig> = None;
+    let final_cloak_config = if mapped == "cloak" {
+      Some(cloak_config.unwrap_or_default())
+    } else {
+      cloak_config
+    };
 
     let final_wayfern_config = if mapped == "wayfern" {
       let mut config = wayfern_config.unwrap_or_default();
@@ -307,6 +315,7 @@ impl ProfileImporter {
           release_type: "stable".to_string(),
           camoufox_config: None,
           wayfern_config: None,
+          cloak_config: None,
           group_id: None,
           tags: Vec::new(),
           note: None,
@@ -361,6 +370,7 @@ impl ProfileImporter {
       release_type: "stable".to_string(),
       camoufox_config: final_camoufox_config,
       wayfern_config: final_wayfern_config,
+      cloak_config: final_cloak_config,
       group_id: None,
       tags: Vec::new(),
       note: None,
@@ -450,6 +460,7 @@ pub async fn detect_existing_profiles() -> Result<Vec<DetectedProfile>, String> 
 }
 
 #[tauri::command]
+#[allow(clippy::too_many_arguments)]
 pub async fn import_browser_profile(
   app_handle: tauri::AppHandle,
   source_path: String,
@@ -458,6 +469,7 @@ pub async fn import_browser_profile(
   proxy_id: Option<String>,
   camoufox_config: Option<CamoufoxConfig>,
   wayfern_config: Option<WayfernConfig>,
+  cloak_config: Option<CloakConfig>,
 ) -> Result<(), String> {
   // Camoufox is deprecated — Firefox-based profiles (which map to Camoufox) can
   // no longer be imported. Reject them before doing any work.
@@ -477,6 +489,7 @@ pub async fn import_browser_profile(
       proxy_id,
       camoufox_config,
       wayfern_config,
+      cloak_config,
     )
     .await
     .map_err(|e| format!("Failed to import profile: {e}"))

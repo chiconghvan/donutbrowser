@@ -1,5 +1,6 @@
 use crate::browser::ProxySettings;
 use crate::camoufox_manager::CamoufoxConfig;
+use crate::cloak_manager::CloakConfig;
 use crate::events;
 use crate::group_manager::GROUP_MANAGER;
 use crate::profile::manager::ProfileManager;
@@ -36,6 +37,10 @@ pub struct ApiProfile {
   pub release_type: String,
   #[schema(value_type = Object)]
   pub camoufox_config: Option<serde_json::Value>,
+  #[schema(value_type = Object)]
+  pub wayfern_config: Option<serde_json::Value>,
+  #[schema(value_type = Object)]
+  pub cloak_config: Option<serde_json::Value>,
   pub group_id: Option<String>,
   pub tags: Vec<String>,
   pub is_running: bool,
@@ -77,6 +82,9 @@ pub struct CreateProfileRequest {
   /// pin a specific one.
   #[schema(value_type = Object)]
   pub wayfern_config: Option<serde_json::Value>,
+  /// Cloak Browser fingerprint/config. Send only when `browser` is `"cloak"`.
+  #[schema(value_type = Object)]
+  pub cloak_config: Option<serde_json::Value>,
   pub group_id: Option<String>,
   pub tags: Option<Vec<String>>,
 }
@@ -93,6 +101,8 @@ pub struct UpdateProfileRequest {
   pub release_type: Option<String>,
   #[schema(value_type = Object)]
   pub camoufox_config: Option<serde_json::Value>,
+  #[schema(value_type = Object)]
+  pub cloak_config: Option<serde_json::Value>,
   pub group_id: Option<String>,
   pub tags: Option<Vec<String>>,
   pub extension_group_id: Option<String>,
@@ -553,6 +563,8 @@ async fn get_profiles() -> Result<Json<ApiProfilesResponse>, StatusCode> {
           last_launch: profile.last_launch,
           release_type: profile.release_type.clone(),
           camoufox_config: config_to_api_value(profile.camoufox_config.as_ref()),
+          wayfern_config: config_to_api_value(profile.wayfern_config.as_ref()),
+          cloak_config: config_to_api_value(profile.cloak_config.as_ref()),
           group_id: profile.group_id.clone(),
           tags: profile.tags.clone(),
           is_running: profile.process_id.is_some(), // Simple check based on process_id
@@ -606,6 +618,8 @@ async fn get_profile(
             last_launch: profile.last_launch,
             release_type: profile.release_type.clone(),
             camoufox_config: config_to_api_value(profile.camoufox_config.as_ref()),
+            wayfern_config: config_to_api_value(profile.wayfern_config.as_ref()),
+            cloak_config: config_to_api_value(profile.cloak_config.as_ref()),
             group_id: profile.group_id.clone(),
             tags: profile.tags.clone(),
             is_running: profile.process_id.is_some(), // Simple check based on process_id
@@ -651,12 +665,10 @@ async fn create_profile(
 ) -> Result<Json<ApiProfileResponse>, StatusCode> {
   let profile_manager = ProfileManager::instance();
 
-  // Only Wayfern and Camoufox profiles are launchable; the rest of the system
-  // (fingerprint generation, launch, run) supports nothing else. Reject anything
-  // else up front — otherwise the profile is created with no fingerprint and an
-  // unrecognized browser, then crashes with a 500 on /run. Mirrors the MCP
-  // create_profile validation.
-  if request.browser != "wayfern" && request.browser != "camoufox" {
+  // Only the supported anti-detect browsers are launchable. Reject anything
+  // else up front so profiles do not save with an unrecognized browser and
+  // later crash on /run. Mirrors the MCP create_profile validation.
+  if request.browser != "wayfern" && request.browser != "camoufox" && request.browser != "cloak" {
     return Err(StatusCode::BAD_REQUEST);
   }
 
@@ -692,6 +704,11 @@ async fn create_profile(
   } else {
     None
   };
+  let cloak_config = if let Some(config) = &request.cloak_config {
+    serde_json::from_value(config.clone()).ok()
+  } else {
+    None
+  };
 
   // Reject a dead/unreachable proxy before creating the profile. A 402
   // (expired proxy subscription) maps to 402; anything else is a 400.
@@ -715,6 +732,7 @@ async fn create_profile(
       None,
       camoufox_config,
       wayfern_config,
+      cloak_config,
       request.group_id.clone(),
       false,
       None,
@@ -753,6 +771,8 @@ async fn create_profile(
           last_launch: profile.last_launch,
           release_type: profile.release_type,
           camoufox_config: config_to_api_value(profile.camoufox_config.as_ref()),
+          wayfern_config: config_to_api_value(profile.wayfern_config.as_ref()),
+          cloak_config: config_to_api_value(profile.cloak_config.as_ref()),
           group_id: profile.group_id,
           tags: profile.tags,
           is_running: false,
@@ -840,6 +860,22 @@ async fn update_profile(
       Ok(config) => {
         if profile_manager
           .update_camoufox_config(state.app_handle.clone(), &id, config)
+          .await
+          .is_err()
+        {
+          return Err(StatusCode::BAD_REQUEST);
+        }
+      }
+      Err(_) => return Err(StatusCode::BAD_REQUEST),
+    }
+  }
+
+  if let Some(cloak_config) = request.cloak_config {
+    let config: Result<CloakConfig, _> = serde_json::from_value(cloak_config);
+    match config {
+      Ok(config) => {
+        if profile_manager
+          .update_cloak_config(state.app_handle.clone(), &id, config)
           .await
           .is_err()
         {
@@ -1729,15 +1765,17 @@ mod tests {
     assert!(parsed.version.is_none());
     assert!(parsed.wayfern_config.is_none());
     assert!(parsed.camoufox_config.is_none());
+    assert!(parsed.cloak_config.is_none());
   }
 
   #[test]
   fn create_profile_browser_validation_matches_supported_engines() {
     // The handler rejects anything that isn't a launchable engine; this is the
     // same predicate it uses, kept in lockstep with MCP's create_profile.
-    let is_valid = |b: &str| b == "wayfern" || b == "camoufox";
+    let is_valid = |b: &str| b == "wayfern" || b == "camoufox" || b == "cloak";
     assert!(is_valid("wayfern"));
     assert!(is_valid("camoufox"));
+    assert!(is_valid("cloak"));
     assert!(!is_valid("chromium"));
     assert!(!is_valid("firefox"));
     assert!(!is_valid(""));
