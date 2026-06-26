@@ -81,7 +81,7 @@ jobs:
             args: "--target aarch64-apple-darwin --verbose"
             arch: "aarch64"
             target: "aarch64-apple-darwin"
-          - platform: "macos-latest"
+          - platform: "macos-15-intel"
             args: "--target x86_64-apple-darwin --verbose"
             arch: "x86_64"
             target: "x86_64-apple-darwin"
@@ -437,6 +437,8 @@ jobs:
     if: github.repository == 'chiconghvan/donutbrowser'
     needs: [release, changelog]
     runs-on: ubuntu-latest
+    env:
+      DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_STABLE_WEBHOOK_URL }}
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 #v6.0.3
         with:
@@ -444,7 +446,7 @@ jobs:
           fetch-depth: 0
 
       - name: Generate changelog summary
-        if: ${{ secrets.DISCORD_STABLE_WEBHOOK_URL != '' }}
+        if: ${{ env.DISCORD_WEBHOOK_URL != '' }}
         env:
           TAG: ${{ github.ref_name }}
         run: |
@@ -480,9 +482,8 @@ jobs:
           printf '%b' "$CHANGES" > /tmp/discord-changes.txt
 
       - name: Send Discord notification
-        if: ${{ secrets.DISCORD_STABLE_WEBHOOK_URL != '' }}
+        if: ${{ env.DISCORD_WEBHOOK_URL != '' }}
         env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_STABLE_WEBHOOK_URL }}
           TAG: ${{ github.ref_name }}
         run: |
           VERSION="${TAG}"
@@ -521,10 +522,12 @@ jobs:
     if: github.repository == 'chiconghvan/donutbrowser'
     needs: [release]
     runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_WEB_DEPLOYMENT_HOOK: ${{ secrets.CLOUDFLARE_WEB_DEPLOYMENT_HOOK }}
     steps:
       - name: Trigger Cloudflare Pages deployment
-        if: ${{ secrets.CLOUDFLARE_WEB_DEPLOYMENT_HOOK != '' }}
-        run: curl -fsSL -X POST "${{ secrets.CLOUDFLARE_WEB_DEPLOYMENT_HOOK }}"
+        if: ${{ env.CLOUDFLARE_WEB_DEPLOYMENT_HOOK != '' }}
+        run: curl -fsSL -X POST "$CLOUDFLARE_WEB_DEPLOYMENT_HOOK"
 
   docker:
     if: github.repository == 'chiconghvan/donutbrowser'

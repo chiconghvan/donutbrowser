@@ -17,7 +17,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useBrowserDownload } from "@/hooks/use-browser-download";
+import { translateBackendError } from "@/lib/backend-errors";
 import { getBrowserIcon } from "@/lib/browser-utils";
+import { showErrorToast } from "@/lib/toast-utils";
 import type { BrowserReleaseTypes } from "@/types";
 
 import { RippleButton } from "./ui/ripple";
@@ -187,6 +189,11 @@ export function BulkCreateProfileDialog({
       handleClose();
     } catch (error) {
       console.error("Bulk create failed:", error);
+      showErrorToast(
+        t("errors.createProfileFailed", {
+          error: translateBackendError(t, error),
+        }),
+      );
     } finally {
       setIsCreating(false);
     }

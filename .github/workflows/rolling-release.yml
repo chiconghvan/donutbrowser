@@ -322,20 +322,22 @@ jobs:
     if: github.repository == 'chiconghvan/donutbrowser'
     needs: [update-nightly-release]
     runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_WEB_DEPLOYMENT_HOOK: ${{ secrets.CLOUDFLARE_WEB_DEPLOYMENT_HOOK }}
     steps:
       - name: Trigger Cloudflare Pages deployment
-        if: ${{ secrets.CLOUDFLARE_WEB_DEPLOYMENT_HOOK != '' }}
-        run: curl -fsSL -X POST "${{ secrets.CLOUDFLARE_WEB_DEPLOYMENT_HOOK }}"
+        if: ${{ env.CLOUDFLARE_WEB_DEPLOYMENT_HOOK != '' }}
+        run: curl -fsSL -X POST "$CLOUDFLARE_WEB_DEPLOYMENT_HOOK"
 
   notify-discord:
     if: github.repository == 'chiconghvan/donutbrowser'
     needs: [update-nightly-release]
     runs-on: ubuntu-latest
+    env:
+      DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_NIGHTLY_WEBHOOK_URL }}
     steps:
       - name: Send Discord notification
-        if: ${{ secrets.DISCORD_NIGHTLY_WEBHOOK_URL != '' }}
-        env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_NIGHTLY_WEBHOOK_URL }}
+        if: ${{ env.DISCORD_WEBHOOK_URL != '' }}
         run: |
           COMMIT_SHORT=$(echo "${GITHUB_SHA}" | cut -c1-7)
           RELEASE_URL="https://github.com/${GITHUB_REPOSITORY}/releases/tag/nightly"

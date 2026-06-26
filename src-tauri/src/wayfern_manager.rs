@@ -229,38 +229,56 @@ impl WayfernManager {
     method: &str,
     params: serde_json::Value,
   ) -> Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>> {
-    let (mut ws_stream, _) = connect_async(ws_url).await?;
+    type CdpResult = Result<serde_json::Value, Box<dyn std::error::Error + Send + Sync>>;
 
-    let command = json!({
-      "id": 1,
-      "method": method,
-      "params": params
-    });
+    let command_timeout = Duration::from_secs(15);
+    let result: Result<CdpResult, tokio::time::error::Elapsed> =
+      tokio::time::timeout(command_timeout, async {
+        let (mut ws_stream, _) = connect_async(ws_url).await?;
 
-    use futures_util::sink::SinkExt;
-    use futures_util::stream::StreamExt;
+        let command = json!({
+          "id": 1,
+          "method": method,
+          "params": params
+        });
 
-    ws_stream
-      .send(Message::Text(command.to_string().into()))
-      .await?;
+        use futures_util::sink::SinkExt;
+        use futures_util::stream::StreamExt;
 
-    while let Some(msg) = ws_stream.next().await {
-      match msg? {
-        Message::Text(text) => {
-          let response: serde_json::Value = serde_json::from_str(text.as_str())?;
-          if response.get("id") == Some(&json!(1)) {
-            if let Some(error) = response.get("error") {
-              return Err(format!("CDP error: {}", error).into());
+        ws_stream
+          .send(Message::Text(command.to_string().into()))
+          .await?;
+
+        while let Some(msg) = ws_stream.next().await {
+          match msg? {
+            Message::Text(text) => {
+              let response: serde_json::Value = serde_json::from_str(text.as_str())?;
+              if response.get("id") == Some(&json!(1)) {
+                if let Some(error) = response.get("error") {
+                  return Err(format!("CDP error: {error}").into());
+                }
+                return Ok(response.get("result").cloned().unwrap_or(json!({})));
+              }
             }
-            return Ok(response.get("result").cloned().unwrap_or(json!({})));
+            Message::Close(_) => break,
+            _ => {}
           }
         }
-        Message::Close(_) => break,
-        _ => {}
-      }
-    }
 
-    Err("No response received from CDP".into())
+        Err("No response received from CDP".into())
+      })
+      .await;
+
+    match result {
+      Ok(command_result) => command_result,
+      Err(_) => Err(
+        format!(
+          "Timed out after {}s waiting for CDP method {method}",
+          command_timeout.as_secs()
+        )
+        .into(),
+      ),
+    }
   }
 
   pub async fn generate_fingerprint_config(
