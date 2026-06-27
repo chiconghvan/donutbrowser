@@ -29,6 +29,7 @@ import {
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { WayfernConfigForm } from "@/components/wayfern-config-form";
 import { useBrowserDownload } from "@/hooks/use-browser-download";
+import { parseBackendError } from "@/lib/backend-errors";
 import { getBrowserIcon } from "@/lib/browser-utils";
 import type {
   BrowserReleaseTypes,
@@ -71,6 +72,7 @@ interface CreateProfileDialogProps {
     dnsBlocklist?: string;
     launchHook?: string;
     password?: string;
+    allowDuplicateCloakSeed?: boolean;
   }) => Promise<void>;
   selectedGroupId?: string;
   crossOsUnlocked?: boolean;
@@ -464,7 +466,7 @@ export function CreateProfileDialog({
             return;
           }
 
-          await onCreateProfile({
+          const cloakProfileData = {
             name: profileName.trim(),
             browserStr: "cloak",
             version: bestCloakVersion.version,
@@ -481,7 +483,29 @@ export function CreateProfileDialog({
             dnsBlocklist: dnsBlocklist || undefined,
             launchHook: launchHook.trim() || undefined,
             password: passwordToSet,
-          });
+          } as const;
+
+          try {
+            await onCreateProfile(cloakProfileData);
+          } catch (error) {
+            const parsed = parseBackendError(error);
+            if (
+              parsed?.code === "CLOAK_SEED_DUPLICATE" &&
+              window.confirm(
+                t("config.cloak.duplicateSeedConfirm", {
+                  seed: parsed.params?.seed ?? "",
+                  profileName: parsed.params?.profileName ?? "",
+                }),
+              )
+            ) {
+              await onCreateProfile({
+                ...cloakProfileData,
+                allowDuplicateCloakSeed: true,
+              });
+            } else {
+              throw error;
+            }
+          }
         }
       } else {
         // Regular browser

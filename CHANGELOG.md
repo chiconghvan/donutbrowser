@@ -1,6 +1,24 @@
 # Changelog
 
 
+## v0.27.19 (2026-06-27)
+
+### Features
+
+- add Cloak seed number fingerprint (range 10000–99999) with auto-generation, duplicate detection, and randomize-on-launch
+- add `created_at` info card to profile info dialog
+
+### Bug Fixes
+
+- fix runtime TypeError in keyboard shortcut matching when `event.key` is undefined
+
+### Maintenance
+
+- build unsigned macOS release (both ARM64 and x86_64 on macos-latest, code signing disabled)
+- remove unused Apple certificate and notarization secrets from release workflow
+- chore: bump version to 0.27.19
+
+
 ## v0.27.18 (2026-06-27)
 
 ### Features

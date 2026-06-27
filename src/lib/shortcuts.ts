@@ -103,6 +103,7 @@ export const SHORTCUTS: ShortcutDef[] = [
  * the static SHORTCUTS table.
  */
 export function matchesGroupDigit(e: KeyboardEvent): number | null {
+  if (typeof e.key !== "string") return null;
   if (e.key < "1" || e.key > "9") return null;
   const mod = isMac() ? e.metaKey : e.ctrlKey;
   const oppositeMod = isMac() ? e.ctrlKey : e.metaKey;
@@ -160,6 +161,7 @@ function prettyKey(key: string): string {
  * Ctrl+K).
  */
 export function matchesShortcut(s: ShortcutDef, e: KeyboardEvent): boolean {
+  if (typeof e.key !== "string" || typeof s.key !== "string") return false;
   if (e.key.toLowerCase() !== s.key.toLowerCase()) return false;
   const mod = isMac() ? e.metaKey : e.ctrlKey;
   const oppositeMod = isMac() ? e.ctrlKey : e.metaKey;

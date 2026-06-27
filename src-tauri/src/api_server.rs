@@ -733,6 +733,7 @@ async fn create_profile(
       camoufox_config,
       wayfern_config,
       cloak_config,
+      false,
       request.group_id.clone(),
       false,
       None,
@@ -875,7 +876,7 @@ async fn update_profile(
     match config {
       Ok(config) => {
         if profile_manager
-          .update_cloak_config(state.app_handle.clone(), &id, config)
+          .update_cloak_config(state.app_handle.clone(), &id, config, false)
           .await
           .is_err()
         {

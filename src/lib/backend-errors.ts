@@ -24,6 +24,9 @@ export type BackendErrorCode =
   | "PROXY_NOT_WORKING"
   | "PROXY_PAYMENT_REQUIRED"
   | "CAMOUFOX_IMPORT_DEPRECATED"
+  | "CLOAK_SEED_INVALID"
+  | "CLOAK_SEED_DUPLICATE"
+  | "CLOAK_SEED_POOL_EXHAUSTED"
   | "INTERNAL_ERROR";
 
 export interface BackendError {
@@ -108,6 +111,19 @@ export function translateBackendError(t: TFunction, err: unknown): string {
       return t("backendErrors.proxyPaymentRequired");
     case "CAMOUFOX_IMPORT_DEPRECATED":
       return t("backendErrors.camoufoxImportDeprecated");
+    case "CLOAK_SEED_INVALID":
+      return t("backendErrors.cloakSeedInvalid", {
+        seed: parsed.params?.seed ?? "",
+        min: parsed.params?.min ?? "10000",
+        max: parsed.params?.max ?? "99999",
+      });
+    case "CLOAK_SEED_DUPLICATE":
+      return t("backendErrors.cloakSeedDuplicate", {
+        seed: parsed.params?.seed ?? "",
+        profileName: parsed.params?.profileName ?? "",
+      });
+    case "CLOAK_SEED_POOL_EXHAUSTED":
+      return t("backendErrors.cloakSeedPoolExhausted");
     case "INTERNAL_ERROR":
       return t("backendErrors.internal", {
         detail: parsed.params?.detail ?? "",

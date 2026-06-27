@@ -7,6 +7,7 @@ use crate::events;
 use crate::profile::types::{get_host_os, BrowserProfile, SyncMode};
 use crate::proxy_manager::PROXY_MANAGER;
 use crate::wayfern_manager::WayfernConfig;
+use rand::RngExt;
 use std::fs::{self, create_dir_all};
 use std::path::{Path, PathBuf};
 use sysinfo::{Pid, ProcessRefreshKind, RefreshKind, System};
@@ -24,6 +25,24 @@ fn atomic_write(path: &Path, data: &[u8]) -> std::io::Result<()> {
     f.sync_all()?;
   }
   fs::rename(&tmp, path)
+}
+
+const CLOAK_SEED_MIN: u32 = 10_000;
+const CLOAK_SEED_MAX: u32 = 99_999;
+
+fn backend_error(code: &str, params: serde_json::Value) -> Box<dyn std::error::Error> {
+  serde_json::json!({ "code": code, "params": params })
+    .to_string()
+    .into()
+}
+
+fn command_error(prefix: &str, err: impl ToString) -> String {
+  let message = err.to_string();
+  if message.starts_with('{') {
+    message
+  } else {
+    format!("{prefix}: {message}")
+  }
 }
 
 pub struct ProfileManager {
@@ -70,6 +89,137 @@ impl ProfileManager {
     }
   }
 
+  fn normalize_cloak_seed(
+    seed: Option<String>,
+  ) -> Result<Option<String>, Box<dyn std::error::Error>> {
+    let Some(seed) = seed else {
+      return Ok(None);
+    };
+    let trimmed = seed.trim();
+    if trimmed.is_empty() {
+      return Ok(None);
+    }
+    if !trimmed.chars().all(|c| c.is_ascii_digit()) {
+      return Err(backend_error(
+        "CLOAK_SEED_INVALID",
+        serde_json::json!({
+          "seed": trimmed,
+          "min": CLOAK_SEED_MIN.to_string(),
+          "max": CLOAK_SEED_MAX.to_string()
+        }),
+      ));
+    }
+    let value = trimmed.parse::<u32>().map_err(|_| {
+      backend_error(
+        "CLOAK_SEED_INVALID",
+        serde_json::json!({
+          "seed": trimmed,
+          "min": CLOAK_SEED_MIN.to_string(),
+          "max": CLOAK_SEED_MAX.to_string()
+        }),
+      )
+    })?;
+    if !(CLOAK_SEED_MIN..=CLOAK_SEED_MAX).contains(&value) {
+      return Err(backend_error(
+        "CLOAK_SEED_INVALID",
+        serde_json::json!({
+          "seed": trimmed,
+          "min": CLOAK_SEED_MIN.to_string(),
+          "max": CLOAK_SEED_MAX.to_string()
+        }),
+      ));
+    }
+    Ok(Some(value.to_string()))
+  }
+
+  fn find_cloak_seed_owner(
+    profiles: &[BrowserProfile],
+    seed: &str,
+    except_profile_id: Option<uuid::Uuid>,
+  ) -> Option<String> {
+    profiles.iter().find_map(|profile| {
+      if profile.browser != "cloak" || Some(profile.id) == except_profile_id {
+        return None;
+      }
+      let profile_seed = profile
+        .cloak_config
+        .as_ref()
+        .and_then(|config| config.fingerprint_seed.as_deref())
+        .map(str::trim)?;
+      if profile_seed == seed {
+        Some(profile.name.clone())
+      } else {
+        None
+      }
+    })
+  }
+
+  fn generate_unique_cloak_seed(
+    profiles: &[BrowserProfile],
+    except_profile_id: Option<uuid::Uuid>,
+  ) -> Result<String, Box<dyn std::error::Error>> {
+    let used: std::collections::HashSet<String> = profiles
+      .iter()
+      .filter(|profile| profile.browser == "cloak" && Some(profile.id) != except_profile_id)
+      .filter_map(|profile| {
+        profile
+          .cloak_config
+          .as_ref()
+          .and_then(|config| config.fingerprint_seed.as_deref())
+          .map(str::trim)
+          .filter(|seed| !seed.is_empty())
+          .map(str::to_string)
+      })
+      .collect();
+
+    if used.len() >= (CLOAK_SEED_MAX - CLOAK_SEED_MIN + 1) as usize {
+      return Err(backend_error(
+        "CLOAK_SEED_POOL_EXHAUSTED",
+        serde_json::json!({}),
+      ));
+    }
+
+    let mut rng = rand::rng();
+    loop {
+      let seed = rng
+        .random_range(CLOAK_SEED_MIN..=CLOAK_SEED_MAX)
+        .to_string();
+      if !used.contains(&seed) {
+        return Ok(seed);
+      }
+    }
+  }
+
+  fn prepare_cloak_config_for_save(
+    &self,
+    mut config: CloakConfig,
+    profiles: &[BrowserProfile],
+    except_profile_id: Option<uuid::Uuid>,
+    allow_duplicate_seed: bool,
+  ) -> Result<CloakConfig, Box<dyn std::error::Error>> {
+    let normalized = Self::normalize_cloak_seed(config.fingerprint_seed.take())?;
+    config.fingerprint_seed = match normalized {
+      Some(seed) => {
+        if !allow_duplicate_seed {
+          if let Some(profile_name) =
+            Self::find_cloak_seed_owner(profiles, &seed, except_profile_id)
+          {
+            return Err(backend_error(
+              "CLOAK_SEED_DUPLICATE",
+              serde_json::json!({ "seed": seed, "profileName": profile_name }),
+            ));
+          }
+        }
+        Some(seed)
+      }
+      None => Some(Self::generate_unique_cloak_seed(
+        profiles,
+        except_profile_id,
+      )?),
+    };
+    Ok(config)
+  }
+
   #[allow(clippy::too_many_arguments)]
   pub async fn create_profile_with_group(
     &self,
@@ -83,6 +233,7 @@ impl ProfileManager {
     camoufox_config: Option<CamoufoxConfig>,
     wayfern_config: Option<WayfernConfig>,
     cloak_config: Option<CloakConfig>,
+    allow_duplicate_cloak_seed: bool,
     group_id: Option<String>,
     ephemeral: bool,
     dns_blocklist: Option<String>,
@@ -321,7 +472,13 @@ impl ProfileManager {
     };
 
     let final_cloak_config = if browser == "cloak" {
-      Some(cloak_config.unwrap_or_default())
+      let config = cloak_config.unwrap_or_default();
+      Some(self.prepare_cloak_config_for_save(
+        config,
+        &existing_profiles,
+        None,
+        allow_duplicate_cloak_seed,
+      )?)
     } else {
       cloak_config.clone()
     };
@@ -1195,6 +1352,7 @@ impl ProfileManager {
     app_handle: tauri::AppHandle,
     profile_id: &str,
     config: CloakConfig,
+    allow_duplicate_seed: bool,
   ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let profile_uuid = uuid::Uuid::parse_str(profile_id).map_err(
       |_| -> Box<dyn std::error::Error + Send + Sync> {
@@ -1225,6 +1383,16 @@ impl ProfileManager {
       );
     }
 
+    let profiles =
+      self
+        .list_profiles()
+        .map_err(|e| -> Box<dyn std::error::Error + Send + Sync> {
+          format!("Failed to list profiles: {e}").into()
+        })?;
+    let config = self
+      .prepare_cloak_config_for_save(config, &profiles, Some(profile_uuid), allow_duplicate_seed)
+      .map_err(|e| -> Box<dyn std::error::Error + Send + Sync> { e.to_string().into() })?;
+
     profile.cloak_config = Some(config);
     profile.updated_at = Some(crate::proxy_manager::now_secs());
     self
@@ -1244,6 +1412,23 @@ impl ProfileManager {
     }
 
     Ok(())
+  }
+
+  pub fn ensure_cloak_seed(
+    &self,
+    profile: &BrowserProfile,
+  ) -> Result<CloakConfig, Box<dyn std::error::Error>> {
+    let profiles = self.list_profiles()?;
+    let config = profile.cloak_config.clone().unwrap_or_default();
+    let prepared =
+      self.prepare_cloak_config_for_save(config, &profiles, Some(profile.id), false)?;
+
+    let mut updated_profile = profile.clone();
+    updated_profile.cloak_config = Some(prepared.clone());
+    updated_profile.updated_at = Some(crate::proxy_manager::now_secs());
+    self.save_profile(&updated_profile)?;
+
+    Ok(prepared)
   }
 
   pub async fn update_profile_proxy(
@@ -2241,6 +2426,7 @@ pub async fn create_browser_profile_with_group(
   camoufox_config: Option<CamoufoxConfig>,
   wayfern_config: Option<WayfernConfig>,
   cloak_config: Option<CloakConfig>,
+  allow_duplicate_cloak_seed: Option<bool>,
   group_id: Option<String>,
   ephemeral: bool,
   dns_blocklist: Option<String>,
@@ -2259,13 +2445,14 @@ pub async fn create_browser_profile_with_group(
       camoufox_config,
       wayfern_config,
       cloak_config,
+      allow_duplicate_cloak_seed.unwrap_or(false),
       group_id,
       ephemeral,
       dns_blocklist,
       launch_hook,
     )
     .await
-    .map_err(|e| format!("Failed to create profile: {e}"))
+    .map_err(|e| command_error("Failed to create profile", e))
 }
 
 #[tauri::command]
@@ -2421,6 +2608,7 @@ pub async fn create_browser_profile_new(
   camoufox_config: Option<CamoufoxConfig>,
   wayfern_config: Option<WayfernConfig>,
   cloak_config: Option<CloakConfig>,
+  allow_duplicate_cloak_seed: Option<bool>,
   group_id: Option<String>,
   ephemeral: Option<bool>,
   dns_blocklist: Option<String>,
@@ -2449,6 +2637,7 @@ pub async fn create_browser_profile_new(
     camoufox_config,
     wayfern_config,
     cloak_config,
+    allow_duplicate_cloak_seed,
     group_id,
     ephemeral.unwrap_or(false),
     dns_blocklist,
@@ -2513,6 +2702,7 @@ pub async fn create_browser_profiles_bulk(
         None,
         None,
         None,
+        false,
         group_id.clone(),
         false,
         None,
@@ -2559,12 +2749,18 @@ pub async fn update_cloak_config(
   app_handle: tauri::AppHandle,
   profile_id: String,
   config: CloakConfig,
+  allow_duplicate_seed: Option<bool>,
 ) -> Result<(), String> {
   let profile_manager = ProfileManager::instance();
   profile_manager
-    .update_cloak_config(app_handle, &profile_id, config)
+    .update_cloak_config(
+      app_handle,
+      &profile_id,
+      config,
+      allow_duplicate_seed.unwrap_or(false),
+    )
     .await
-    .map_err(|e| format!("Failed to update Cloak config: {e}"))
+    .map_err(|e| command_error("Failed to update Cloak config", e))
 }
 
 #[tauri::command]

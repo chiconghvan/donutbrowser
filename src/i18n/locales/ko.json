@@ -732,7 +732,12 @@
       "humanize": "Humanize interactions",
       "headless": "Headless",
       "geoip": "GeoIP",
-      "launchArgs": "Launch Arguments"
+      "launchArgs": "Launch Arguments",
+      "seedNumber": "Seed Number",
+      "seedNumberDescription": "Enter a number from 10000 to 99999. Leave blank to generate a unique seed automatically.",
+      "randomizeFingerprintOnLaunch": "Generate new fingerprint on every launch",
+      "randomizeFingerprintOnLaunchDescription": "Ignore the saved seed when launching so Cloak generates a fresh fingerprint.",
+      "duplicateSeedConfirm": "Seed number {{seed}} is already used by {{profileName}}. Continue anyway?"
     }
   },
   "cookies": {
@@ -1728,7 +1733,10 @@
     "cookieDbUnavailable": "쿠키를 읽을 수 없습니다 — 쿠키 저장소를 사용할 수 없습니다.",
     "proxyNotWorking": "선택한 프록시가 작동하지 않아 프로필이 생성되지 않았습니다.",
     "proxyPaymentRequired": "선택한 프록시는 결제가 필요합니다(402). 구독이 만료되었을 수 있어 프로필이 생성되지 않았습니다.",
-    "camoufoxImportDeprecated": "Firefox 기반(Camoufox) 프로필 가져오기는 더 이상 지원되지 않습니다. Camoufox는 지원 종료 예정입니다. 대신 Wayfern을 사용하세요."
+    "camoufoxImportDeprecated": "Firefox 기반(Camoufox) 프로필 가져오기는 더 이상 지원되지 않습니다. Camoufox는 지원 종료 예정입니다. 대신 Wayfern을 사용하세요.",
+    "cloakSeedInvalid": "Cloak seed \"{{seed}}\" must be a number between {{min}} and {{max}}.",
+    "cloakSeedDuplicate": "Cloak seed {{seed}} is already used by {{profileName}}.",
+    "cloakSeedPoolExhausted": "No unique Cloak seed numbers are available."
   },
   "rail": {
     "profiles": "프로필",

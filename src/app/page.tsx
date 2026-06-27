@@ -48,7 +48,7 @@ import { useProfileEvents } from "@/hooks/use-profile-events";
 import { useUpdateNotifications } from "@/hooks/use-update-notifications";
 import { useVersionUpdater } from "@/hooks/use-version-updater";
 import { useWayfernTerms } from "@/hooks/use-wayfern-terms";
-import { translateBackendError } from "@/lib/backend-errors";
+import { parseBackendError, translateBackendError } from "@/lib/backend-errors";
 import {
   ONBOARDING_TOUR_FINISHED_EVENT,
   setOnboardingActive,
@@ -681,10 +681,31 @@ export default function Home() {
   const handleSaveCloakConfig = useCallback(
     async (profile: BrowserProfile, config: CloakConfig) => {
       try {
-        await invoke("update_cloak_config", {
-          profileId: profile.id,
-          config,
-        });
+        try {
+          await invoke("update_cloak_config", {
+            profileId: profile.id,
+            config,
+          });
+        } catch (err) {
+          const parsed = parseBackendError(err);
+          if (
+            parsed?.code === "CLOAK_SEED_DUPLICATE" &&
+            window.confirm(
+              t("config.cloak.duplicateSeedConfirm", {
+                seed: parsed.params?.seed ?? "",
+                profileName: parsed.params?.profileName ?? "",
+              }),
+            )
+          ) {
+            await invoke("update_cloak_config", {
+              profileId: profile.id,
+              config,
+              allowDuplicateSeed: true,
+            });
+          } else {
+            throw err;
+          }
+        }
         setCamoufoxConfigDialogOpen(false);
       } catch (err: unknown) {
         console.error("Failed to update cloak config:", err);
@@ -713,6 +734,7 @@ export default function Home() {
       dnsBlocklist?: string;
       launchHook?: string;
       password?: string;
+      allowDuplicateCloakSeed?: boolean;
     }) => {
       try {
         const profile = await invoke<BrowserProfile>(
@@ -726,6 +748,7 @@ export default function Home() {
             camoufoxConfig: profileData.camoufoxConfig,
             wayfernConfig: profileData.wayfernConfig,
             cloakConfig: profileData.cloakConfig,
+            allowDuplicateCloakSeed: profileData.allowDuplicateCloakSeed,
             groupId:
               profileData.groupId ??
               (selectedGroupId && selectedGroupId !== "__all__"
@@ -765,6 +788,9 @@ export default function Home() {
 
         // No need to manually reload - useProfileEvents will handle the update
       } catch (error) {
+        if (parseBackendError(error)?.code === "CLOAK_SEED_DUPLICATE") {
+          throw error;
+        }
         showErrorToast(
           t("errors.createProfileFailed", {
             error: translateBackendError(t, error),

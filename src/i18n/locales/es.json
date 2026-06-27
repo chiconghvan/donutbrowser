@@ -732,7 +732,12 @@
       "humanize": "Humanize interactions",
       "headless": "Headless",
       "geoip": "GeoIP",
-      "launchArgs": "Launch Arguments"
+      "launchArgs": "Launch Arguments",
+      "seedNumber": "Seed Number",
+      "seedNumberDescription": "Enter a number from 10000 to 99999. Leave blank to generate a unique seed automatically.",
+      "randomizeFingerprintOnLaunch": "Generate new fingerprint on every launch",
+      "randomizeFingerprintOnLaunchDescription": "Ignore the saved seed when launching so Cloak generates a fresh fingerprint.",
+      "duplicateSeedConfirm": "Seed number {{seed}} is already used by {{profileName}}. Continue anyway?"
     }
   },
   "cookies": {
@@ -1728,7 +1733,10 @@
     "cookieDbUnavailable": "No se pudieron leer las cookies — el almacén de cookies no está disponible.",
     "proxyNotWorking": "El proxy seleccionado no funciona, por lo que no se creó el perfil.",
     "proxyPaymentRequired": "El proxy seleccionado requiere pago (402) —su suscripción puede haber vencido— por lo que no se creó el perfil.",
-    "camoufoxImportDeprecated": "La importación de perfiles basados en Firefox (Camoufox) ya no es compatible. Camoufox está en desuso; usa Wayfern en su lugar."
+    "camoufoxImportDeprecated": "La importación de perfiles basados en Firefox (Camoufox) ya no es compatible. Camoufox está en desuso; usa Wayfern en su lugar.",
+    "cloakSeedInvalid": "Cloak seed \"{{seed}}\" must be a number between {{min}} and {{max}}.",
+    "cloakSeedDuplicate": "Cloak seed {{seed}} is already used by {{profileName}}.",
+    "cloakSeedPoolExhausted": "No unique Cloak seed numbers are available."
   },
   "rail": {
     "profiles": "Perfiles",

@@ -732,7 +732,12 @@
       "humanize": "Humanize interactions",
       "headless": "Headless",
       "geoip": "GeoIP",
-      "launchArgs": "Launch Arguments"
+      "launchArgs": "Launch Arguments",
+      "seedNumber": "Seed Number",
+      "seedNumberDescription": "Enter a number from 10000 to 99999. Leave blank to generate a unique seed automatically.",
+      "randomizeFingerprintOnLaunch": "Generate new fingerprint on every launch",
+      "randomizeFingerprintOnLaunchDescription": "Ignore the saved seed when launching so Cloak generates a fresh fingerprint.",
+      "duplicateSeedConfirm": "Seed number {{seed}} is already used by {{profileName}}. Continue anyway?"
     }
   },
   "cookies": {
@@ -1728,7 +1733,10 @@
     "cookieDbUnavailable": "无法读取 Cookie — Cookie 存储不可用。",
     "proxyNotWorking": "所选代理无法使用，因此未创建配置文件。",
     "proxyPaymentRequired": "所选代理需要付费（402），其订阅可能已过期，因此未创建配置文件。",
-    "camoufoxImportDeprecated": "不再支持导入基于 Firefox 的 (Camoufox) 配置文件。Camoufox 即将停用——请改用 Wayfern。"
+    "camoufoxImportDeprecated": "不再支持导入基于 Firefox 的 (Camoufox) 配置文件。Camoufox 即将停用——请改用 Wayfern。",
+    "cloakSeedInvalid": "Cloak seed \"{{seed}}\" must be a number between {{min}} and {{max}}.",
+    "cloakSeedDuplicate": "Cloak seed {{seed}} is already used by {{profileName}}.",
+    "cloakSeedPoolExhausted": "No unique Cloak seed numbers are available."
   },
   "rail": {
     "profiles": "配置文件",

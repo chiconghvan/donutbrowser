@@ -81,7 +81,7 @@ jobs:
             args: "--target aarch64-apple-darwin --verbose"
             arch: "aarch64"
             target: "aarch64-apple-darwin"
-          - platform: "macos-15-intel"
+          - platform: "macos-latest"
             args: "--target x86_64-apple-darwin --verbose"
             arch: "x86_64"
             target: "x86_64-apple-darwin"
@@ -182,48 +182,16 @@ jobs:
             chmod +x src-tauri/binaries/donut-proxy-${{ matrix.target }}
           fi
 
-      - name: Import Apple certificate
+      - name: Skip Apple certificate (unsigned build)
         if: startsWith(matrix.platform, 'macos-')
-        env:
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_KEY: ${{ secrets.APPLE_CERTIFICATE_KEY }}
-        run: |
-          if [ -z "$APPLE_CERTIFICATE" ] || [ -z "$APPLE_CERTIFICATE_KEY" ]; then
-            echo "Apple certificate secrets are not configured; building without certificate import."
-            exit 0
-          fi
-
-          CERT_PATH=$RUNNER_TEMP/cert.cer
-          KEY_PATH=$RUNNER_TEMP/cert.key
-          PEM_PATH=$RUNNER_TEMP/cert.pem
-          P12_PATH=$RUNNER_TEMP/build_certificate.p12
-          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
-          KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
-          P12_PASSWORD=$(openssl rand -base64 32)
-
-          echo "$APPLE_CERTIFICATE" | base64 --decode > $CERT_PATH
-          echo "$APPLE_CERTIFICATE_KEY" | base64 --decode > $KEY_PATH
-          openssl x509 -inform DER -in $CERT_PATH -out $PEM_PATH
-          openssl pkcs12 -export -out $P12_PATH -inkey $KEY_PATH -in $PEM_PATH -passout pass:$P12_PASSWORD
-
-          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-          security import $P12_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
-          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-          security list-keychain -d user -s $KEYCHAIN_PATH login.keychain-db
-
-          security find-identity -v -p codesigning $KEYCHAIN_PATH
-          rm -f $CERT_PATH $KEY_PATH $PEM_PATH $P12_PATH
+        run: echo "Building unsigned macOS binary (code signing disabled)"
 
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@84b9d35b5fc46c1e45415bdb6144030364f7ebc5 #v0.6.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REF_NAME: ${{ github.ref_name }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          # Code signing disabled — building unsigned binary
           # tauri-action invokes `pnpm tauri build`, which runs
           # `beforeBuildCommand` from tauri.conf.json. That rebuilds the
           # frontend in its own subprocess, so the env var MUST be forwarded
@@ -270,11 +238,9 @@ jobs:
           VERSION="${TAG#v}"
           gh release upload "$TAG" "Donut_${VERSION}_x64-portable.zip" --clobber
 
-      - name: Clean up Apple certificate
+      - name: Clean up (no Apple certificate)
         if: startsWith(matrix.platform, 'macos-') && always()
-        run: |
-          security delete-keychain $RUNNER_TEMP/app-signing.keychain-db || true
-          rm -f $RUNNER_TEMP/build_certificate.p12 || true
+        run: echo "No Apple certificate to clean up (unsigned build)"
 
   changelog:
     if: github.repository == 'chiconghvan/donutbrowser'

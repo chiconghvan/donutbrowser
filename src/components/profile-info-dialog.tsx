@@ -59,7 +59,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { WayfernConfigForm } from "@/components/wayfern-config-form";
-import { translateBackendError } from "@/lib/backend-errors";
+import { parseBackendError, translateBackendError } from "@/lib/backend-errors";
 import { getProfileIcon } from "@/lib/browser-utils";
 import { formatRelativeTime } from "@/lib/flag-utils";
 import { showErrorToast, showSuccessToast } from "@/lib/toast-utils";
@@ -1778,10 +1778,31 @@ function FingerprintSectionInline({
           config: camoufoxConfig,
         });
       } else if (isCloak) {
-        await invoke("update_cloak_config", {
-          profileId: profile.id,
-          config: cloakConfig,
-        });
+        try {
+          await invoke("update_cloak_config", {
+            profileId: profile.id,
+            config: cloakConfig,
+          });
+        } catch (error) {
+          const parsed = parseBackendError(error);
+          if (
+            parsed?.code === "CLOAK_SEED_DUPLICATE" &&
+            window.confirm(
+              t("config.cloak.duplicateSeedConfirm", {
+                seed: parsed.params?.seed ?? "",
+                profileName: parsed.params?.profileName ?? "",
+              }),
+            )
+          ) {
+            await invoke("update_cloak_config", {
+              profileId: profile.id,
+              config: cloakConfig,
+              allowDuplicateSeed: true,
+            });
+          } else {
+            throw error;
+          }
+        }
       } else {
         await invoke("update_wayfern_config", {
           profileId: profile.id,

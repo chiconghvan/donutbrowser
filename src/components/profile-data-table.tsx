@@ -1091,7 +1091,7 @@ export function ProfilesDataTable({
   const { t } = useTranslation();
   const { getTableSorting, updateSorting, isLoaded } = useTableSorting();
   const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnVisibility, setColumnVisibility] =
+  const [_columnVisibility, _setColumnVisibility] =
     React.useState<VisibilityState>({ created_at: false });
 
   // Sync external selectedProfiles with table's row selection state
@@ -1780,7 +1780,7 @@ export function ProfilesDataTable({
 
   // These are called by stable document listeners (wired via onDragMoveRef /
   // onDragEndRef) so they must avoid stale closures by reading from refs.
-  const endDrag = React.useCallback(() => {
+  const _endDrag = React.useCallback(() => {
     const session = dragSession.current;
     if (!session.active) return;
     if (session.didDrag) {
@@ -1797,7 +1797,7 @@ export function ProfilesDataTable({
     stopDragAutoScroll();
   }, [stopDragAutoScroll]);
 
-  const onDragPointerMove = React.useCallback(
+  const _onDragPointerMove = React.useCallback(
     (e: PointerEvent) => {
       const session = dragSession.current;
       if (!session.active) return;
@@ -2901,7 +2901,7 @@ export function ProfilesDataTable({
   // below the compact-layout floor; the name column takes the remainder.
   // Computed in px from the observed container width because fixed table
   // layout ignores max()/calc() column widths.
-  const [containerWidth, setContainerWidth] = React.useState(0);
+  const [_containerWidth, setContainerWidth] = React.useState(0);
 
   const table = useReactTable({
     data: profiles,

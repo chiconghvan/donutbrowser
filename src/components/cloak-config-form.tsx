@@ -50,15 +50,23 @@ export function CloakConfigForm({
     <fieldset disabled={readOnly} className={`space-y-6 ${className}`}>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="cloak-seed">{t("config.cloak.seed")}</Label>
+          <Label htmlFor="cloak-seed">{t("config.cloak.seedNumber")}</Label>
           <Input
             id="cloak-seed"
+            inputMode="numeric"
+            pattern="[0-9]*"
             value={config.fingerprint_seed ?? ""}
             onChange={(e) =>
-              onConfigChange("fingerprint_seed", e.target.value || undefined)
+              onConfigChange(
+                "fingerprint_seed",
+                e.target.value.replace(/\D/g, "") || undefined,
+              )
             }
             placeholder={t("common.placeholders.example", { value: "12345" })}
           />
+          <p className="text-xs text-muted-foreground">
+            {t("config.cloak.seedNumberDescription")}
+          </p>
         </div>
         <div className="space-y-2">
           <Label>{t("config.cloak.platform")}</Label>
@@ -252,6 +260,26 @@ export function CloakConfigForm({
       </div>
 
       <div className="grid gap-3">
+        <div className="flex items-start gap-2">
+          <Checkbox
+            id="cloak-randomize-fingerprint"
+            checked={config.randomize_fingerprint_on_launch ?? false}
+            onCheckedChange={(checked) =>
+              onConfigChange(
+                "randomize_fingerprint_on_launch",
+                checked === true,
+              )
+            }
+          />
+          <div className="space-y-1">
+            <Label htmlFor="cloak-randomize-fingerprint">
+              {t("config.cloak.randomizeFingerprintOnLaunch")}
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              {t("config.cloak.randomizeFingerprintOnLaunchDescription")}
+            </p>
+          </div>
+        </div>
         {(
           [
             ["humanize", "humanize"],

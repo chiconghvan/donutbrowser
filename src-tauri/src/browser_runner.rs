@@ -746,9 +746,25 @@ impl BrowserRunner {
         })?;
 
       let proxy_url = format!("http://{}:{}", local_proxy.host, local_proxy.port);
-      cloak_config.proxy = Some(proxy_url);
+      cloak_config.proxy = Some(proxy_url.clone());
 
       let mut updated_profile = profile.clone();
+      if cloak_config.randomize_fingerprint_on_launch == Some(true) {
+        cloak_config.fingerprint_seed = None;
+      } else if cloak_config
+        .fingerprint_seed
+        .as_deref()
+        .map(str::trim)
+        .filter(|seed| !seed.is_empty())
+        .is_none()
+      {
+        cloak_config = self
+          .profile_manager
+          .ensure_cloak_seed(&updated_profile)
+          .map_err(|e| -> Box<dyn std::error::Error + Send + Sync> { e.to_string().into() })?;
+        cloak_config.proxy = Some(proxy_url.clone());
+        updated_profile.cloak_config = Some(cloak_config.clone());
+      }
       if updated_profile.cloak_config.is_none() {
         updated_profile.cloak_config = Some(cloak_config.clone());
       }

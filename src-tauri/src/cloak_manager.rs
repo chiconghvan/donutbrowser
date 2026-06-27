@@ -42,6 +42,8 @@ pub struct CloakConfig {
   #[serde(default)]
   pub humanize: Option<bool>,
   #[serde(default)]
+  pub randomize_fingerprint_on_launch: Option<bool>,
+  #[serde(default)]
   pub human_preset: Option<String>,
   #[serde(default)]
   pub headless: Option<bool>,
