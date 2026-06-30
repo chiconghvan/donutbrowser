@@ -3,6 +3,13 @@
 
 ## v0.27.23 (2026-06-30)
 
+### Other
+
+- release: v0.27.23
+
+
+## v0.27.23 (2026-06-30)
+
 ### Features
 
 - remove Wayfern browser option; only Camoufox and Cloak available for new profiles
