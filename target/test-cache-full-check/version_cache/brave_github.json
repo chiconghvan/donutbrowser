@@ -1,0 +1,62 @@
+{
+  "releases": [
+    {
+      "tag_name": "v1.81.9",
+      "name": "Release v1.81.9 (Chromium 137.0.7151.104)",
+      "assets": [
+        {
+          "name": "brave-v1.81.9-universal.dmg",
+          "browser_download_url": "https://example.com/brave-1.81.9-universal.dmg",
+          "size": 200000000,
+          "download_count": null,
+          "id": null,
+          "node_id": null,
+          "label": null,
+          "content_type": null,
+          "state": null,
+          "created_at": null,
+          "updated_at": null
+        },
+        {
+          "name": "brave-browser-1.81.9-linux-amd64.zip",
+          "browser_download_url": "https://example.com/brave-1.81.9-linux-amd64.zip",
+          "size": 180000000,
+          "download_count": null,
+          "id": null,
+          "node_id": null,
+          "label": null,
+          "content_type": null,
+          "state": null,
+          "created_at": null,
+          "updated_at": null
+        },
+        {
+          "name": "BraveBrowserStandaloneSetup.exe",
+          "browser_download_url": "https://example.com/brave-1.81.9-setup.exe",
+          "size": 150000000,
+          "download_count": null,
+          "id": null,
+          "node_id": null,
+          "label": null,
+          "content_type": null,
+          "state": null,
+          "created_at": null,
+          "updated_at": null
+        }
+      ],
+      "published_at": "2024-01-15T10:00:00Z",
+      "is_nightly": false,
+      "prerelease": false,
+      "draft": false,
+      "body": null,
+      "html_url": null,
+      "id": null,
+      "node_id": null,
+      "target_commitish": null,
+      "created_at": null,
+      "tarball_url": null,
+      "zipball_url": null
+    }
+  ],
+  "timestamp": 1782770790
+}

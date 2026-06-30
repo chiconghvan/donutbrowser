@@ -195,7 +195,7 @@ impl CookieManager {
     chrome_decrypt::get_encryption_key(&profile_data_path)
   }
 
-  fn wayfern_cookie_path(profile_data_path: &Path) -> PathBuf {
+  fn chromium_cookie_path(profile_data_path: &Path) -> PathBuf {
     let default_dir = profile_data_path.join("Default");
     #[cfg(target_os = "windows")]
     {
@@ -212,8 +212,8 @@ impl CookieManager {
     let profile_data_path = profile.get_profile_data_path(profiles_dir);
 
     match profile.browser.as_str() {
-      "wayfern" => {
-        let path = Self::wayfern_cookie_path(&profile_data_path);
+      "wayfern" | "cloak" => {
+        let path = Self::chromium_cookie_path(&profile_data_path);
         if path.exists() {
           Ok(path)
         } else {
@@ -246,8 +246,8 @@ impl CookieManager {
     let profile_data_path = profile.get_profile_data_path(profiles_dir);
 
     match profile.browser.as_str() {
-      "wayfern" => {
-        let path = Self::wayfern_cookie_path(&profile_data_path);
+      "wayfern" | "cloak" => {
+        let path = Self::chromium_cookie_path(&profile_data_path);
         if !path.exists() {
           Self::create_empty_chrome_cookies_db(&path)?;
         }
@@ -401,7 +401,7 @@ impl CookieManager {
     Ok(cookies)
   }
 
-  /// Read cookies from a Chrome/Wayfern profile.
+  /// Read cookies from a Chromium-backed profile.
   /// Handles encrypted cookies by decrypting encrypted_value using the profile's encryption key.
   fn read_chrome_cookies(
     db_path: &Path,
@@ -556,7 +556,7 @@ impl CookieManager {
     Ok((copied, replaced))
   }
 
-  /// Write cookies to a Chrome/Wayfern profile.
+  /// Write cookies to a Chromium-backed profile.
   ///
   /// Always writes values as plaintext in the `value` column with an empty
   /// `encrypted_value`. Chromium reads plaintext on a per-row basis when
@@ -675,7 +675,7 @@ impl CookieManager {
 
     let cookies = match profile.browser.as_str() {
       "camoufox" => Self::read_firefox_cookies(&db_path)?,
-      "wayfern" => {
+      "wayfern" | "cloak" => {
         let key = Self::get_chrome_encryption_key(profile, &profiles_dir);
         Self::read_chrome_cookies(&db_path, key.as_ref())?
       }
@@ -785,7 +785,7 @@ impl CookieManager {
         "SELECT COUNT(*) FROM moz_cookies",
         "SELECT host, COUNT(*) FROM moz_cookies GROUP BY host ORDER BY COUNT(*) DESC, host ASC",
       ),
-      "wayfern" => (
+      "wayfern" | "cloak" => (
         "SELECT COUNT(*) FROM cookies",
         "SELECT host_key, COUNT(*) FROM cookies GROUP BY host_key ORDER BY COUNT(*) DESC, host_key ASC",
       ),
@@ -860,7 +860,7 @@ impl CookieManager {
     let source_db_path = Self::get_cookie_db_path(source, &profiles_dir)?;
     let all_cookies = match source.browser.as_str() {
       "camoufox" => Self::read_firefox_cookies(&source_db_path)?,
-      "wayfern" => {
+      "wayfern" | "cloak" => {
         let key = Self::get_chrome_encryption_key(source, &profiles_dir);
         Self::read_chrome_cookies(&source_db_path, key.as_ref())?
       }
@@ -932,7 +932,7 @@ impl CookieManager {
 
       let write_result = match target.browser.as_str() {
         "camoufox" => Self::write_firefox_cookies(&target_db_path, &cookies_to_copy),
-        "wayfern" => Self::write_chrome_cookies(&target_db_path, &cookies_to_copy),
+        "wayfern" | "cloak" => Self::write_chrome_cookies(&target_db_path, &cookies_to_copy),
         _ => {
           results.push(CookieCopyResult {
             target_profile_id: target_id.clone(),
@@ -1072,6 +1072,7 @@ impl CookieManager {
       } else {
         obj
           .get("expirationDate")
+          .or_else(|| obj.get("expires"))
           .and_then(|v| v.as_f64())
           .map(|f| f as i64)
           .unwrap_or(0)
@@ -1079,7 +1080,7 @@ impl CookieManager {
       let same_site = obj
         .get("sameSite")
         .and_then(|v| v.as_str())
-        .map(|s| match s {
+        .map(|s| match s.to_ascii_lowercase().as_str() {
           "lax" => 1,
           "strict" => 2,
           _ => 0, // "no_restriction" or unrecognized
@@ -1198,7 +1199,7 @@ impl CookieManager {
 
     let write_result = match profile.browser.as_str() {
       "camoufox" => Self::write_firefox_cookies(&db_path, &cookies),
-      "wayfern" => Self::write_chrome_cookies(&db_path, &cookies),
+      "wayfern" | "cloak" => Self::write_chrome_cookies(&db_path, &cookies),
       _ => return Err(format!("Unsupported browser type: {}", profile.browser)),
     };
 
@@ -1310,12 +1311,45 @@ mod tests {
     let content = r#"[
       {"name": "a", "value": "", "domain": ".d.com", "sameSite": "no_restriction"},
       {"name": "b", "value": "", "domain": ".d.com", "sameSite": "lax"},
-      {"name": "c", "value": "", "domain": ".d.com", "sameSite": "strict"}
+      {"name": "c", "value": "", "domain": ".d.com", "sameSite": "strict"},
+      {"name": "d", "value": "", "domain": ".d.com", "sameSite": "None"},
+      {"name": "e", "value": "", "domain": ".d.com", "sameSite": "Lax"},
+      {"name": "f", "value": "", "domain": ".d.com", "sameSite": "Strict"}
     ]"#;
     let (cookies, _) = CookieManager::parse_json_cookies(content);
     assert_eq!(cookies[0].same_site, 0);
     assert_eq!(cookies[1].same_site, 1);
     assert_eq!(cookies[2].same_site, 2);
+    assert_eq!(cookies[3].same_site, 0);
+    assert_eq!(cookies[4].same_site, 1);
+    assert_eq!(cookies[5].same_site, 2);
+  }
+
+  #[test]
+  fn test_parse_json_cookies_cloak_guide_format() {
+    let content = r#"[
+      {
+        "name": "sessionid",
+        "value": "abc123",
+        "domain": ".example.com",
+        "path": "/",
+        "expires": 1893456000,
+        "httpOnly": true,
+        "secure": true,
+        "sameSite": "Lax"
+      }
+    ]"#;
+    let (cookies, errors) = CookieManager::parse_json_cookies(content);
+    assert!(errors.is_empty());
+    assert_eq!(cookies.len(), 1);
+    assert_eq!(cookies[0].name, "sessionid");
+    assert_eq!(cookies[0].value, "abc123");
+    assert_eq!(cookies[0].domain, ".example.com");
+    assert_eq!(cookies[0].path, "/");
+    assert_eq!(cookies[0].expires, 1893456000);
+    assert!(cookies[0].is_http_only);
+    assert!(cookies[0].is_secure);
+    assert_eq!(cookies[0].same_site, 1);
   }
 
   #[test]
@@ -1521,6 +1555,39 @@ mod tests {
       .unwrap();
   }
 
+  fn test_profile(browser: &str) -> BrowserProfile {
+    BrowserProfile {
+      id: uuid::Uuid::new_v4(),
+      name: format!("{browser} profile"),
+      browser: browser.to_string(),
+      ..Default::default()
+    }
+  }
+
+  #[test]
+  fn test_ensure_cookie_db_path_creates_cloak_chromium_db() {
+    let profiles_dir =
+      std::env::temp_dir().join(format!("donut_cloak_profile_{}", uuid::Uuid::new_v4()));
+    let profile = test_profile("cloak");
+    let profile_data_path = profile.get_profile_data_path(&profiles_dir);
+    let expected = CookieManager::chromium_cookie_path(&profile_data_path);
+    assert!(!expected.exists());
+
+    let db_path = CookieManager::ensure_cookie_db_path(&profile, &profiles_dir).unwrap();
+    assert_eq!(db_path, expected);
+    assert!(db_path.exists());
+
+    let conn = Connection::open(&db_path).unwrap();
+    let version: String = conn
+      .query_row("SELECT value FROM meta WHERE key = 'version'", [], |row| {
+        row.get(0)
+      })
+      .unwrap();
+    assert!(!version.is_empty());
+
+    let _ = std::fs::remove_dir_all(&profiles_dir);
+  }
+
   #[test]
   fn test_write_chrome_cookies_stores_plaintext_values() {
     let tmp = std::env::temp_dir().join(format!("donut_cookie_test_{}.db", uuid::Uuid::new_v4()));
@@ -1664,6 +1731,44 @@ mod tests {
     assert!(encrypted.is_empty());
 
     let _ = std::fs::remove_file(&tmp);
+  }
+
+  #[test]
+  fn test_cloak_chromium_cookie_roundtrip_preserves_fields() {
+    let profiles_dir =
+      std::env::temp_dir().join(format!("donut_cloak_roundtrip_{}", uuid::Uuid::new_v4()));
+    let profile = test_profile("cloak");
+    let db_path = CookieManager::ensure_cookie_db_path(&profile, &profiles_dir).unwrap();
+
+    let cookies = vec![UnifiedCookie {
+      name: "sid".to_string(),
+      value: "cloak-value".to_string(),
+      domain: ".example.com".to_string(),
+      path: "/app".to_string(),
+      expires: 1893456000,
+      is_secure: true,
+      is_http_only: true,
+      same_site: 1,
+      creation_time: 1700000000,
+      last_accessed: 1700000123,
+    }];
+
+    let (inserted, replaced) = CookieManager::write_chrome_cookies(&db_path, &cookies).unwrap();
+    assert_eq!(inserted, 1);
+    assert_eq!(replaced, 0);
+
+    let read = CookieManager::read_chrome_cookies(&db_path, None).unwrap();
+    assert_eq!(read.len(), 1);
+    assert_eq!(read[0].name, "sid");
+    assert_eq!(read[0].value, "cloak-value");
+    assert_eq!(read[0].domain, ".example.com");
+    assert_eq!(read[0].path, "/app");
+    assert_eq!(read[0].expires, 1893456000);
+    assert!(read[0].is_secure);
+    assert!(read[0].is_http_only);
+    assert_eq!(read[0].same_site, 1);
+
+    let _ = std::fs::remove_dir_all(&profiles_dir);
   }
 
   /// Wayfern → Camoufox: write cookies to a Chrome DB, read them back, and
@@ -1827,6 +1932,91 @@ mod tests {
 
     let _ = std::fs::remove_file(&ff_db);
     let _ = std::fs::remove_file(&chrome_db);
+  }
+
+  #[test]
+  fn test_camoufox_cookies_transfer_to_cloak() {
+    let ff_db = std::env::temp_dir().join(format!(
+      "donut_xbrowser_cloak_ff_{}.db",
+      uuid::Uuid::new_v4()
+    ));
+    let cloak_db = std::env::temp_dir().join(format!(
+      "donut_xbrowser_cloak_chrome_{}.db",
+      uuid::Uuid::new_v4()
+    ));
+    create_firefox_cookies_db(&ff_db);
+    create_chrome_cookies_db(&cloak_db);
+
+    let source_cookies = vec![UnifiedCookie {
+      name: "sessionid".to_string(),
+      value: "ff-to-cloak".to_string(),
+      domain: ".example.com".to_string(),
+      path: "/".to_string(),
+      expires: 1900000000,
+      is_secure: true,
+      is_http_only: false,
+      same_site: 1,
+      creation_time: 1700000000,
+      last_accessed: 1700000000,
+    }];
+    CookieManager::write_firefox_cookies(&ff_db, &source_cookies).unwrap();
+
+    let from_ff = CookieManager::read_firefox_cookies(&ff_db).unwrap();
+    CookieManager::write_chrome_cookies(&cloak_db, &from_ff).unwrap();
+
+    let from_cloak = CookieManager::read_chrome_cookies(&cloak_db, None).unwrap();
+    assert_eq!(from_cloak.len(), 1);
+    assert_eq!(from_cloak[0].name, "sessionid");
+    assert_eq!(from_cloak[0].value, "ff-to-cloak");
+    assert_eq!(from_cloak[0].domain, ".example.com");
+    assert_eq!(from_cloak[0].same_site, 1);
+
+    let _ = std::fs::remove_file(&ff_db);
+    let _ = std::fs::remove_file(&cloak_db);
+  }
+
+  #[test]
+  fn test_cloak_cookies_transfer_to_camoufox() {
+    let cloak_db = std::env::temp_dir().join(format!(
+      "donut_xbrowser_cloak_rev_chrome_{}.db",
+      uuid::Uuid::new_v4()
+    ));
+    let ff_db = std::env::temp_dir().join(format!(
+      "donut_xbrowser_cloak_rev_ff_{}.db",
+      uuid::Uuid::new_v4()
+    ));
+    create_chrome_cookies_db(&cloak_db);
+    create_firefox_cookies_db(&ff_db);
+
+    let source_cookies = vec![UnifiedCookie {
+      name: "auth".to_string(),
+      value: "cloak-to-ff".to_string(),
+      domain: ".example.org".to_string(),
+      path: "/secure".to_string(),
+      expires: 1900000000,
+      is_secure: true,
+      is_http_only: true,
+      same_site: 2,
+      creation_time: 1700000000,
+      last_accessed: 1700000000,
+    }];
+    CookieManager::write_chrome_cookies(&cloak_db, &source_cookies).unwrap();
+
+    let from_cloak = CookieManager::read_chrome_cookies(&cloak_db, None).unwrap();
+    CookieManager::write_firefox_cookies(&ff_db, &from_cloak).unwrap();
+
+    let from_ff = CookieManager::read_firefox_cookies(&ff_db).unwrap();
+    assert_eq!(from_ff.len(), 1);
+    assert_eq!(from_ff[0].name, "auth");
+    assert_eq!(from_ff[0].value, "cloak-to-ff");
+    assert_eq!(from_ff[0].domain, ".example.org");
+    assert_eq!(from_ff[0].path, "/secure");
+    assert!(from_ff[0].is_secure);
+    assert!(from_ff[0].is_http_only);
+    assert_eq!(from_ff[0].same_site, 2);
+
+    let _ = std::fs::remove_file(&cloak_db);
+    let _ = std::fs::remove_file(&ff_db);
   }
 
   /// Regression: decrypting a real v10-encrypted Chromium cookie with the

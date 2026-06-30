@@ -1150,6 +1150,36 @@ impl BrowserRunner {
     })
   }
 
+  async fn force_kill_browser_pid(&self, pid: u32, profile_path_str: &str) -> bool {
+    let _ = profile_path_str;
+
+    #[cfg(target_os = "macos")]
+    let kill_result =
+      platform_browser::macos::kill_browser_process_impl(pid, Some(profile_path_str)).await;
+
+    #[cfg(target_os = "windows")]
+    let kill_result = platform_browser::windows::kill_browser_process_impl(pid).await;
+
+    #[cfg(target_os = "linux")]
+    let kill_result =
+      platform_browser::linux::kill_browser_process_impl(pid, Some(profile_path_str)).await;
+
+    #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
+    {
+      log::error!("Unsupported platform for force-killing browser process {pid}");
+      return false;
+    }
+
+    if let Err(e) = kill_result {
+      log::error!("Failed to force kill browser process {pid}: {e}");
+      return false;
+    }
+
+    tokio::time::sleep(Duration::from_millis(500)).await;
+    let system = System::new_all();
+    system.process(sysinfo::Pid::from(pid as usize)).is_none()
+  }
+
   pub async fn check_browser_status(
     &self,
     app_handle: tauri::AppHandle,
@@ -1987,7 +2017,231 @@ impl BrowserRunner {
       return Ok(());
     }
 
-    // For non-camoufox/wayfern browsers, use the existing logic
+    if profile.browser == "cloak" {
+      let profiles_dir = self.profile_manager.get_profiles_dir();
+      let profile_data_path =
+        crate::ephemeral_dirs::get_effective_profile_path(profile, &profiles_dir);
+      let profile_path_str = profile_data_path.to_string_lossy();
+
+      log::info!(
+        "Attempting to kill Cloak process for profile: {} (ID: {})",
+        profile.name,
+        profile.id
+      );
+
+      let profile_id_str = profile.id.to_string();
+      if let Err(e) = PROXY_MANAGER
+        .stop_proxy_by_profile_id(app_handle.clone(), &profile_id_str)
+        .await
+      {
+        log::warn!(
+          "Warning: Failed to stop proxy for profile {}: {e}",
+          profile_id_str
+        );
+      }
+
+      let mut process_actually_stopped = false;
+      match self
+        .cloak_manager
+        .find_cloak_by_profile(&profile_path_str)
+        .await
+      {
+        Some(cloak_process) => {
+          log::info!(
+            "Found Cloak process: {} (PID: {:?})",
+            cloak_process.id,
+            cloak_process.processId
+          );
+
+          match self.cloak_manager.stop_cloak(&cloak_process.id).await {
+            Ok(_) => {
+              if let Some(pid) = cloak_process.processId {
+                tokio::time::sleep(Duration::from_millis(500)).await;
+
+                let system = System::new_all();
+                process_actually_stopped =
+                  system.process(sysinfo::Pid::from(pid as usize)).is_none();
+
+                if process_actually_stopped {
+                  log::info!(
+                    "Successfully stopped Cloak process: {} (PID: {:?}) - verified process is dead",
+                    cloak_process.id,
+                    pid
+                  );
+                } else {
+                  log::warn!(
+                    "Cloak stop command returned success but process {} (PID: {:?}) is still running - forcing kill",
+                    cloak_process.id,
+                    pid
+                  );
+                  process_actually_stopped =
+                    self.force_kill_browser_pid(pid, &profile_path_str).await;
+                  if process_actually_stopped {
+                    log::info!(
+                      "Successfully force killed Cloak process {} (PID: {:?})",
+                      cloak_process.id,
+                      pid
+                    );
+                  }
+                }
+              } else {
+                process_actually_stopped = true;
+              }
+            }
+            Err(e) => {
+              log::error!("Error stopping Cloak process {}: {}", cloak_process.id, e);
+              if let Some(pid) = cloak_process.processId {
+                log::info!(
+                  "Attempting force kill after stop_cloak error for PID: {}",
+                  pid
+                );
+                process_actually_stopped =
+                  self.force_kill_browser_pid(pid, &profile_path_str).await;
+              }
+            }
+          }
+        }
+        None => {
+          log::info!(
+            "No running Cloak process found for profile: {} (ID: {})",
+            profile.name,
+            profile.id
+          );
+          process_actually_stopped = true;
+        }
+      }
+
+      if !process_actually_stopped {
+        log::error!(
+          "Failed to stop Cloak process for profile: {} (ID: {}) - process may still be running",
+          profile.name,
+          profile.id
+        );
+        return Err(
+          format!(
+            "Failed to stop Cloak process for profile {} - process may still be running",
+            profile.name
+          )
+          .into(),
+        );
+      }
+
+      let mut updated_profile = profile.clone();
+      updated_profile.process_id = None;
+      self
+        .save_process_info(&updated_profile)
+        .map_err(|e| format!("Failed to update profile: {e}"))?;
+
+      if let Ok(Some(pending_update)) = self
+        .auto_updater
+        .get_pending_update(&profile.browser, &profile.version)
+      {
+        log::info!(
+          "Found pending update for Cloak profile {}: {} -> {}",
+          profile.name,
+          profile.version,
+          pending_update.new_version
+        );
+
+        match self.profile_manager.update_profile_version(
+          &app_handle,
+          &profile.id.to_string(),
+          &pending_update.new_version,
+        ) {
+          Ok(updated_profile_after_update) => {
+            log::info!(
+              "Successfully updated Cloak profile {} from version {} to {}",
+              profile.name,
+              profile.version,
+              pending_update.new_version
+            );
+            updated_profile = updated_profile_after_update;
+
+            if let Err(e) = self
+              .auto_updater
+              .dismiss_update_notification(&pending_update.id)
+            {
+              log::warn!("Warning: Failed to dismiss pending update notification: {e}");
+            }
+          }
+          Err(e) => {
+            log::error!(
+              "Failed to apply pending update for Cloak profile {}: {}",
+              profile.name,
+              e
+            );
+          }
+        }
+      }
+
+      if updated_profile.version == profile.version {
+        if let Some(p) = self
+          .auto_updater
+          .update_profile_to_latest_installed(&app_handle, &updated_profile)
+        {
+          updated_profile = p;
+        }
+      }
+
+      log::info!(
+        "Emitting profile events for successful Cloak kill: {}",
+        updated_profile.name
+      );
+
+      if let Err(e) = events::emit("profile-updated", &updated_profile) {
+        log::warn!("Warning: Failed to emit profile update event: {e}");
+      }
+
+      #[derive(Serialize)]
+      struct RunningChangedPayload {
+        id: String,
+        is_running: bool,
+      }
+      let payload = RunningChangedPayload {
+        id: updated_profile.id.to_string(),
+        is_running: false,
+      };
+
+      if let Err(e) = events::emit("profile-running-changed", &payload) {
+        log::warn!("Warning: Failed to emit profile running changed event: {e}");
+      } else {
+        log::info!(
+          "Successfully emitted profile-running-changed event for Cloak {}: running={}",
+          updated_profile.name,
+          payload.is_running
+        );
+      }
+
+      crate::browser_cache::clear_profile_cache_after_close(profile).await;
+
+      if profile.password_protected {
+        crate::profile::password::complete_after_quit_and_wait(profile).await;
+      } else if profile.ephemeral {
+        crate::ephemeral_dirs::remove_ephemeral_dir(&profile.id.to_string());
+      }
+
+      log::info!(
+        "Cloak process cleanup completed for profile: {} (ID: {})",
+        profile.name,
+        profile.id
+      );
+
+      if let Ok(consolidated) = self
+        .downloaded_browsers_registry
+        .consolidate_browser_versions(&app_handle)
+      {
+        if !consolidated.is_empty() {
+          log::info!("Post-stop version consolidation results:");
+          for action in &consolidated {
+            log::info!("  {action}");
+          }
+        }
+      }
+
+      return Ok(());
+    }
+
+    // For non-camoufox/wayfern/cloak browsers, use the existing logic
     let pid = if let Some(pid) = profile.process_id {
       // First verify the stored PID is still valid and belongs to our profile
       let system = System::new_all();

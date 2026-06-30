@@ -1,6 +1,24 @@
 # Changelog
 
 
+## v0.27.21 (2026-06-30)
+
+### Features
+
+- add Cloak profile support to cookie copy, cookie import, and cookie export flows
+
+### Bug Fixes
+
+- accept Cloak/Playwright cookie JSON that uses `expires` and case-insensitive `sameSite` values
+
+### Maintenance
+
+- add CloakBrowser cookie JSON import/export guide
+- ignore local `dist-dev` output
+- update pnpm package manager metadata to 11.9.0
+- chore: bump version to 0.27.21
+
+
 ## v0.27.19 (2026-06-27)
 
 ### Features

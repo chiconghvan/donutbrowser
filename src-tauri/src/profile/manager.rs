@@ -1,7 +1,7 @@
 use crate::api_client::is_browser_version_nightly;
 use crate::browser::{create_browser, BrowserType, ProxySettings};
 use crate::camoufox_manager::CamoufoxConfig;
-use crate::cloak_manager::CloakConfig;
+use crate::cloak_manager::{CloakConfig, CloakManager};
 use crate::downloaded_browsers_registry::DownloadedBrowsersRegistry;
 use crate::events;
 use crate::profile::types::{get_host_os, BrowserProfile, SyncMode};
@@ -48,6 +48,7 @@ fn command_error(prefix: &str, err: impl ToString) -> String {
 pub struct ProfileManager {
   camoufox_manager: &'static crate::camoufox_manager::CamoufoxManager,
   wayfern_manager: &'static crate::wayfern_manager::WayfernManager,
+  cloak_manager: &'static CloakManager,
 }
 
 impl ProfileManager {
@@ -55,6 +56,7 @@ impl ProfileManager {
     Self {
       camoufox_manager: crate::camoufox_manager::CamoufoxManager::instance(),
       wayfern_manager: crate::wayfern_manager::WayfernManager::instance(),
+      cloak_manager: CloakManager::instance(),
     }
   }
 
@@ -1575,6 +1577,10 @@ impl ProfileManager {
       return self.check_wayfern_status(&app_handle, profile).await;
     }
 
+    if profile.browser == "cloak" {
+      return self.check_cloak_status(&app_handle, profile).await;
+    }
+
     // For non-camoufox browsers, use the existing PID-based logic
     let inner_profile = profile.clone();
     let system = System::new_with_specifics(
@@ -1947,6 +1953,97 @@ impl ProfileManager {
             latest.process_id = None;
             if let Err(e) = self.save_profile(&latest) {
               log::warn!("Warning: Failed to clear Wayfern profile process info: {e}");
+            }
+
+            if let Some(updated) = crate::auto_updater::AutoUpdater::instance()
+              .update_profile_to_latest_installed(app_handle, &latest)
+            {
+              latest = updated;
+            }
+
+            if let Err(e) = events::emit("profile-updated", &latest) {
+              log::warn!("Warning: Failed to emit profile update event: {e}");
+            }
+          }
+        }
+        Ok(false)
+      }
+    }
+  }
+
+  async fn check_cloak_status(
+    &self,
+    app_handle: &tauri::AppHandle,
+    profile: &BrowserProfile,
+  ) -> Result<bool, Box<dyn std::error::Error + Send + Sync>> {
+    let manager = self.cloak_manager;
+    let profiles_dir = self.get_profiles_dir();
+    let profile_data_path =
+      crate::ephemeral_dirs::get_effective_profile_path(profile, &profiles_dir);
+    let profile_path_str = profile_data_path.to_string_lossy();
+
+    match manager.find_cloak_by_profile(&profile_path_str).await {
+      Some(cloak_process) => {
+        let profiles_dir = self.get_profiles_dir();
+        let profile_uuid_dir = profiles_dir.join(profile.id.to_string());
+        let metadata_file = profile_uuid_dir.join("metadata.json");
+        let metadata_exists = metadata_file.exists();
+
+        if metadata_exists {
+          let mut latest: BrowserProfile = match std::fs::read_to_string(&metadata_file)
+            .ok()
+            .and_then(|s| serde_json::from_str(&s).ok())
+          {
+            Some(p) => p,
+            None => profile.clone(),
+          };
+
+          if latest.process_id != cloak_process.processId {
+            let old_pid = latest.process_id;
+            latest.process_id = cloak_process.processId;
+            if let Err(e) = self.save_profile(&latest) {
+              log::warn!("Warning: Failed to update Cloak profile with process info: {e}");
+            }
+            if let (Some(prev), Some(new)) = (old_pid, cloak_process.processId) {
+              let _ = crate::proxy_manager::PROXY_MANAGER.update_proxy_pid(prev, new);
+            }
+
+            if let Err(e) = events::emit("profile-updated", &latest) {
+              log::warn!("Warning: Failed to emit profile update event: {e}");
+            }
+
+            log::info!(
+              "Cloak process has started for profile '{}' with PID: {:?}",
+              profile.name,
+              cloak_process.processId
+            );
+          }
+        }
+        Ok(true)
+      }
+      None => {
+        if profile.ephemeral {
+          crate::ephemeral_dirs::remove_ephemeral_dir(&profile.id.to_string());
+        }
+
+        let profiles_dir = self.get_profiles_dir();
+        let profile_uuid_dir = profiles_dir.join(profile.id.to_string());
+        let metadata_file = profile_uuid_dir.join("metadata.json");
+        let metadata_exists = metadata_file.exists();
+
+        if metadata_exists {
+          let mut latest: BrowserProfile = match std::fs::read_to_string(&metadata_file)
+            .ok()
+            .and_then(|s| serde_json::from_str(&s).ok())
+          {
+            Some(p) => p,
+            None => profile.clone(),
+          };
+
+          if latest.process_id.is_some() {
+            latest.process_id = None;
+            if let Err(e) = self.save_profile(&latest) {
+              log::warn!("Warning: Failed to clear Cloak profile process info: {e}");
             }
 
             if let Some(updated) = crate::auto_updater::AutoUpdater::instance()
