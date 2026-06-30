@@ -21,6 +21,13 @@
 
 ## v0.27.19 (2026-06-27)
 
+### Other
+
+- release: v0.27.19
+
+
+## v0.27.19 (2026-06-27)
+
 ### Features
 
 - add Cloak seed number fingerprint (range 10000–99999) with auto-generation, duplicate detection, and randomize-on-launch

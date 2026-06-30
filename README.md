@@ -47,25 +47,19 @@
 
 | | Apple Silicon | Intel |
 |---|---|---|
-| **DMG** | [Download](https://github.com/chiconghvan/donutbrowser/releases/download/v0.26.0/Donut_0.26.0_aarch64.dmg) | [Download](https://github.com/chiconghvan/donutbrowser/releases/download/v0.26.0/Donut_0.26.0_x64.dmg) |
-
-Or install via Homebrew:
-
-```bash
-brew install --cask donut
-```
+| **DMG** | [Download](https://github.com/chiconghvan/donutbrowser/releases/download/v0.27.19/Donut_0.27.19_aarch64.dmg) | [Download](https://github.com/chiconghvan/donutbrowser/releases/download/v0.27.19/Donut_0.27.19_x64.dmg) |
 
 ### Windows
 
-[Download Windows Installer (x64)](https://github.com/chiconghvan/donutbrowser/releases/download/v0.26.0/Donut_0.26.0_x64-setup.exe) · [Portable (x64)](https://github.com/chiconghvan/donutbrowser/releases/download/v0.26.0/Donut_0.26.0_x64-portable.zip)
+[Download Windows Installer (x64)](https://github.com/chiconghvan/donutbrowser/releases/download/v0.27.19/Donut_0.27.19_x64-setup.exe) · [Portable (x64)](https://github.com/chiconghvan/donutbrowser/releases/download/v0.27.19/Donut_0.27.19_x64-portable.zip)
 
 ### Linux
 
 | Format | x86_64 | ARM64 |
 |---|---|---|
-| **deb** | [Download](https://github.com/chiconghvan/donutbrowser/releases/download/v0.26.0/Donut_0.26.0_amd64.deb) | [Download](https://github.com/chiconghvan/donutbrowser/releases/download/v0.26.0/Donut_0.26.0_arm64.deb) |
-| **rpm** | [Download](https://github.com/chiconghvan/donutbrowser/releases/download/v0.26.0/Donut-0.26.0-1.x86_64.rpm) | [Download](https://github.com/chiconghvan/donutbrowser/releases/download/v0.26.0/Donut-0.26.0-1.aarch64.rpm) |
-| **AppImage** | [Download](https://github.com/chiconghvan/donutbrowser/releases/download/v0.26.0/Donut_0.26.0_amd64.AppImage) | [Download](https://github.com/chiconghvan/donutbrowser/releases/download/v0.26.0/Donut_0.26.0_aarch64.AppImage) |
+| **deb** | [Download](https://github.com/chiconghvan/donutbrowser/releases/download/v0.27.19/Donut_0.27.19_amd64.deb) | [Download](https://github.com/chiconghvan/donutbrowser/releases/download/v0.27.19/Donut_0.27.19_arm64.deb) |
+| **rpm** | [Download](https://github.com/chiconghvan/donutbrowser/releases/download/v0.27.19/Donut-0.27.19-1.x86_64.rpm) | [Download](https://github.com/chiconghvan/donutbrowser/releases/download/v0.27.19/Donut-0.27.19-1.aarch64.rpm) |
+| **AppImage** | [Download](https://github.com/chiconghvan/donutbrowser/releases/download/v0.27.19/Donut_0.27.19_amd64.AppImage) | [Download](https://github.com/chiconghvan/donutbrowser/releases/download/v0.27.19/Donut_0.27.19_aarch64.AppImage) |
 <!-- install-links-end -->
 
 Or install via package manager:
