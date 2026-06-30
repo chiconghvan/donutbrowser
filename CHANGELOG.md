@@ -3,6 +3,13 @@
 
 ## v0.27.22 (2026-06-30)
 
+### Other
+
+- release: v0.27.22
+
+
+## v0.27.22 (2026-06-30)
+
 ### Bug Fixes
 
 - fix GitHub Windows release builds skipping Tauri ACL embedding when target-specific sidecar paths are used
