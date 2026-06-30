@@ -3,6 +3,9 @@
 
 ## v0.27.21 (2026-06-30)
 
+
+## v0.27.21 (2026-06-30)
+
 ### Features
 
 - add Cloak profile support to cookie copy, cookie import, and cookie export flows
