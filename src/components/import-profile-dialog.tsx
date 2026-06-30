@@ -30,18 +30,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { WayfernConfigForm } from "@/components/wayfern-config-form";
 import { useBrowserSupport } from "@/hooks/use-browser-support";
 import { parseBackendError, translateBackendError } from "@/lib/backend-errors";
 import { getBrowserDisplayName, getBrowserIcon } from "@/lib/browser-utils";
 import { cn } from "@/lib/utils";
-import type { DetectedProfile, WayfernConfig } from "@/types";
+import type { DetectedProfile } from "@/types";
 import { RippleButton } from "./ui/ripple";
 
-const getMappedBrowser = (browser: string): "camoufox" | "wayfern" => {
+const getMappedBrowser = (browser: string): "camoufox" | "cloak" => {
   if (["firefox", "firefox-developer", "zen"].includes(browser))
     return "camoufox";
-  return "wayfern";
+  return "cloak";
 };
 
 interface ImportProfileDialogProps {
@@ -54,7 +53,6 @@ interface ImportProfileDialogProps {
 export function ImportProfileDialog({
   isOpen,
   onClose,
-  crossOsUnlocked,
   subPage,
 }: ImportProfileDialogProps) {
   const { t } = useTranslation();
@@ -69,7 +67,6 @@ export function ImportProfileDialog({
   const [currentStep, setCurrentStep] = useState<"select" | "configure">(
     "select",
   );
-  const [wayfernConfig, setWayfernConfig] = useState<WayfernConfig>({});
   const [proxyString, setProxyString] = useState<string>("");
 
   // Auto-detect state
@@ -89,8 +86,7 @@ export function ImportProfileDialog({
     useBrowserSupport();
   // Proxy is inline string, no stored proxy list needed.
 
-  // All detected browsers are importable — both Wayfern (Chromium-family)
-  // and Camoufox (Firefox-family) sources are accepted.
+  // All detected browsers are importable as Camoufox or Cloak profiles.
   const importableBrowsers = supportedBrowsers;
 
   const loadDetectedProfiles = useCallback(async () => {
@@ -187,7 +183,7 @@ export function ImportProfileDialog({
         newProfileName,
         proxyId: proxyString.trim() || null,
         camoufoxConfig: mappedBrowser === "camoufox" ? {} : null,
-        wayfernConfig: mappedBrowser === "wayfern" ? wayfernConfig : null,
+        cloakConfig: mappedBrowser === "cloak" ? {} : null,
       });
 
       toast.success(
@@ -225,7 +221,6 @@ export function ImportProfileDialog({
     manualProfilePath,
     manualProfileName,
     proxyString,
-    wayfernConfig,
     onClose,
     selectedProfile,
     t,
@@ -233,7 +228,6 @@ export function ImportProfileDialog({
 
   const handleClose = () => {
     setCurrentStep("select");
-    setWayfernConfig({});
     setProxyString("");
     setSelectedDetectedProfile(null);
     setAutoDetectProfileName("");
@@ -563,19 +557,6 @@ export function ImportProfileDialog({
                 />
               </div>
 
-              {/* Show Wayfern config for Wayfern imports; Camoufox imports
-                  use server-side defaults. */}
-              {currentMappedBrowser === "wayfern" && (
-                <WayfernConfigForm
-                  config={wayfernConfig}
-                  onConfigChange={(key, value) => {
-                    setWayfernConfig((prev) => ({ ...prev, [key]: value }));
-                  }}
-                  isCreating={true}
-                  crossOsUnlocked={crossOsUnlocked}
-                  limitedMode={!crossOsUnlocked}
-                />
-              )}
               {currentMappedBrowser === "camoufox" && (
                 <p className="text-sm text-muted-foreground">
                   {t("importProfile.camoufoxConfigNote")}

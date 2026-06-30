@@ -2074,7 +2074,7 @@ export function ProfilesDataTable({
             const resolvedOs =
               profile.host_os ||
               profile.camoufox_config?.os ||
-              profile.wayfern_config?.os;
+              profile.cloak_config?.platform;
             const osName = resolvedOs
               ? getOSDisplayName(resolvedOs)
               : "another OS";
@@ -2125,7 +2125,7 @@ export function ProfilesDataTable({
             const resolvedOs =
               profile.host_os ||
               profile.camoufox_config?.os ||
-              profile.wayfern_config?.os;
+              profile.cloak_config?.platform;
             const osName = resolvedOs
               ? getOSDisplayName(resolvedOs)
               : "another OS";
@@ -3048,7 +3048,7 @@ export function ProfilesDataTable({
                           os: getOSDisplayName(
                             row.original.host_os ||
                               row.original.camoufox_config?.os ||
-                              row.original.wayfern_config?.os ||
+                              row.original.cloak_config?.platform ||
                               "",
                           ),
                         })

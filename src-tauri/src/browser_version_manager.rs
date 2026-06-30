@@ -74,22 +74,6 @@ impl BrowserVersionManager {
         // Camoufox supports all platforms and architectures according to the JS code
         Ok(true)
       }
-      "wayfern" => {
-        // Wayfern support depends on version.json downloads availability
-        // Currently supports macos-arm64 and linux-x64
-        let platform_key = format!("{os}-{arch}");
-        // Check dynamically, but allow the browser to appear even if platform not available yet
-        // The actual download will fail gracefully if not supported
-        Ok(matches!(
-          platform_key.as_str(),
-          "macos-arm64"
-            | "linux-x64"
-            | "macos-x64"
-            | "linux-arm64"
-            | "windows-x64"
-            | "windows-arm64"
-        ))
-      }
       "cloak" => {
         let platform_key = format!("{os}-{arch}");
         Ok(matches!(
@@ -110,7 +94,6 @@ impl BrowserVersionManager {
       "brave",
       "chromium",
       "camoufox",
-      "wayfern",
       "cloak",
     ];
 
@@ -180,6 +163,10 @@ impl BrowserVersionManager {
     &self,
     browser: &str,
   ) -> Result<BrowserReleaseTypes, Box<dyn std::error::Error + Send + Sync>> {
+    if browser == "wayfern" {
+      return Err("Wayfern is no longer supported".into());
+    }
+
     // Try to get from cache first
     if let Some(cached_versions) = self.get_cached_browser_versions_detailed(browser) {
       let latest_stable = cached_versions

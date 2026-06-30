@@ -43,7 +43,7 @@ pub struct BrowserProfile {
   #[serde(default)]
   pub camoufox_config: Option<CamoufoxConfig>, // Camoufox configuration
   #[serde(default)]
-  pub wayfern_config: Option<WayfernConfig>, // Wayfern configuration
+  pub wayfern_config: Option<WayfernConfig>, // Legacy Wayfern configuration
   #[serde(default)]
   pub cloak_config: Option<CloakConfig>, // Cloak Browser configuration
   #[serde(default)]
@@ -117,7 +117,6 @@ impl BrowserProfile {
       .host_os
       .as_deref()
       .or_else(|| self.camoufox_config.as_ref().and_then(|c| c.os.as_deref()))
-      .or_else(|| self.wayfern_config.as_ref().and_then(|c| c.os.as_deref()))
       .or_else(|| {
         self
           .cloak_config

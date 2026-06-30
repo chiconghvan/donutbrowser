@@ -9,7 +9,6 @@ use crate::cloak_manager::CloakConfig;
 use crate::downloaded_browsers_registry::DownloadedBrowsersRegistry;
 use crate::profile::types::{get_host_os, BrowserProfile, SyncMode};
 use crate::profile::ProfileManager;
-use crate::wayfern_manager::WayfernConfig;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DetectedProfile {
@@ -21,13 +20,10 @@ pub struct DetectedProfile {
 }
 
 fn map_browser_type(browser: &str) -> &str {
-  // Firefox-based sources map to the now-deprecated Camoufox. They are no longer
-  // detected for import; the mapping is kept only so the import command can
-  // recognize and REJECT them. Everything else maps to Wayfern.
   match browser {
     "firefox" | "firefox-developer" | "zen" | "camoufox" => "camoufox",
     "cloak" | "cloakbrowser" => "cloak",
-    _ => "wayfern",
+    _ => "cloak",
   }
 }
 
@@ -35,7 +31,6 @@ pub struct ProfileImporter {
   base_dirs: BaseDirs,
   downloaded_browsers_registry: &'static DownloadedBrowsersRegistry,
   profile_manager: &'static ProfileManager,
-  wayfern_manager: &'static crate::wayfern_manager::WayfernManager,
 }
 
 impl ProfileImporter {
@@ -44,7 +39,6 @@ impl ProfileImporter {
       base_dirs: BaseDirs::new().expect("Failed to get base directories"),
       downloaded_browsers_registry: DownloadedBrowsersRegistry::instance(),
       profile_manager: ProfileManager::instance(),
-      wayfern_manager: crate::wayfern_manager::WayfernManager::instance(),
     }
   }
 
@@ -228,13 +222,12 @@ impl ProfileImporter {
   #[allow(clippy::too_many_arguments)]
   pub async fn import_profile(
     &self,
-    app_handle: &tauri::AppHandle,
+    _app_handle: &tauri::AppHandle,
     source_path: &str,
     browser_type: &str,
     new_profile_name: &str,
     proxy_id: Option<String>,
     _camoufox_config: Option<CamoufoxConfig>,
-    wayfern_config: Option<WayfernConfig>,
     cloak_config: Option<CloakConfig>,
   ) -> Result<(), Box<dyn std::error::Error>> {
     let source_path = Path::new(source_path);
@@ -264,97 +257,15 @@ impl ProfileImporter {
 
     let version = self.get_default_version_for_browser(mapped)?;
 
-    // Camoufox import is removed; only Wayfern profiles are imported now, so the
-    // imported profile never carries a Camoufox config.
-    let final_camoufox_config: Option<CamoufoxConfig> = None;
+    let final_camoufox_config: Option<CamoufoxConfig> = if mapped == "camoufox" {
+      Some(CamoufoxConfig::default())
+    } else {
+      None
+    };
     let final_cloak_config = if mapped == "cloak" {
       Some(cloak_config.unwrap_or_default())
     } else {
       cloak_config
-    };
-
-    let final_wayfern_config = if mapped == "wayfern" {
-      let mut config = wayfern_config.unwrap_or_default();
-
-      if let Some(ref proxy_value) = proxy_id {
-        if let Ok(proxy_settings) = crate::proxy_manager::parse_profile_proxy_string(proxy_value) {
-          let proxy_url = if let (Some(username), Some(password)) =
-            (&proxy_settings.username, &proxy_settings.password)
-          {
-            format!(
-              "{}://{}:{}@{}:{}",
-              proxy_settings.proxy_type.to_lowercase(),
-              username,
-              password,
-              proxy_settings.host,
-              proxy_settings.port
-            )
-          } else {
-            format!(
-              "{}://{}:{}",
-              proxy_settings.proxy_type.to_lowercase(),
-              proxy_settings.host,
-              proxy_settings.port
-            )
-          };
-          config.proxy = Some(proxy_url);
-        }
-      }
-
-      if config.fingerprint.is_none() {
-        let temp_profile = BrowserProfile {
-          id: uuid::Uuid::new_v4(),
-          name: new_profile_name.to_string(),
-          browser: mapped.to_string(),
-          version: version.clone(),
-          proxy: proxy_id.clone(),
-          vpn_id: None,
-          launch_hook: None,
-          process_id: None,
-          last_launch: None,
-          release_type: "stable".to_string(),
-          camoufox_config: None,
-          wayfern_config: None,
-          cloak_config: None,
-          group_id: None,
-          tags: Vec::new(),
-          note: None,
-          sync_mode: SyncMode::Disabled,
-          encryption_salt: None,
-          last_sync: None,
-          host_os: None,
-          ephemeral: false,
-          extension_group_id: None,
-          proxy_bypass_rules: Vec::new(),
-          created_by_id: None,
-          created_by_email: None,
-          dns_blocklist: None,
-          password_protected: false,
-          created_at: None,
-          updated_at: None,
-        };
-
-        match self
-          .wayfern_manager
-          .generate_fingerprint_config(app_handle, &temp_profile, &config)
-          .await
-        {
-          Ok(fp) => config.fingerprint = Some(fp),
-          Err(e) => {
-            return Err(
-              format!(
-                "Failed to generate fingerprint for imported profile '{new_profile_name}': {e}"
-              )
-              .into(),
-            );
-          }
-        }
-      }
-
-      config.proxy = None;
-      Some(config)
-    } else {
-      None
     };
 
     let profile = BrowserProfile {
@@ -369,7 +280,7 @@ impl ProfileImporter {
       last_launch: None,
       release_type: "stable".to_string(),
       camoufox_config: final_camoufox_config,
-      wayfern_config: final_wayfern_config,
+      wayfern_config: None,
       cloak_config: final_cloak_config,
       group_id: None,
       tags: Vec::new(),
@@ -468,15 +379,8 @@ pub async fn import_browser_profile(
   new_profile_name: String,
   proxy_id: Option<String>,
   camoufox_config: Option<CamoufoxConfig>,
-  wayfern_config: Option<WayfernConfig>,
   cloak_config: Option<CloakConfig>,
 ) -> Result<(), String> {
-  // Camoufox is deprecated — Firefox-based profiles (which map to Camoufox) can
-  // no longer be imported. Reject them before doing any work.
-  if map_browser_type(&browser_type) == "camoufox" {
-    return Err(serde_json::json!({ "code": "CAMOUFOX_IMPORT_DEPRECATED" }).to_string());
-  }
-
   // cloud_auth removed — fingerprint OS check disabled
 
   let importer = ProfileImporter::instance();
@@ -488,7 +392,6 @@ pub async fn import_browser_profile(
       &new_profile_name,
       proxy_id,
       camoufox_config,
-      wayfern_config,
       cloak_config,
     )
     .await
@@ -543,11 +446,11 @@ mod tests {
     assert_eq!(map_browser_type("firefox"), "camoufox");
     assert_eq!(map_browser_type("firefox-developer"), "camoufox");
     assert_eq!(map_browser_type("zen"), "camoufox");
-    assert_eq!(map_browser_type("chromium"), "wayfern");
-    assert_eq!(map_browser_type("brave"), "wayfern");
+    assert_eq!(map_browser_type("chromium"), "cloak");
+    assert_eq!(map_browser_type("brave"), "cloak");
     assert_eq!(map_browser_type("camoufox"), "camoufox");
-    assert_eq!(map_browser_type("wayfern"), "wayfern");
-    assert_eq!(map_browser_type("something_else"), "wayfern");
+    assert_eq!(map_browser_type("cloak"), "cloak");
+    assert_eq!(map_browser_type("something_else"), "cloak");
   }
 
   #[test]

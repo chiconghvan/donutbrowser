@@ -605,29 +605,12 @@ impl Downloader {
     browser_str: String,
     version: String,
   ) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
-    // Only check Wayfern terms if Wayfern is already downloaded
-    let terms_manager = crate::wayfern_terms::WayfernTermsManager::instance();
-    if terms_manager.is_wayfern_downloaded() && !terms_manager.is_terms_accepted() {
-      return Err("Please accept Wayfern Terms and Conditions before downloading browsers".into());
+    if browser_str == "wayfern" {
+      return Err("Wayfern is no longer supported".into());
     }
 
-    // For Wayfern/Camoufox, resolve the actual available version from the API
-    let version = if browser_str == "wayfern" {
-      match self
-        .api_client
-        .fetch_wayfern_version_with_caching(true)
-        .await
-      {
-        Ok(info) if info.version != version => {
-          log::info!(
-            "Wayfern: requested {version}, using available {}",
-            info.version
-          );
-          info.version
-        }
-        _ => version,
-      }
-    } else if browser_str == "camoufox" {
+    // For Camoufox, resolve the actual available version from the API.
+    let version = if browser_str == "camoufox" {
       match self
         .api_client
         .fetch_camoufox_releases_with_caching(true)
