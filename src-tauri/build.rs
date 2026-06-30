@@ -99,7 +99,11 @@ fn external_binaries_exist() -> bool {
     format!("donut-proxy-{}", target)
   };
 
-  binaries_dir.join(&donut_proxy_name).exists()
+  binaries_dir
+    .join(&donut_proxy_name)
+    .metadata()
+    .map(|metadata| metadata.is_file() && metadata.len() > 0)
+    .unwrap_or(false)
 }
 
 fn ensure_dist_folder_exists() {

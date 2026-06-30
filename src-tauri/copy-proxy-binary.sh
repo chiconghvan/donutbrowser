@@ -28,25 +28,18 @@ if ! command -v cargo &>/dev/null; then
 fi
 
 # Get the target triple from environment or use default
-TARGET="${TARGET:-$(rustc -vV 2>/dev/null | sed -n 's|host: ||p' || echo "unknown")}"
+TARGET="${TARGET:-${TAURI_ENV_TARGET_TRIPLE:-$(rustc -vV 2>/dev/null | sed -n 's|host: ||p' || echo unknown)}}"
 MANIFEST_DIR="$(dirname "$0")"
+PROFILE_DIR="debug"
+if [[ "${PROFILE:-debug}" == "release" ]]; then
+  PROFILE_DIR="release"
+fi
 
-# Determine source path
-HOST_TARGET=$(rustc -vV 2>/dev/null | sed -n 's|host: ||p' || echo "$TARGET")
-if [[ "$TARGET" == "$HOST_TARGET" ]] || [[ "$TARGET" == "unknown" ]]; then
-  # Native target - use debug or release based on profile
-  if [[ "${PROFILE:-debug}" == "release" ]]; then
-    SRC_DIR="$MANIFEST_DIR/target/release"
-  else
-    SRC_DIR="$MANIFEST_DIR/target/debug"
-  fi
-else
-  # Cross-compilation target
-  if [[ "${PROFILE:-debug}" == "release" ]]; then
-    SRC_DIR="$MANIFEST_DIR/target/$TARGET/release"
-  else
-    SRC_DIR="$MANIFEST_DIR/target/$TARGET/debug"
-  fi
+# Cargo writes to target/<triple>/<profile> whenever --target is passed,
+# even when the target triple equals the host triple.
+EXPLICIT_TARGET=false
+if [[ -n "${TARGET:-}" || -n "${TAURI_ENV_TARGET_TRIPLE:-}" ]]; then
+  EXPLICIT_TARGET=true
 fi
 
 DEST_DIR="$MANIFEST_DIR/binaries"
@@ -64,7 +57,19 @@ copy_binary() {
     BIN_NAME="$BIN_BASE_NAME"
   fi
 
-  SOURCE="$SRC_DIR/$BIN_NAME"
+  SOURCE=""
+  SOURCE_CANDIDATES=()
+  if [[ "$TARGET" != "unknown" ]]; then
+    SOURCE_CANDIDATES+=("$MANIFEST_DIR/target/$TARGET/$PROFILE_DIR/$BIN_NAME")
+  fi
+  SOURCE_CANDIDATES+=("$MANIFEST_DIR/target/$PROFILE_DIR/$BIN_NAME")
+
+  for candidate in "${SOURCE_CANDIDATES[@]}"; do
+    if [[ -f "$candidate" ]]; then
+      SOURCE="$candidate"
+      break
+    fi
+  done
 
   # Tauri expects the format: binary-{target} with hyphens
   DEST_NAME="${BIN_BASE_NAME}-$TARGET"
@@ -74,22 +79,43 @@ copy_binary() {
   DEST="$DEST_DIR/$DEST_NAME"
 
   # Copy the binary if it exists
-  if [[ -f "$SOURCE" ]]; then
+  if [[ -n "$SOURCE" ]]; then
+    if [[ "${PROFILE:-debug}" == "release" && ! -s "$SOURCE" ]]; then
+      echo "Error: Release sidecar is empty: $SOURCE"
+      exit 1
+    fi
     cp "$SOURCE" "$DEST"
     echo "Copied $BIN_NAME to $DEST"
   else
-    echo "Warning: Binary not found at $SOURCE"
+    rm -f "$DEST"
+    echo "Warning: Binary not found. Checked:"
+    printf '  - %s\n' "${SOURCE_CANDIDATES[@]}"
+
+    if [[ "${PROFILE:-debug}" == "release" ]]; then
+      echo "Error: Release build requires a real $BIN_BASE_NAME sidecar."
+      exit 1
+    fi
+
     echo "Building $BIN_BASE_NAME binary..."
     cd "$MANIFEST_DIR"
     BUILD_ARGS=("build" "--bin" "$BIN_BASE_NAME")
     if [[ -n "$PROFILE" ]] && [[ "$PROFILE" == "release" ]]; then
       BUILD_ARGS+=("--release")
     fi
-    if [[ -n "$TARGET" ]] && [[ "$TARGET" != "unknown" ]] && [[ "$TARGET" != "$HOST_TARGET" ]]; then
+    if [[ "$EXPLICIT_TARGET" == true && -n "$TARGET" && "$TARGET" != "unknown" ]]; then
       BUILD_ARGS+=("--target" "$TARGET")
     fi
     cargo "${BUILD_ARGS[@]}"
-    if [[ -f "$SOURCE" ]]; then
+
+    SOURCE=""
+    for candidate in "${SOURCE_CANDIDATES[@]}"; do
+      if [[ -f "$candidate" ]]; then
+        SOURCE="$candidate"
+        break
+      fi
+    done
+
+    if [[ -n "$SOURCE" ]]; then
       cp "$SOURCE" "$DEST"
       echo "Built and copied $BIN_NAME to $DEST"
     else

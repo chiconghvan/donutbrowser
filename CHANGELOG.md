@@ -1,6 +1,21 @@
 # Changelog
 
 
+## v0.27.22 (2026-06-30)
+
+### Bug Fixes
+
+- fix GitHub Windows release builds skipping Tauri ACL embedding when target-specific sidecar paths are used
+- fix Windows app update restart flow so the app relaunches after the installer finishes
+- prevent group event listener ACL failures from surfacing as blocking UI errors
+
+### Maintenance
+
+- fail release builds when the donut-proxy sidecar is missing or empty
+- rebuild the frontend before release packaging and then copy the verified sidecar
+- chore: bump version to 0.27.22
+
+
 ## v0.27.21 (2026-06-30)
 
 ### Features

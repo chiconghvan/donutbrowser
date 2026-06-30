@@ -44,7 +44,16 @@ export function useGroupEvents() {
       try {
         // Initial load
         await loadGroups();
+      } catch (err) {
+        console.error("Failed to load groups:", err);
+        setError(
+          i18n.t("errors.loadGroupsFailed", { error: JSON.stringify(err) }),
+        );
+      } finally {
+        setIsLoading(false);
+      }
 
+      try {
         // Listen for group changes (create, delete, rename, update, etc.)
         groupsUnlisten = await listen("groups-changed", () => {
           console.log("Received groups-changed event, reloading groups");
@@ -62,13 +71,6 @@ export function useGroupEvents() {
         console.log("Group event listeners set up successfully");
       } catch (err) {
         console.error("Failed to setup group event listeners:", err);
-        setError(
-          i18n.t("errors.setupGroupListenersFailed", {
-            error: JSON.stringify(err),
-          }),
-        );
-      } finally {
-        setIsLoading(false);
       }
     };
 
