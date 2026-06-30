@@ -58,7 +58,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { WayfernConfigForm } from "@/components/wayfern-config-form";
 import { parseBackendError, translateBackendError } from "@/lib/backend-errors";
 import { getProfileIcon } from "@/lib/browser-utils";
 import { formatRelativeTime } from "@/lib/flag-utils";
@@ -71,7 +70,6 @@ import type {
   ProfileGroup,
   StoredProxy,
   VpnConfig,
-  WayfernConfig,
 } from "@/types";
 
 interface ProfileInfoDialogProps {
@@ -203,7 +201,6 @@ export function ProfileInfoDialog({
   onOpenLaunchHook,
   onCloneProfile,
   onDeleteProfile,
-  onLaunchWithSync,
   onSetPassword,
   onChangePassword,
   onRemovePassword,
@@ -264,9 +261,7 @@ export function ProfileInfoDialog({
 
   const ProfileIcon = getProfileIcon(profile);
   const isAntiDetectBrowser =
-    profile.browser === "camoufox" ||
-    profile.browser === "wayfern" ||
-    profile.browser === "cloak";
+    profile.browser === "camoufox" || profile.browser === "cloak";
   const isDeleteDisabled = isRunning;
 
   const proxyStr = profile.proxy ?? null;
@@ -365,16 +360,6 @@ export function ProfileInfoDialog({
       proBadge: !crossOsUnlocked,
       runningBadge: isRunning,
       hidden: !isAntiDetectBrowser || !onConfigureCamoufox,
-    },
-    {
-      icon: <LuUsers className="size-4" />,
-      label: t("profiles.synchronizer.launchWithSync"),
-      onClick: () => {
-        handleAction(() => onLaunchWithSync?.(profile));
-      },
-      disabled: isDisabled || isRunning || !crossOsUnlocked,
-      proBadge: !crossOsUnlocked,
-      hidden: profile.browser !== "wayfern" || !onLaunchWithSync,
     },
     {
       id: "cookiesCopy",
@@ -1681,9 +1666,8 @@ function CookiesSectionInline({
 // Inline password set / change / remove form. Replaces three separate
 // nested modal dialogs with one in-page form that branches on the current
 // `password_protected` state of the profile.
-// Inline fingerprint editor. Reuses SharedCamoufoxConfigForm (Camoufox/Firefox
-// engine) and WayfernConfigForm (Chromium engine) so the same field set as
-// the standalone dialog is available without opening a nested modal.
+// Inline fingerprint editor. Reuses the same form as the standalone dialog
+// without opening a nested modal.
 function FingerprintSectionInline({
   profile,
   isDisabled,
@@ -1703,9 +1687,6 @@ function FingerprintSectionInline({
   const [cloakConfig, setCloakConfig] = React.useState<CloakConfig>(
     () => profile.cloak_config ?? {},
   );
-  const [wayfernConfig, setWayfernConfig] = React.useState<WayfernConfig>(
-    () => profile.wayfern_config ?? {},
-  );
   const [isSaving, setIsSaving] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState<string | null>(null);
@@ -1715,16 +1696,14 @@ function FingerprintSectionInline({
   React.useEffect(() => {
     setCamoufoxConfig(profile.camoufox_config ?? {});
     setCloakConfig(profile.cloak_config ?? {});
-    setWayfernConfig(profile.wayfern_config ?? {});
     setError(null);
     setSuccess(null);
-  }, [profile.camoufox_config, profile.cloak_config, profile.wayfern_config]);
+  }, [profile.camoufox_config, profile.cloak_config]);
 
   const isCamoufox = profile.browser === "camoufox";
-  const isWayfern = profile.browser === "wayfern";
   const isCloak = profile.browser === "cloak";
 
-  if (!isCamoufox && !isWayfern && !isCloak) {
+  if (!isCamoufox && !isCloak) {
     return (
       <div className="flex flex-col gap-3">
         <div className="flex items-center gap-2 text-sm font-semibold">
@@ -1738,9 +1717,9 @@ function FingerprintSectionInline({
     );
   }
 
-  // Camoufox and Wayfern keep the existing paid-plan lock. Cloak should still
+  // Camoufox keeps the existing paid-plan lock. Cloak should still
   // expose its config in read-only form so the profile details are visible.
-  if (!crossOsUnlocked && (isCamoufox || isWayfern)) {
+  if (!crossOsUnlocked && isCamoufox) {
     return (
       <div className="flex flex-col items-center gap-3 rounded-lg border p-6 text-center">
         <LuLock className="size-4 shrink-0 text-muted-foreground" />
@@ -1756,10 +1735,6 @@ function FingerprintSectionInline({
 
   const onCamoufoxChange = (key: keyof CamoufoxConfig, value: unknown) => {
     setCamoufoxConfig((prev) => ({ ...prev, [key]: value }));
-    setSuccess(null);
-  };
-  const onWayfernChange = (key: keyof WayfernConfig, value: unknown) => {
-    setWayfernConfig((prev) => ({ ...prev, [key]: value }));
     setSuccess(null);
   };
   const onCloakChange = (key: keyof CloakConfig, value: unknown) => {
@@ -1803,11 +1778,6 @@ function FingerprintSectionInline({
             throw error;
           }
         }
-      } else {
-        await invoke("update_wayfern_config", {
-          profileId: profile.id,
-          config: wayfernConfig,
-        });
       }
       setSuccess(t("common.buttons.saved"));
       // Close the dialog once the fingerprint is saved.
@@ -1821,14 +1791,10 @@ function FingerprintSectionInline({
 
   const initial = isCamoufox
     ? JSON.stringify(profile.camoufox_config ?? {})
-    : isCloak
-      ? JSON.stringify(profile.cloak_config ?? {})
-      : JSON.stringify(profile.wayfern_config ?? {});
+    : JSON.stringify(profile.cloak_config ?? {});
   const current = isCamoufox
     ? JSON.stringify(camoufoxConfig)
-    : isCloak
-      ? JSON.stringify(cloakConfig)
-      : JSON.stringify(wayfernConfig);
+    : JSON.stringify(cloakConfig);
   const dirty = current !== initial;
 
   return (
@@ -1850,17 +1816,6 @@ function FingerprintSectionInline({
           browserType="camoufox"
           crossOsUnlocked={crossOsUnlocked}
           limitedMode={false}
-          profileVersion={profile.version}
-          profileBrowser={profile.browser}
-        />
-      )}
-      {isWayfern && (
-        <WayfernConfigForm
-          config={wayfernConfig}
-          onConfigChange={onWayfernChange}
-          forceAdvanced={true}
-          readOnly={isDisabled}
-          crossOsUnlocked={crossOsUnlocked}
           profileVersion={profile.version}
           profileBrowser={profile.browser}
         />
@@ -1895,7 +1850,6 @@ function FingerprintSectionInline({
             onClick={() => {
               setCamoufoxConfig(profile.camoufox_config ?? {});
               setCloakConfig(profile.cloak_config ?? {});
-              setWayfernConfig(profile.wayfern_config ?? {});
               setError(null);
               setSuccess(null);
             }}

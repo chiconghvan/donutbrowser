@@ -12,13 +12,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { WayfernConfigForm } from "@/components/wayfern-config-form";
 import type {
   BrowserProfile,
   CamoufoxConfig,
   CamoufoxOS,
   CloakConfig,
-  WayfernConfig,
 } from "@/types";
 
 const getCurrentOS = (): CamoufoxOS => {
@@ -37,10 +35,6 @@ interface CamoufoxConfigDialogProps {
   onClose: () => void;
   profile: BrowserProfile | null;
   onSave: (profile: BrowserProfile, config: CamoufoxConfig) => Promise<void>;
-  onSaveWayfern?: (
-    profile: BrowserProfile,
-    config: WayfernConfig,
-  ) => Promise<void>;
   onSaveCloak?: (profile: BrowserProfile, config: CloakConfig) => Promise<void>;
   isRunning?: boolean;
   crossOsUnlocked?: boolean;
@@ -51,35 +45,27 @@ export function CamoufoxConfigDialog({
   onClose,
   profile,
   onSave,
-  onSaveWayfern,
   onSaveCloak,
   isRunning = false,
   crossOsUnlocked = false,
 }: CamoufoxConfigDialogProps) {
   const { t } = useTranslation();
-  // Use union type to support both Camoufox and Wayfern configs
-  const [config, setConfig] = useState<
-    CamoufoxConfig | WayfernConfig | CloakConfig
-  >(() => ({
+  const [config, setConfig] = useState<CamoufoxConfig | CloakConfig>(() => ({
     geoip: true,
     os: getCurrentOS(),
   }));
   const [isSaving, setIsSaving] = useState(false);
 
   const isAntiDetectBrowser =
-    profile?.browser === "camoufox" ||
-    profile?.browser === "wayfern" ||
-    profile?.browser === "cloak";
+    profile?.browser === "camoufox" || profile?.browser === "cloak";
 
   // Initialize config when profile changes
   useEffect(() => {
     if (profile && isAntiDetectBrowser) {
       const profileConfig =
-        profile.browser === "wayfern"
-          ? profile.wayfern_config
-          : profile.browser === "cloak"
-            ? profile.cloak_config
-            : profile.camoufox_config;
+        profile.browser === "cloak"
+          ? profile.cloak_config
+          : profile.camoufox_config;
       setConfig(
         profileConfig || {
           geoip: true,
@@ -90,7 +76,7 @@ export function CamoufoxConfigDialog({
   }, [profile, isAntiDetectBrowser]);
 
   const updateConfig = (
-    key: keyof CamoufoxConfig | keyof WayfernConfig | keyof CloakConfig,
+    key: keyof CamoufoxConfig | keyof CloakConfig,
     value: unknown,
   ) => {
     setConfig((prev) => ({ ...prev, [key]: value }));
@@ -114,9 +100,7 @@ export function CamoufoxConfigDialog({
 
     setIsSaving(true);
     try {
-      if (profile.browser === "wayfern" && onSaveWayfern) {
-        await onSaveWayfern(profile, config as WayfernConfig);
-      } else if (profile.browser === "cloak" && onSaveCloak) {
+      if (profile.browser === "cloak" && onSaveCloak) {
         await onSaveCloak(profile, config as CloakConfig);
       } else {
         await onSave(profile, config as CamoufoxConfig);
@@ -140,11 +124,9 @@ export function CamoufoxConfigDialog({
     // Reset config to original when closing without saving
     if (profile && isAntiDetectBrowser) {
       const profileConfig =
-        profile.browser === "wayfern"
-          ? profile.wayfern_config
-          : profile.browser === "cloak"
-            ? profile.cloak_config
-            : profile.camoufox_config;
+        profile.browser === "cloak"
+          ? profile.cloak_config
+          : profile.camoufox_config;
       setConfig(
         profileConfig || {
           geoip: true,
@@ -160,11 +142,9 @@ export function CamoufoxConfigDialog({
   }
 
   const browserName =
-    profile.browser === "wayfern"
-      ? t("createProfile.chromiumLabel")
-      : profile.browser === "cloak"
-        ? t("createProfile.cloakLabel")
-        : t("createProfile.firefoxLabel");
+    profile.browser === "cloak"
+      ? t("createProfile.cloakLabel")
+      : t("createProfile.firefoxLabel");
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -185,18 +165,7 @@ export function CamoufoxConfigDialog({
 
         <ScrollArea className="flex-1 h-[300px]">
           <div className="py-4">
-            {profile.browser === "wayfern" ? (
-              <WayfernConfigForm
-                config={config as WayfernConfig}
-                onConfigChange={updateConfig}
-                forceAdvanced={true}
-                readOnly={isRunning}
-                crossOsUnlocked={crossOsUnlocked}
-                limitedMode={!crossOsUnlocked}
-                profileVersion={profile.version}
-                profileBrowser="wayfern"
-              />
-            ) : profile.browser === "cloak" ? (
+            {profile.browser === "cloak" ? (
               <CloakConfigForm
                 config={config as CloakConfig}
                 onConfigChange={updateConfig}

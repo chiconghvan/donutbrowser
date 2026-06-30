@@ -1,6 +1,24 @@
 # Changelog
 
 
+## v0.27.23 (2026-06-30)
+
+### Features
+
+- remove Wayfern browser option; only Camoufox and Cloak available for new profiles
+- map Chromium-family profile imports to Cloak instead of Wayfern
+
+### Bug Fixes
+
+- remove Wayfern terms/config/import/hooks UI and unused API endpoints
+- block Wayfern backend create/download/update/version paths
+
+### Maintenance
+
+- delete Wayfern-specific frontend files and unused command registrations
+- chore: bump version to 0.27.23
+
+
 ## v0.27.22 (2026-06-30)
 
 ### Other

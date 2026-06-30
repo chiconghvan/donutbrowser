@@ -24,7 +24,7 @@ import type { BrowserReleaseTypes } from "@/types";
 
 import { RippleButton } from "./ui/ripple";
 
-type BrowserTypeString = "camoufox" | "wayfern" | "cloak";
+type BrowserTypeString = "camoufox" | "cloak";
 
 interface BulkCreateProfileDialogProps {
   isOpen: boolean;
@@ -52,7 +52,7 @@ export function BulkCreateProfileDialog({
     "browser-selection" | "bulk-config"
   >("browser-selection");
   const [selectedBrowser, setSelectedBrowser] =
-    useState<BrowserTypeString>("wayfern");
+    useState<BrowserTypeString | null>(null);
   const [profileCount, setProfileCount] = useState<number>(1);
   const [proxyText, setProxyText] = useState("");
   const [isCreating, setIsCreating] = useState(false);
@@ -116,10 +116,8 @@ export function BulkCreateProfileDialog({
 
   useEffect(() => {
     if (isOpen) {
-      void loadDownloadedVersions("wayfern");
       void loadDownloadedVersions("camoufox");
       void loadDownloadedVersions("cloak");
-      void loadReleaseTypes("wayfern");
       void loadReleaseTypes("camoufox");
       void loadReleaseTypes("cloak");
     }
@@ -172,13 +170,14 @@ export function BulkCreateProfileDialog({
 
   const canCreate = useMemo(() => {
     if (profileCount < 1) return false;
-    if (!getCreatableVersion(selectedBrowser)) return false;
+    if (!selectedBrowser || !getCreatableVersion(selectedBrowser)) return false;
     if (isCreating) return false;
     return true;
   }, [profileCount, selectedBrowser, getCreatableVersion, isCreating]);
 
   const handleCreate = async () => {
     if (!canCreate) return;
+    if (!selectedBrowser) return;
 
     const versionInfo = getCreatableVersion(selectedBrowser);
     if (!versionInfo) return;
@@ -218,7 +217,7 @@ export function BulkCreateProfileDialog({
   const handleClose = () => {
     loadingBrowserRef.current = null;
     setCurrentStep("browser-selection");
-    setSelectedBrowser("wayfern");
+    setSelectedBrowser(null);
     setProfileCount(1);
     setProxyText("");
     setReleaseTypesByBrowser({});
@@ -249,11 +248,9 @@ export function BulkCreateProfileDialog({
               ? t("bulkCreateProfile.title")
               : t("bulkCreateProfile.configureTitle", {
                   browser:
-                    selectedBrowser === "wayfern"
-                      ? t("createProfile.chromiumLabel")
-                      : selectedBrowser === "cloak"
-                        ? t("createProfile.cloakLabel")
-                        : t("createProfile.firefoxLabel"),
+                    selectedBrowser === "cloak"
+                      ? t("createProfile.cloakLabel")
+                      : t("createProfile.firefoxLabel"),
                 })}
           </DialogTitle>
         </DialogHeader>
@@ -261,39 +258,6 @@ export function BulkCreateProfileDialog({
         <div className="flex-1 overflow-y-auto py-4 space-y-6">
           {currentStep === "browser-selection" ? (
             <div className="space-y-3 pt-4">
-              {/* Wayfern (Chromium) */}
-              <Button
-                onClick={() => {
-                  handleBrowserSelect("wayfern");
-                }}
-                disabled={!getCreatableVersion("wayfern")}
-                className="flex gap-3 justify-start items-center p-4 w-full h-16 border-2 transition-colors hover:border-primary/50"
-                variant="outline"
-              >
-                <div className="flex justify-center items-center size-8">
-                  {isBrowserDownloading("wayfern") ? (
-                    <LuLoaderCircle className="size-6 animate-spin" />
-                  ) : (
-                    (() => {
-                      const IconComponent = getBrowserIcon("wayfern");
-                      return IconComponent ? (
-                        <IconComponent className="size-6" />
-                      ) : null;
-                    })()
-                  )}
-                </div>
-                <div className="text-left">
-                  <div className="font-medium">
-                    {t("createProfile.chromiumLabel")}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {isBrowserDownloading("wayfern")
-                      ? t("createProfile.downloadingSubtitle")
-                      : t("createProfile.chromiumSubtitle")}
-                  </div>
-                </div>
-              </Button>
-
               {/* Cloak */}
               <Button
                 onClick={() => {
@@ -360,30 +324,13 @@ export function BulkCreateProfileDialog({
                 </div>
               </Button>
 
-              {!getCreatableVersion("wayfern") &&
-                !getCreatableVersion("cloak") &&
+              {!getCreatableVersion("cloak") &&
                 !getCreatableVersion("camoufox") && (
                   <p className="pt-2 text-sm text-center text-muted-foreground">
                     {t("createProfile.browsersDownloading")}
                   </p>
                 )}
 
-              {!getCreatableVersion("wayfern") && !isLoadingReleaseTypes && (
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => {
-                    void handleDownload("wayfern");
-                  }}
-                  disabled={isBrowserDownloading("wayfern")}
-                >
-                  {isBrowserDownloading("wayfern")
-                    ? t("createProfile.downloadingButton")
-                    : t("createProfile.downloadButton", {
-                        browser: t("createProfile.chromiumLabel"),
-                      })}
-                </Button>
-              )}
               {!getCreatableVersion("cloak") && !isLoadingReleaseTypes && (
                 <Button
                   variant="outline"

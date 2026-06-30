@@ -47,7 +47,6 @@ mod settings_manager;
 
 pub mod traffic_stats;
 mod wayfern_manager;
-mod wayfern_terms;
 // mod theme_detector; // removed: theme detection handled in webview via CSS prefers-color-scheme
 
 mod cloak_manager;
@@ -68,7 +67,7 @@ use profile::manager::{
   delete_profile, list_browser_profiles, rename_profile, update_camoufox_config,
   update_cloak_config, update_profile_dns_blocklist, update_profile_launch_hook,
   update_profile_note, update_profile_proxy, update_profile_proxy_bypass_rules,
-  update_profile_tags, update_wayfern_config,
+  update_profile_tags,
 };
 
 use profile::password::{
@@ -272,23 +271,6 @@ async fn export_profile_cookies(profile_id: String, format: String) -> Result<St
 }
 
 #[tauri::command]
-fn check_wayfern_terms_accepted() -> bool {
-  wayfern_terms::WayfernTermsManager::instance().is_terms_accepted()
-}
-
-#[tauri::command]
-fn check_wayfern_downloaded() -> bool {
-  wayfern_terms::WayfernTermsManager::instance().is_wayfern_downloaded()
-}
-
-#[tauri::command]
-async fn accept_wayfern_terms() -> Result<(), String> {
-  wayfern_terms::WayfernTermsManager::instance()
-    .accept_terms()
-    .await
-}
-
-#[tauri::command]
 async fn get_commercial_trial_status(
   app_handle: tauri::AppHandle,
 ) -> Result<commercial_license::TrialStatus, String> {
@@ -427,14 +409,6 @@ async fn generate_sample_fingerprint(
     let config: crate::camoufox_manager::CamoufoxConfig =
       serde_json::from_str(&config_json).map_err(|e| format!("Failed to parse config: {e}"))?;
     let manager = crate::camoufox_manager::CamoufoxManager::instance();
-    manager
-      .generate_fingerprint_config(&app_handle, &temp_profile, &config)
-      .await
-      .map_err(|e| format!("Failed to generate fingerprint: {e}"))
-  } else if browser == "wayfern" {
-    let config: crate::wayfern_manager::WayfernConfig =
-      serde_json::from_str(&config_json).map_err(|e| format!("Failed to parse config: {e}"))?;
-    let manager = crate::wayfern_manager::WayfernManager::instance();
     manager
       .generate_fingerprint_config(&app_handle, &temp_profile, &config)
       .await
@@ -1264,7 +1238,6 @@ pub fn run() {
       ensure_active_browsers_downloaded,
       update_camoufox_config,
       update_cloak_config,
-      update_wayfern_config,
       generate_sample_fingerprint,
       get_profile_groups,
       get_groups_with_profile_counts,
@@ -1300,9 +1273,6 @@ pub fn run() {
       copy_profile_cookies,
       import_cookies_from_file,
       export_profile_cookies,
-      check_wayfern_terms_accepted,
-      check_wayfern_downloaded,
-      accept_wayfern_terms,
       get_commercial_trial_status,
       acknowledge_trial_expiration,
       has_acknowledged_trial_expiration,

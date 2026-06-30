@@ -241,8 +241,6 @@ struct ImportCookiesResponse {
     delete_extension_api,
     get_extension_groups,
     delete_extension_group_api,
-    get_wayfern_token,
-    refresh_wayfern_token,
   ),
   components(schemas(
     ApiProfile,
@@ -264,7 +262,6 @@ struct ImportCookiesResponse {
     ImportCookiesRequest,
     ImportCookiesResponse,
     ProxySettings,
-    WayfernTokenResponse,
   )),
   tags(
     (name = "profiles", description = "Profile management endpoints"),
@@ -274,7 +271,6 @@ struct ImportCookiesResponse {
     (name = "browsers", description = "Browser management endpoints"),
     (name = "cookies", description = "Cookie management endpoints"),
     (name = "extensions", description = "Extension management endpoints"),
-    (name = "wayfern", description = "Wayfern token management endpoints"),
   ),
   modifiers(&SecurityAddon),
 )]
@@ -374,7 +370,6 @@ impl ApiServer {
       .routes(routes!(download_browser_api))
       .routes(routes!(get_browser_versions))
       .routes(routes!(check_browser_downloaded))
-      .routes(routes!(get_wayfern_token, refresh_wayfern_token))
       .split_for_parts();
 
     let api = ApiDoc::openapi();
@@ -382,8 +377,7 @@ impl ApiServer {
     let v1_routes = v1_routes
       // Inert chokepoint (innermost → runs after auth) for the future per-hour
       // automation request limit. See rate_limit_middleware.
-      .layer(middleware::from_fn(rate_limit_middleware))
-      .layer(middleware::from_fn(terms_check_middleware));
+      .layer(middleware::from_fn(rate_limit_middleware));
 
     let api_for_v1 = api.clone();
     let app = Router::new()
@@ -428,19 +422,6 @@ impl ApiServer {
     self.port = None;
     Ok(())
   }
-}
-
-// Terms and Conditions check middleware
-async fn terms_check_middleware(
-  request: axum::extract::Request,
-  next: Next,
-) -> Result<Response, StatusCode> {
-  // Check if Wayfern terms have been accepted
-  if !crate::wayfern_terms::WayfernTermsManager::instance().is_terms_accepted() {
-    return Err(StatusCode::FORBIDDEN);
-  }
-
-  Ok(next.run(request).await)
 }
 
 /// Logs every request: method, path, query, response status, duration.
@@ -636,12 +617,12 @@ async fn get_profile(
 
 /// Create a profile.
 ///
-/// - `browser` must be `"wayfern"` or `"camoufox"`; any other value is rejected
+/// - `browser` must be `"camoufox"` or `"cloak"`; any other value is rejected
 ///   with 400.
 /// - `version` is optional: omit it or pass `"latest"` to use the newest
 ///   already-downloaded version of that browser. The version must be present
 ///   locally (this endpoint does not download new versions); 400 if none is.
-/// - Omitting the matching `wayfern_config`/`camoufox_config`, or passing an
+/// - Omitting the matching `camoufox_config`/`cloak_config`, or passing an
 ///   empty object `{}`, generates a fresh fingerprint automatically.
 #[utoipa::path(
   post,
@@ -668,7 +649,7 @@ async fn create_profile(
   // Only the supported anti-detect browsers are launchable. Reject anything
   // else up front so profiles do not save with an unrecognized browser and
   // later crash on /run. Mirrors the MCP create_profile validation.
-  if request.browser != "wayfern" && request.browser != "camoufox" && request.browser != "cloak" {
+  if request.browser != "camoufox" && request.browser != "cloak" {
     return Err(StatusCode::BAD_REQUEST);
   }
 
@@ -698,12 +679,6 @@ async fn create_profile(
     None
   };
 
-  // Parse wayfern config if provided
-  let wayfern_config = if let Some(config) = &request.wayfern_config {
-    serde_json::from_value(config.clone()).ok()
-  } else {
-    None
-  };
   let cloak_config = if let Some(config) = &request.cloak_config {
     serde_json::from_value(config.clone()).ok()
   } else {
@@ -731,7 +706,6 @@ async fn create_profile(
       request.proxy.clone(),
       None,
       camoufox_config,
-      wayfern_config,
       cloak_config,
       false,
       request.group_id.clone(),
@@ -1681,52 +1655,6 @@ async fn check_browser_downloaded(
   Ok(Json(is_downloaded))
 }
 
-// API Handlers - Wayfern Token
-
-#[derive(Debug, Serialize, Deserialize, ToSchema)]
-pub struct WayfernTokenResponse {
-  pub token: Option<String>,
-}
-
-#[utoipa::path(
-  get,
-  path = "/v1/wayfern-token",
-  responses(
-    (status = 200, description = "Current wayfern token", body = WayfernTokenResponse),
-    (status = 401, description = "Unauthorized"),
-  ),
-  security(
-    ("bearer_auth" = [])
-  ),
-  tag = "wayfern"
-)]
-async fn get_wayfern_token(
-  State(_state): State<ApiServerState>,
-) -> Result<Json<WayfernTokenResponse>, StatusCode> {
-  let token: Option<String> = None;
-  Ok(Json(WayfernTokenResponse { token }))
-}
-
-#[utoipa::path(
-  post,
-  path = "/v1/wayfern-token/refresh",
-  responses(
-    (status = 200, description = "Refreshed wayfern token", body = WayfernTokenResponse),
-    (status = 401, description = "Unauthorized"),
-    (status = 500, description = "Failed to refresh token"),
-  ),
-  security(
-    ("bearer_auth" = [])
-  ),
-  tag = "wayfern"
-)]
-async fn refresh_wayfern_token(
-  State(_state): State<ApiServerState>,
-) -> Result<Json<WayfernTokenResponse>, (StatusCode, String)> {
-  let token: Option<String> = None;
-  Ok(Json(WayfernTokenResponse { token }))
-}
-
 #[cfg(test)]
 mod tests {
   use super::*;
@@ -1740,7 +1668,7 @@ mod tests {
   fn update_profile_request_ignores_unknown_fields() {
     // `browser` is no longer a field, plus a wholly unknown field. Both must
     // be accepted and ignored, not rejected.
-    let json = r#"{"name": "p", "browser": "wayfern", "totally_unknown": 123}"#;
+    let json = r#"{"name": "p", "browser": "cloak", "totally_unknown": 123}"#;
     let parsed: UpdateProfileRequest =
       serde_json::from_str(json).expect("unknown fields must be ignored, not rejected");
     assert_eq!(parsed.name.as_deref(), Some("p"));
@@ -1748,21 +1676,21 @@ mod tests {
 
   #[test]
   fn create_profile_request_ignores_unknown_fields() {
-    let json = r#"{"name": "p", "browser": "wayfern", "version": "latest", "future_field": true}"#;
+    let json = r#"{"name": "p", "browser": "cloak", "version": "latest", "future_field": true}"#;
     let parsed: CreateProfileRequest =
       serde_json::from_str(json).expect("unknown fields must be ignored, not rejected");
-    assert_eq!(parsed.browser, "wayfern");
+    assert_eq!(parsed.browser, "cloak");
   }
 
   #[test]
   fn create_profile_request_allows_omitting_version_and_configs() {
-    // Minimal body: no version, no wayfern_config/camoufox_config. Must
+    // Minimal body: no version, no camoufox_config/cloak_config. Must
     // deserialize (version resolves to latest-downloaded at the handler; an
     // absent config triggers fresh-fingerprint generation).
-    let json = r#"{"name": "p", "browser": "wayfern"}"#;
+    let json = r#"{"name": "p", "browser": "cloak"}"#;
     let parsed: CreateProfileRequest =
       serde_json::from_str(json).expect("version and configs are optional");
-    assert_eq!(parsed.browser, "wayfern");
+    assert_eq!(parsed.browser, "cloak");
     assert!(parsed.version.is_none());
     assert!(parsed.wayfern_config.is_none());
     assert!(parsed.camoufox_config.is_none());
@@ -1773,8 +1701,7 @@ mod tests {
   fn create_profile_browser_validation_matches_supported_engines() {
     // The handler rejects anything that isn't a launchable engine; this is the
     // same predicate it uses, kept in lockstep with MCP's create_profile.
-    let is_valid = |b: &str| b == "wayfern" || b == "camoufox" || b == "cloak";
-    assert!(is_valid("wayfern"));
+    let is_valid = |b: &str| b == "camoufox" || b == "cloak";
     assert!(is_valid("camoufox"));
     assert!(is_valid("cloak"));
     assert!(!is_valid("chromium"));
