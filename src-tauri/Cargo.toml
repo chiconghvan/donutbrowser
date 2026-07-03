@@ -1,6 +1,6 @@
 [package]
 name = "donutbrowser"
-version = "0.27.24"
+version = "0.27.25"
 description = "Simple Yet Powerful Anti-Detect Browser"
 authors = ["zhom@github"]
 edition = "2021"
@@ -103,7 +103,7 @@ thiserror = "2.0"
 regex-lite = "0.1"
 tempfile = "3"
 maxminddb = "0.28"
-quick-xml = { version = "0.40", features = ["serialize"] }
+quick-xml = { version = "0.41", features = ["serialize"] }
 
 # VPN support
 boringtun = "0.7"

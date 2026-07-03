@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v0.27.25 (2026-07-03)
+
+### Bug Fixes
+
+- unblock GitHub release builds by upgrading direct quick-xml usage and allowing the remaining Tauri plist advisory until upstream updates
+
+### Maintenance
+
+- update Tauri patch dependencies used by release builds
+- chore: bump version to 0.27.25
+
+
 ## v0.27.24 (2026-07-03)
 
 ### Bug Fixes
