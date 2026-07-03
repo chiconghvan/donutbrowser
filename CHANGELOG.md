@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v0.27.24 (2026-07-03)
+
+### Bug Fixes
+
+- expand browser cache cleanup after close for Cloak profiles and Chromium cache folders
+
+### Maintenance
+
+- refresh API guide for current profile, group, and browser endpoints
+- chore: bump version to 0.27.24
+
+
 ## v0.27.23 (2026-06-30)
 
 ### Features

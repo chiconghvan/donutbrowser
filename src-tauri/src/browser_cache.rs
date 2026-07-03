@@ -2,19 +2,29 @@ use crate::profile::BrowserProfile;
 use std::path::{Path, PathBuf};
 use tokio::time::{sleep, Duration};
 
-const WAYFERN_CACHE_DIRS: &[&str] = &[
+const CHROMIUM_CACHE_DIRS: &[&str] = &[
   "Cache",
   "Code Cache",
   "GPUCache",
   "DawnCache",
+  "DawnWebGPUCache",
+  "DawnGraphiteCache",
+  "GraphiteDawnCache",
   "GrShaderCache",
   "ShaderCache",
+  "BrowserMetrics",
+  "component_crx_cache",
+  "extensions_crx_cache",
   "Default/Cache",
   "Default/Code Cache",
   "Default/GPUCache",
   "Default/DawnCache",
+  "Default/DawnWebGPUCache",
+  "Default/DawnGraphiteCache",
+  "Default/GraphiteDawnCache",
   "Default/GrShaderCache",
   "Default/ShaderCache",
+  "Default/Service Worker/ScriptCache",
 ];
 
 const CAMOUFOX_CACHE_DIRS: &[&str] = &[
@@ -47,7 +57,7 @@ async fn clear_profile_cache_dirs(browser: &str, profile_path: &Path) {
   }
 
   let cache_dirs = match browser {
-    "wayfern" => WAYFERN_CACHE_DIRS,
+    "wayfern" | "cloak" => CHROMIUM_CACHE_DIRS,
     "camoufox" => CAMOUFOX_CACHE_DIRS,
     _ => return,
   };
@@ -107,6 +117,11 @@ mod tests {
     write_file(&profile.join("Default/Cache/data_0"));
     write_file(&profile.join("Default/Code Cache/js/index"));
     write_file(&profile.join("Default/GPUCache/data"));
+    write_file(&profile.join("Default/DawnWebGPUCache/data"));
+    write_file(&profile.join("Default/DawnGraphiteCache/data"));
+    write_file(&profile.join("Default/Service Worker/ScriptCache/data"));
+    write_file(&profile.join("BrowserMetrics/data"));
+    write_file(&profile.join("GraphiteDawnCache/data"));
     write_file(&profile.join("Default/Service Worker/CacheStorage/cache/index"));
     write_file(&profile.join("Default/Cookies"));
     write_file(&profile.join("Default/Local Storage/leveldb/000003.log"));
@@ -118,6 +133,11 @@ mod tests {
     assert!(!profile.join("Default/Cache").exists());
     assert!(!profile.join("Default/Code Cache").exists());
     assert!(!profile.join("Default/GPUCache").exists());
+    assert!(!profile.join("Default/DawnWebGPUCache").exists());
+    assert!(!profile.join("Default/DawnGraphiteCache").exists());
+    assert!(!profile.join("Default/Service Worker/ScriptCache").exists());
+    assert!(!profile.join("BrowserMetrics").exists());
+    assert!(!profile.join("GraphiteDawnCache").exists());
     assert!(profile.join("Default/Cookies").exists());
     assert!(profile
       .join("Default/Local Storage/leveldb/000003.log")
@@ -129,6 +149,50 @@ mod tests {
     assert!(profile
       .join("Default/Service Worker/CacheStorage/cache/index")
       .exists());
+  }
+
+  #[tokio::test]
+  async fn cloak_cleanup_removes_chromium_cache_and_preserves_session_data() {
+    let temp = TempDir::new().unwrap();
+    let profile = temp.path();
+
+    write_file(&profile.join("Default/Cache/Cache_Data/data_0"));
+    write_file(&profile.join("Default/Code Cache/js/index"));
+    write_file(&profile.join("Default/GPUCache/data"));
+    write_file(&profile.join("Default/DawnWebGPUCache/data"));
+    write_file(&profile.join("Default/DawnGraphiteCache/data"));
+    write_file(&profile.join("Default/Service Worker/ScriptCache/data"));
+    write_file(&profile.join("BrowserMetrics/metrics.pma"));
+    write_file(&profile.join("GraphiteDawnCache/data"));
+    write_file(&profile.join("GrShaderCache/data"));
+    write_file(&profile.join("ShaderCache/data"));
+    write_file(&profile.join("Default/Cookies"));
+    write_file(&profile.join("Default/Local Storage/leveldb/000003.log"));
+    write_file(&profile.join("Default/Session Storage/000003.log"));
+    write_file(&profile.join("Default/IndexedDB/site.leveldb/000003.log"));
+    write_file(&profile.join("Default/Sessions/Session_1"));
+
+    clear_profile_cache_dirs("cloak", profile).await;
+
+    assert!(!profile.join("Default/Cache").exists());
+    assert!(!profile.join("Default/Code Cache").exists());
+    assert!(!profile.join("Default/GPUCache").exists());
+    assert!(!profile.join("Default/DawnWebGPUCache").exists());
+    assert!(!profile.join("Default/DawnGraphiteCache").exists());
+    assert!(!profile.join("Default/Service Worker/ScriptCache").exists());
+    assert!(!profile.join("BrowserMetrics").exists());
+    assert!(!profile.join("GraphiteDawnCache").exists());
+    assert!(!profile.join("GrShaderCache").exists());
+    assert!(!profile.join("ShaderCache").exists());
+    assert!(profile.join("Default/Cookies").exists());
+    assert!(profile
+      .join("Default/Local Storage/leveldb/000003.log")
+      .exists());
+    assert!(profile.join("Default/Session Storage/000003.log").exists());
+    assert!(profile
+      .join("Default/IndexedDB/site.leveldb/000003.log")
+      .exists());
+    assert!(profile.join("Default/Sessions/Session_1").exists());
   }
 
   #[tokio::test]
