@@ -795,8 +795,7 @@ impl CamoufoxManager {
               "user_pref(\"network.proxy.type\", 1);\n\
                user_pref(\"network.proxy.socks\", \"{host}\");\n\
                user_pref(\"network.proxy.socks_port\", {port});\n\
-               user_pref(\"network.proxy.socks_version\", {});\n\
-               user_pref(\"network.proxy.socks_remote_dns\", true);\n",
+               user_pref(\"network.proxy.socks_version\", {});\n",
               if scheme == "socks5" { 5 } else { 4 }
             ));
           } else {

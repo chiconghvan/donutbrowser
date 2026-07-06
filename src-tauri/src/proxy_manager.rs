@@ -48,7 +48,6 @@ pub struct ProxyInfo {
   pub local_port: u16,
   // Optional profile ID to which this proxy instance is logically tied
   pub profile_id: Option<String>,
-  pub blocklist_file: Option<String>,
 }
 
 // Proxy check result cache
@@ -758,7 +757,7 @@ impl ProxyManager {
     if err.contains("timed out") || err.contains("deadline has elapsed") {
       return format!("Connection to {proxy_addr} timed out. The proxy server is not responding.");
     }
-    if err.contains("no such host") || err.contains("dns") || err.contains("resolve") {
+    if err.contains("no such host") || err.contains("resolve") {
       return format!(
         "Could not resolve proxy host '{}'. Check that the hostname is correct.",
         settings.host
@@ -1126,7 +1125,6 @@ impl ProxyManager {
     browser_pid: u32,
     profile_id: Option<&str>,
     bypass_rules: Vec<String>,
-    blocklist_file: Option<String>,
   ) -> Result<ProxySettings, String> {
     if let Some(name) = profile_id {
       // Check if we have an active proxy recorded for this profile
@@ -1254,11 +1252,6 @@ impl ProxyManager {
       proxy_cmd = proxy_cmd.arg("--bypass-rules").arg(rules_json);
     }
 
-    // Add blocklist file path if provided
-    if let Some(ref path) = blocklist_file {
-      proxy_cmd = proxy_cmd.arg("--blocklist-file").arg(path);
-    }
-
     // Execute the command and wait for it to complete
     // The donut-proxy binary should start the worker and then exit
     let output = proxy_cmd
@@ -1304,7 +1297,6 @@ impl ProxyManager {
         .unwrap_or_else(|| "DIRECT".to_string()),
       local_port,
       profile_id: profile_id.map(|s| s.to_string()),
-      blocklist_file: blocklist_file.clone(),
     };
 
     // Wait for the local proxy port to be ready to accept connections
@@ -1949,7 +1941,6 @@ mod tests {
           upstream_type: "http".to_string(),
           local_port: (8000 + i) as u16,
           profile_id: None,
-          blocklist_file: None,
         };
 
         // Add proxy
@@ -2276,7 +2267,6 @@ mod tests {
       upstream_type: "http".to_string(),
       local_port: port,
       profile_id: profile_id.map(|s| s.to_string()),
-      blocklist_file: None,
     }
   }
 
@@ -2504,7 +2494,6 @@ mod tests {
       pid: Some(live_pid),
       profile_id: None,
       bypass_rules: Vec::new(),
-      blocklist_file: None,
     };
     let dead_config = ProxyConfig {
       id: dead_id.clone(),
@@ -2515,7 +2504,6 @@ mod tests {
       pid: Some(dead_pid),
       profile_id: None,
       bypass_rules: Vec::new(),
-      blocklist_file: None,
     };
 
     save_proxy_config(&live_config).unwrap();
@@ -2554,7 +2542,6 @@ mod tests {
       pid: Some(12345),
       profile_id: Some("prof_abc".to_string()),
       bypass_rules: vec!["*.local".to_string(), "192.168.*".to_string()],
-      blocklist_file: None,
     };
 
     // Save
@@ -2673,7 +2660,6 @@ mod tests {
       upstream_type: "http".to_string(),
       local_port: 9201,
       profile_id: Some("profile_alpha".to_string()),
-      blocklist_file: None,
     };
     let info_b = ProxyInfo {
       id: "px_shared_b".to_string(),
@@ -2683,7 +2669,6 @@ mod tests {
       upstream_type: "http".to_string(),
       local_port: 9202,
       profile_id: Some("profile_beta".to_string()),
-      blocklist_file: None,
     };
 
     pm.insert_active_proxy(3001, info_a);
@@ -2872,7 +2857,6 @@ mod tests {
       pid: Some(dead_pid),
       profile_id: None,
       bypass_rules: Vec::new(),
-      blocklist_file: None,
     };
     save_proxy_config(&config).unwrap();
 
@@ -3045,7 +3029,6 @@ mod tests {
         upstream_type: ptype.to_string(),
         local_port: 9300 + i as u16,
         profile_id: Some(format!("profile_{ptype}")),
-        blocklist_file: None,
       };
       pm.insert_active_proxy(4000 + i as u32, info);
     }

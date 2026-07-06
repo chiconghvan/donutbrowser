@@ -68,8 +68,6 @@ pub async fn start_wireguard_server() -> Result<WireGuardTestConfig, String> {
       "-e",
       "SERVERPORT=51820",
       "-e",
-      "PEERDNS=auto",
-      "-e",
       "INTERNAL_SUBNET=10.64.0.0",
       WIREGUARD_IMAGE,
     ])
@@ -169,7 +167,6 @@ pub async fn stop_vpn_servers() {
 pub struct WireGuardTestConfig {
   pub private_key: String,
   pub address: String,
-  pub dns: Option<String>,
   pub peer_public_key: String,
   pub peer_endpoint: String,
   pub allowed_ips: Vec<String>,
@@ -184,7 +181,6 @@ pub struct WireGuardTestConfig {
 fn parse_wireguard_test_config(content: &str) -> Result<WireGuardTestConfig, String> {
   let mut private_key = String::new();
   let mut address = String::new();
-  let mut dns = None;
   let mut peer_public_key = String::new();
   let mut peer_endpoint = String::new();
   let mut allowed_ips = vec!["0.0.0.0/0".to_string()];
@@ -213,7 +209,6 @@ fn parse_wireguard_test_config(content: &str) -> Result<WireGuardTestConfig, Str
       match (current_section, key) {
         ("interface", "PrivateKey") => private_key = value.to_string(),
         ("interface", "Address") => address = value.to_string(),
-        ("interface", "DNS") => dns = Some(value.to_string()),
         ("peer", "PublicKey") => peer_public_key = value.to_string(),
         ("peer", "Endpoint") => peer_endpoint = value.to_string(),
         ("peer", "PresharedKey") => preshared_key = Some(value.to_string()),
@@ -238,7 +233,6 @@ fn parse_wireguard_test_config(content: &str) -> Result<WireGuardTestConfig, Str
   Ok(WireGuardTestConfig {
     private_key,
     address,
-    dns,
     peer_public_key,
     peer_endpoint,
     allowed_ips,
@@ -266,7 +260,6 @@ fn get_ci_wireguard_config(host: &str, port: &str) -> Result<WireGuardTestConfig
   Ok(WireGuardTestConfig {
     private_key,
     address: std::env::var("VPN_TEST_WG_ADDRESS").unwrap_or_else(|_| "10.0.0.2/24".to_string()),
-    dns: Some("1.1.1.1".to_string()),
     peer_public_key: public_key,
     peer_endpoint: format!("{host}:{port}"),
     allowed_ips: vec!["0.0.0.0/0".to_string()],

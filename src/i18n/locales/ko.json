@@ -143,45 +143,6 @@
       "cameraDescription": "브라우저 애플리케이션의 카메라 액세스",
       "accessRequested": "{{permission}} 액세스가 요청되었습니다"
     },
-    "integrations": {
-      "title": "통합",
-      "description": "외부 도구 및 AI 어시스턴트와 통합하기 위해 로컬 API와 MCP(Model Context Protocol)를 구성합니다.",
-      "openSettings": "통합 설정 열기"
-    },
-    "encryption": {
-      "title": "동기화 암호화",
-      "description": "E2E 암호화 동기화를 사용하려면 비밀번호를 설정하세요. 이 비밀번호를 잃어버리면 암호화된 프로필을 복구할 수 없습니다.",
-      "passwordSet": "활성",
-      "passwordSetDescription": "E2E 암호화 비밀번호가 설정되어 있습니다",
-      "noPassword": "비밀번호가 설정되지 않았습니다",
-      "passwordPlaceholder": "비밀번호 (8자 이상)",
-      "confirmPlaceholder": "비밀번호 확인",
-      "setPassword": "비밀번호 설정",
-      "changePassword": "비밀번호 변경",
-      "removePassword": "비밀번호 제거",
-      "removed": "암호화 비밀번호가 제거되었습니다",
-      "passwordSaved": "암호화 비밀번호가 설정되었습니다",
-      "passwordMismatch": "비밀번호가 일치하지 않습니다",
-      "passwordTooShort": "비밀번호는 8자 이상이어야 합니다",
-      "requiresProOrOwner": "프로필 암호화는 Pro 사용자 및 팀 소유자만 사용할 수 있습니다.",
-      "validatePassword": "확인",
-      "validateDialog": {
-        "title": "암호화 비밀번호 확인",
-        "description": "이 기기에 저장된 비밀번호와 일치하는지 확인하려면 암호화 비밀번호를 입력하세요.",
-        "submit": "확인",
-        "matchToast": "비밀번호가 일치합니다",
-        "mismatchToast": "비밀번호가 일치하지 않습니다"
-      }
-    },
-    "commercial": {
-      "title": "상업용 라이선스",
-      "trialActive": "체험판: {{days}}일 {{hours}}시간 남음",
-      "trialActiveDescription": "체험 기간 동안 상업적 사용은 무료입니다. 체험이 종료되면 모든 기능은 계속 작동합니다 — 개인 사용은 무료로 유지되며 상업적 사용만 라이선스가 필요합니다.",
-      "trialExpired": "체험판이 만료되었습니다",
-      "trialExpiredDescription": "개인 사용은 무료로 유지됩니다. 상업적 사용에는 라이선스가 필요합니다.",
-      "subscriptionActive": "구독 중 — {{plan}} 플랜",
-      "subscriptionActiveDescription": "Donut Browser 구독이 활성 상태입니다. 플랜 기간 동안 상업적 사용이 라이선스됩니다."
-    },
     "advanced": {
       "title": "고급",
       "clearCache": "모든 버전 캐시 지우기",
@@ -249,9 +210,7 @@
       "empty": "프로필을 찾을 수 없습니다.",
       "notSelected": "선택 안 됨",
       "ext": "확장",
-      "dns": "DNS",
       "extDefault": "기본값",
-      "dnsLevel": "DNS 차단 목록: {{level}}",
       "extSearch": "그룹 검색…",
       "extEmpty": "확장 프로그램 그룹이 없습니다",
       "cantModifyRunning": "실행 중인 프로필은 수정할 수 없습니다",
@@ -614,7 +573,6 @@
     "apiToggleFailed": "API 서버 토글 실패",
     "apiStartFailed": "API 서버 시작 실패",
     "apiUnknownError": "알 수 없는 오류",
-    "openSettings": "통합 설정 열기",
     "apiRunningOn": "실행 중",
     "apiExampleRequest": "예시 요청"
   },
@@ -1241,23 +1199,6 @@
     "cookieExportLocked": "쿠키 내보내기는 Pro 기능입니다",
     "cookieManagementLocked": "쿠키 관리는 Pro 기능입니다"
   },
-  "dnsBlocklist": {
-    "title": "DNS 차단 목록",
-    "none": "없음",
-    "light": "라이트",
-    "normal": "보통",
-    "pro": "Pro",
-    "proPlus": "Pro++",
-    "ultimate": "얼티밋",
-    "settingsDescription": "DNS 차단 목록은 프록시 수준에서 광고, 트래커 및 악성코드 도메인을 차단합니다. 목록은 12시간마다 자동으로 새로 고쳐집니다.",
-    "manageLists": "DNS 차단 목록 관리",
-    "refreshAll": "모든 목록 새로 고침",
-    "refreshFailed": "DNS 차단 목록 새로 고침 실패",
-    "domains": "도메인",
-    "fresh": "최신",
-    "stale": "오래됨",
-    "notCached": "캐시되지 않음"
-  },
   "vpns": {
     "form": {
       "titleEdit": "VPN 편집",
@@ -1270,8 +1211,6 @@
       "privateKeyPlaceholder": "Base64로 인코딩된 개인 키",
       "address": "주소",
       "addressPlaceholder": "예: 10.0.0.2/24",
-      "dnsOptional": "DNS (선택 사항)",
-      "dnsPlaceholder": "예: 1.1.1.1",
       "mtuOptional": "MTU (선택 사항)",
       "mtuPlaceholder": "예: 1420",
       "peerPublicKey": "피어 공개 키",
@@ -1473,14 +1412,6 @@
     "acceptButton": "동의함",
     "acceptSuccess": "약관에 동의했습니다",
     "acceptFailed": "약관 동의 실패",
-    "tryAgain": "다시 시도하세요"
-  },
-  "commercialTrial": {
-    "title": "상업용 체험판 만료됨",
-    "description": "2주 상업용 체험판 기간이 종료되었습니다.",
-    "body": "Donut Browser를 비즈니스 용도로 사용하는 경우 계속 사용하려면 상업용 라이선스를 구매해야 합니다. 개인 용도로는 계속 무료로 사용할 수 있습니다.",
-    "understandButton": "이해했습니다",
-    "failed": "확인 저장 실패",
     "tryAgain": "다시 시도하세요"
   },
   "permissionDialog": {
@@ -1835,10 +1766,6 @@
       "createProfile": {
         "title": "첫 프로필 만들기",
         "content": "여기를 클릭하여 첫 프로필을 만드세요. 브라우저로는 Wayfern을 선택하세요. 핑거프린트 방지가 적용된 권장 Chromium입니다."
-      },
-      "dnsBlocking": {
-        "title": "DNS 차단",
-        "content": "이 드롭다운으로 프로필의 DNS 차단 목록 수준을 설정하세요. 광고, 추적기, 멀웨어를 네트워크 수준에서 차단합니다. 수준이 높을수록 더 많이 차단합니다."
       }
     },
     "buttons": {
@@ -1895,16 +1822,6 @@
         "groups": "프로필 그룹",
         "cookies": "쿠키 가져오기 및 내보내기"
       }
-    },
-    "license": {
-      "title": "라이선스",
-      "body": "Donut Browser는 오픈 소스이며 무료로 사용할 수 있습니다.",
-      "agree": "이해했습니다",
-      "personalTitle": "개인 사용",
-      "personalDesc": "영구적으로 무료입니다.",
-      "commercialTitle": "상업적 사용",
-      "trialBadge": "2주 무료",
-      "commercialDesc": "2주간의 평가 기간 동안 무료입니다. 이후에는 유료 요금제가 필요하며, 이를 통해 프로젝트가 유지되고 발전할 수 있습니다."
     }
   },
   "wayfernBlocked": {

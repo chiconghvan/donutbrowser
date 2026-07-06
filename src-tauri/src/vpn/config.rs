@@ -63,7 +63,6 @@ pub struct VpnConfig {
 pub struct WireGuardConfig {
   pub private_key: String,
   pub address: String,
-  pub dns: Option<String>,
   pub mtu: Option<u16>,
   pub peer_public_key: String,
   pub peer_endpoint: String,
@@ -187,7 +186,6 @@ pub fn parse_wireguard_config(content: &str) -> Result<WireGuardConfig, VpnError
 
   let persistent_keepalive = peer.get("PersistentKeepalive").and_then(|s| s.parse().ok());
 
-  let dns = interface.get("DNS").cloned();
   let mtu = interface.get("MTU").and_then(|s| s.parse().ok());
   let preshared_key = peer.get("PresharedKey").cloned();
   if let Some(ref psk) = preshared_key {
@@ -197,7 +195,6 @@ pub fn parse_wireguard_config(content: &str) -> Result<WireGuardConfig, VpnError
   Ok(WireGuardConfig {
     private_key,
     address,
-    dns,
     mtu,
     peer_public_key,
     peer_endpoint,
@@ -272,7 +269,6 @@ mod tests {
 [Interface]
 PrivateKey = YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWE=
 Address = 10.0.0.2/24
-DNS = 1.1.1.1
 MTU = 1420
 
 [Peer]
@@ -288,7 +284,6 @@ PersistentKeepalive = 25
       "YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWE="
     );
     assert_eq!(config.address, "10.0.0.2/24");
-    assert_eq!(config.dns, Some("1.1.1.1".to_string()));
     assert_eq!(config.mtu, Some(1420));
     assert_eq!(
       config.peer_public_key,
@@ -317,7 +312,6 @@ Endpoint = 1.2.3.4:51820
       "YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWE="
     );
     assert_eq!(config.address, "10.0.0.2/32");
-    assert!(config.dns.is_none());
     assert!(config.mtu.is_none());
     assert_eq!(
       config.peer_public_key,

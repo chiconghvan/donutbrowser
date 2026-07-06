@@ -17,7 +17,6 @@ import type { Dispatch, SetStateAction } from "react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { FaApple, FaLinux, FaWindows } from "react-icons/fa";
-import { FiWifi } from "react-icons/fi";
 import {
   LuCheck,
   LuChevronDown,
@@ -38,7 +37,6 @@ import {
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
 import {
   ProfileBypassRulesDialog,
-  ProfileDnsBlocklistDialog,
   ProfileInfoDialog,
   ProfileLaunchHookDialog,
 } from "@/components/profile-info-dialog";
@@ -103,7 +101,6 @@ import {
   DataTableActionBarAction,
   DataTableActionBarSelection,
 } from "./data-table-action-bar";
-import MultipleSelector, { type Option } from "./multiple-selector";
 
 import { TrafficDetailsDialog } from "./traffic-details-dialog";
 import { Input } from "./ui/input";
@@ -122,16 +119,6 @@ interface TableMeta {
   stoppingProfiles: Set<string>;
   isUpdating: (browser: string) => boolean;
   browserState: ReturnType<typeof useBrowserState>;
-
-  // Tags editor state
-  tagsOverrides: Record<string, string[]>;
-  allTags: string[];
-  openTagsEditorFor: string | null;
-  setAllTags: React.Dispatch<React.SetStateAction<string[]>>;
-  setOpenTagsEditorFor: React.Dispatch<React.SetStateAction<string | null>>;
-  setTagsOverrides: React.Dispatch<
-    React.SetStateAction<Record<string, string[]>>
-  >;
 
   // Note editor state
   noteOverrides: Record<string, string | null>;
@@ -155,11 +142,8 @@ interface TableMeta {
   // Extension groups (for Ext column lookup)
   extensionGroups: ExtensionGroup[];
 
-  // Click handlers for inline Ext / DNS cell editing
+  // Click handlers for inline Ext cell editing
   onAssignExtensionGroup?: (profileIds: string[]) => void;
-  setDnsBlocklistProfile: React.Dispatch<
-    React.SetStateAction<BrowserProfile | null>
-  >;
 
   // Selection helpers
   isProfileSelected: (id: string) => boolean;
@@ -387,377 +371,6 @@ function ExtCell({
   );
 }
 
-// Inline DNS blocklist dropdown — same Popover/Command pattern as Ext.
-function DnsCell({
-  profile,
-  meta,
-}: {
-  profile: BrowserProfile;
-  meta: TableMeta;
-}) {
-  const [open, setOpen] = React.useState(false);
-  const [isSaving, setIsSaving] = React.useState(false);
-  const level = profile.dns_blocklist ?? null;
-  // Backend levels are: light, normal, pro, pro_plus, ultimate (+ null).
-  // Keep the list ordered from least to most restrictive.
-  const LEVELS: { value: string; labelKey: string }[] = [
-    { value: "light", labelKey: "dnsBlocklist.light" },
-    { value: "normal", labelKey: "dnsBlocklist.normal" },
-    { value: "pro", labelKey: "dnsBlocklist.pro" },
-    { value: "pro_plus", labelKey: "dnsBlocklist.proPlus" },
-    { value: "ultimate", labelKey: "dnsBlocklist.ultimate" },
-  ];
-  const currentLabel =
-    level === null
-      ? null
-      : (LEVELS.find((l) => l.value === level)?.labelKey ?? null);
-
-  const onPick = async (nextLevel: string | null) => {
-    setIsSaving(true);
-    try {
-      await invoke("update_profile_dns_blocklist", {
-        profileId: profile.id,
-        dnsBlocklist: nextLevel,
-      });
-    } catch (err) {
-      console.error("Failed to update DNS blocklist:", err);
-    } finally {
-      setIsSaving(false);
-      setOpen(false);
-    }
-  };
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          data-onborda="dns-blocklist"
-          disabled={isSaving}
-          className="flex items-center gap-1.5 h-7 px-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded transition-colors duration-100 w-full text-left disabled:opacity-50"
-          title={
-            level
-              ? meta.t("profiles.table.dnsLevel", { level })
-              : meta.t("dnsBlocklist.none")
-          }
-        >
-          <FiWifi className="size-3 shrink-0" />
-          <span className="flex-1 truncate text-[11px] tracking-wide">
-            {currentLabel ? meta.t(currentLabel) : "—"}
-          </span>
-          <LuChevronDown className="size-3 shrink-0 text-muted-foreground" />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent className="w-48 p-0" align="start">
-        <Command>
-          <CommandList>
-            <CommandGroup>
-              <CommandItem
-                value="__none__"
-                onSelect={() => {
-                  void onPick(null);
-                }}
-              >
-                {level === null && <LuCheck className="mr-2 size-3.5" />}
-                <span className={level === null ? "" : "ml-5"}>
-                  {meta.t("dnsBlocklist.none")}
-                </span>
-              </CommandItem>
-              {LEVELS.map((l) => (
-                <CommandItem
-                  key={l.value}
-                  value={l.value}
-                  onSelect={() => {
-                    void onPick(l.value);
-                  }}
-                >
-                  {level === l.value && <LuCheck className="mr-2 size-3.5" />}
-                  <span className={level === l.value ? "" : "ml-5"}>
-                    {meta.t(l.labelKey)}
-                  </span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
-  );
-}
-
-const TagsCell = React.memo<{
-  profile: BrowserProfile;
-  isDisabled: boolean;
-  tagsOverrides: Record<string, string[]>;
-  allTags: string[];
-  setAllTags: React.Dispatch<React.SetStateAction<string[]>>;
-  openTagsEditorFor: string | null;
-  setOpenTagsEditorFor: React.Dispatch<React.SetStateAction<string | null>>;
-  setTagsOverrides: React.Dispatch<
-    React.SetStateAction<Record<string, string[]>>
-  >;
-}>(
-  ({
-    profile,
-    isDisabled,
-    tagsOverrides,
-    allTags,
-    setAllTags,
-    openTagsEditorFor,
-    setOpenTagsEditorFor,
-    setTagsOverrides,
-  }) => {
-    const { t: translate } = useTranslation();
-    const effectiveTags: string[] = Object.hasOwn(tagsOverrides, profile.id)
-      ? tagsOverrides[profile.id]
-      : (profile.tags ?? []);
-
-    const valueOptions: Option[] = React.useMemo(
-      () => effectiveTags.map((t) => ({ value: t, label: t })),
-      [effectiveTags],
-    );
-    const allOptions: Option[] = React.useMemo(
-      () => allTags.map((t) => ({ value: t, label: t })),
-      [allTags],
-    );
-
-    const onTagsChange = React.useCallback(
-      async (newTagsRaw: string[]) => {
-        // Dedupe tags
-        const seen = new Set<string>();
-        const newTags: string[] = [];
-        for (const t of newTagsRaw) {
-          if (!seen.has(t)) {
-            seen.add(t);
-            newTags.push(t);
-          }
-        }
-        setTagsOverrides((prev) => ({ ...prev, [profile.id]: newTags }));
-        try {
-          await invoke<BrowserProfile>("update_profile_tags", {
-            profileId: profile.id,
-            tags: newTags,
-          });
-          setAllTags((prev) => {
-            const next = new Set(prev);
-            for (const t of newTags) next.add(t);
-            return Array.from(next).sort();
-          });
-        } catch (error) {
-          console.error("Failed to update tags:", error);
-        }
-      },
-      [profile.id, setTagsOverrides, setAllTags],
-    );
-
-    const handleChange = React.useCallback(
-      async (opts: Option[]) => {
-        const newTagsRaw = opts.map((o) => o.value);
-        await onTagsChange(newTagsRaw);
-      },
-      [onTagsChange],
-    );
-
-    const containerRef = React.useRef<HTMLDivElement | null>(null);
-    const editorRef = React.useRef<HTMLDivElement | null>(null);
-    const [visibleCount, setVisibleCount] = React.useState<number>(
-      effectiveTags.length,
-    );
-    const [isFocused, setIsFocused] = React.useState(false);
-
-    React.useLayoutEffect(() => {
-      // Only measure when not editing this profile's tags
-      if (openTagsEditorFor === profile.id) return;
-      const container = containerRef.current;
-      if (!container) return;
-
-      let timeoutId: number | undefined;
-      const compute = () => {
-        if (timeoutId) clearTimeout(timeoutId);
-        timeoutId = window.setTimeout(() => {
-          const available = container.clientWidth;
-          if (available <= 0) return;
-          const canvas = document.createElement("canvas");
-          const ctx = canvas.getContext("2d");
-          if (!ctx) return;
-          const style = window.getComputedStyle(container);
-          const font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
-          ctx.font = font;
-          const padding = 16;
-          const gap = 4;
-          let used = 0;
-          let count = 0;
-          for (let i = 0; i < effectiveTags.length; i++) {
-            const text = effectiveTags[i];
-            const width = Math.ceil(ctx.measureText(text).width) + padding;
-            const remaining = effectiveTags.length - (i + 1);
-            let extra = 0;
-            if (remaining > 0) {
-              const plusText = `+${remaining}`;
-              extra = Math.ceil(ctx.measureText(plusText).width) + padding;
-            }
-            const nextUsed =
-              used +
-              (used > 0 ? gap : 0) +
-              width +
-              (remaining > 0 ? gap + extra : 0);
-            if (nextUsed <= available) {
-              used += (used > 0 ? gap : 0) + width;
-              count = i + 1;
-            } else {
-              break;
-            }
-          }
-          setVisibleCount(count);
-        }, 16); // Debounce with RAF timing
-      };
-      compute();
-      const ro = new ResizeObserver(compute);
-      ro.observe(container);
-      return () => {
-        ro.disconnect();
-        if (timeoutId) clearTimeout(timeoutId);
-      };
-    }, [effectiveTags, openTagsEditorFor, profile.id]);
-
-    React.useEffect(() => {
-      if (openTagsEditorFor !== profile.id) return;
-      const handleClick = (e: MouseEvent) => {
-        const target = e.target as Node | null;
-        if (
-          editorRef.current &&
-          target &&
-          !editorRef.current.contains(target)
-        ) {
-          setOpenTagsEditorFor(null);
-        }
-      };
-      document.addEventListener("mousedown", handleClick);
-      return () => {
-        document.removeEventListener("mousedown", handleClick);
-      };
-    }, [openTagsEditorFor, profile.id, setOpenTagsEditorFor]);
-
-    React.useEffect(() => {
-      if (openTagsEditorFor === profile.id && editorRef.current) {
-        // Focus the inner input of MultipleSelector on open
-        const inputEl = editorRef.current.querySelector("input");
-        if (inputEl) {
-          inputEl.focus();
-        }
-      }
-    }, [openTagsEditorFor, profile.id]);
-
-    if (openTagsEditorFor !== profile.id) {
-      const hiddenCount = Math.max(0, effectiveTags.length - visibleCount);
-      const ButtonContent = (
-        <button
-          type="button"
-          ref={containerRef as unknown as React.RefObject<HTMLButtonElement>}
-          className={cn(
-            "flex overflow-hidden gap-1 items-center px-2 py-1 h-6 w-full bg-transparent rounded border-none cursor-pointer",
-            isDisabled
-              ? "opacity-60 cursor-not-allowed"
-              : "cursor-pointer hover:bg-accent/50",
-          )}
-          onClick={() => {
-            if (!isDisabled) setOpenTagsEditorFor(profile.id);
-          }}
-        >
-          {effectiveTags.slice(0, visibleCount).map((t) => (
-            <Badge key={t} variant="secondary" className="px-2 py-0 text-xs">
-              {t}
-            </Badge>
-          ))}
-          {effectiveTags.length === 0 && (
-            <span className="text-muted-foreground">
-              {translate("profileTable.noTags")}
-            </span>
-          )}
-          {hiddenCount > 0 && (
-            <Badge variant="outline" className="px-2 py-0 text-xs">
-              +{hiddenCount}
-            </Badge>
-          )}
-        </button>
-      );
-
-      return (
-        <div className="w-full h-6 cursor-pointer">
-          <Tooltip>
-            <TooltipTrigger asChild>{ButtonContent}</TooltipTrigger>
-            {hiddenCount > 0 && (
-              <TooltipContent className="max-w-[320px]">
-                <div className="flex flex-wrap gap-1">
-                  {effectiveTags.map((t) => (
-                    <Badge
-                      key={t}
-                      variant="secondary"
-                      className="px-2 py-0 text-xs"
-                    >
-                      {t}
-                    </Badge>
-                  ))}
-                </div>
-              </TooltipContent>
-            )}
-          </Tooltip>
-        </div>
-      );
-    }
-
-    return (
-      <div
-        className={cn(
-          "w-full h-6 relative",
-          isDisabled && "opacity-60 pointer-events-none",
-        )}
-      >
-        <div
-          ref={editorRef}
-          className="absolute top-0 left-0 z-50 w-40 min-h-6 bg-popover rounded-md shadow-md"
-        >
-          <MultipleSelector
-            value={valueOptions}
-            options={allOptions}
-            onChange={(opts) => void handleChange(opts)}
-            creatable
-            selectFirstItem={false}
-            placeholder={
-              effectiveTags.length === 0
-                ? translate("profileTable.addTagsPlaceholder")
-                : ""
-            }
-            className={cn(
-              "bg-transparent border-0! focus-within:ring-0!",
-              "[&_div:first-child]:border-0! [&_div:first-child]:ring-0! [&_div:first-child]:focus-within:ring-0!",
-              "[&_div:first-child]:min-h-6! [&_div:first-child]:px-2! [&_div:first-child]:py-1!",
-              "[&_div:first-child>div]:items-center [&_div:first-child>div]:h-6!",
-              "[&_input]:ml-0! [&_input]:mt-0! [&_input]:px-0!",
-              !isFocused && "[&_div:first-child>div]:justify-center",
-            )}
-            badgeClassName="shrink-0"
-            inputProps={{
-              className: "!py-0 text-sm caret-current !ml-0 !mt-0 !px-0",
-              onKeyDown: (e) => {
-                if (e.key === "Escape") setOpenTagsEditorFor(null);
-              },
-              onFocus: () => {
-                setIsFocused(true);
-              },
-              onBlur: () => {
-                setIsFocused(false);
-              },
-            }}
-          />
-        </div>
-      </div>
-    );
-  },
-);
-
-TagsCell.displayName = "TagsCell";
-
 const NonHoverableTooltip = React.memo<{
   children: React.ReactNode;
   content: React.ReactNode;
@@ -924,15 +537,16 @@ const NoteCell = React.memo<{
         <div className="w-full min-h-6">
           <Tooltip>
             <TooltipTrigger asChild>
-              <button
-                type="button"
+              <div
+                role="button"
+                tabIndex={isDisabled ? -1 : 0}
                 className={cn(
                   "flex items-center px-2 py-1 min-h-6 w-full min-w-0 bg-transparent rounded border-none text-left",
                   isDisabled
                     ? "opacity-60 cursor-not-allowed"
                     : "cursor-pointer hover:bg-accent/50",
                 )}
-                onClick={() => {
+                onDoubleClick={() => {
                   if (!isDisabled) {
                     setNoteValue(effectiveNote ?? "");
                     setOpenNoteEditorFor(profile.id);
@@ -947,7 +561,7 @@ const NoteCell = React.memo<{
                 >
                   {effectiveNote ? displayNote : t("profiles.note.empty")}
                 </span>
-              </button>
+              </div>
             </TooltipTrigger>
             {showTooltip && (
               <TooltipContent className="max-w-[320px]">
@@ -1003,6 +617,13 @@ const NoteCell = React.memo<{
 );
 
 NoteCell.displayName = "NoteCell";
+
+function isRowSelectionTarget(target: EventTarget | null) {
+  if (!(target instanceof Element)) return false;
+  return !target.closest(
+    "button,input,textarea,select,a,[data-row-click-ignore]",
+  );
+}
 
 interface ProfilesDataTableProps {
   profiles: BrowserProfile[];
@@ -1178,8 +799,6 @@ export function ProfilesDataTable({
   );
   const [bypassRulesProfile, setBypassRulesProfile] =
     React.useState<BrowserProfile | null>(null);
-  const [dnsBlocklistProfile, setDnsBlocklistProfile] =
-    React.useState<BrowserProfile | null>(null);
   const [launchHookProfile, setLaunchHookProfile] =
     React.useState<BrowserProfile | null>(null);
   const [launchingProfiles, setLaunchingProfiles] = React.useState<Set<string>>(
@@ -1199,13 +818,6 @@ export function ProfilesDataTable({
     Record<string, string | null>
   >({});
   const [showCheckboxes, setShowCheckboxes] = React.useState(false);
-  const [tagsOverrides, setTagsOverrides] = React.useState<
-    Record<string, string[]>
-  >({});
-  const [allTags, setAllTags] = React.useState<string[]>([]);
-  const [openTagsEditorFor, setOpenTagsEditorFor] = React.useState<
-    string | null
-  >(null);
   const [noteOverrides, setNoteOverrides] = React.useState<
     Record<string, string | null>
   >({});
@@ -1226,12 +838,13 @@ export function ProfilesDataTable({
   // ── Drag selection refs (declared early — assigned after table init) ────
   const dragSession = React.useRef<{
     active: boolean;
-    mode: "add" | "remove";
+    mode: "add" | "remove" | "replace";
     anchorIndex: number;
     lastIndex: number;
     didDrag: boolean;
     startX: number;
     startY: number;
+    baseSelection: string[];
   }>({
     active: false,
     mode: "add",
@@ -1240,6 +853,7 @@ export function ProfilesDataTable({
     didDrag: false,
     startX: 0,
     startY: 0,
+    baseSelection: [],
   });
   const autoScrollRaf = React.useRef<number | null>(null);
   const lastPointerCoords = React.useRef<{ x: number; y: number } | null>(null);
@@ -1248,6 +862,7 @@ export function ProfilesDataTable({
   const sortedRowsRef = React.useRef<any[]>([]);
   const scrollParentRefForDrag = React.useRef<HTMLDivElement | null>(null);
   const suppressClickRef = React.useRef(false);
+  const selectionAnchorIdRef = React.useRef<string | null>(null);
   // Stable refs so document listeners always call latest handlers
   const onDragMoveRef = React.useRef<(e: PointerEvent) => void>(() => {});
   const onDragEndRef = React.useRef<(e: PointerEvent) => void>(() => {});
@@ -1279,15 +894,6 @@ export function ProfilesDataTable({
       mounted = false;
       unlisten?.();
     };
-  }, []);
-
-  const loadAllTags = React.useCallback(async () => {
-    try {
-      const tags = await invoke<string[]>("get_all_tags");
-      setAllTags(tags);
-    } catch (error) {
-      console.error("Failed to load tags:", error);
-    }
   }, []);
 
   const handleVpnSelection = React.useCallback(
@@ -1580,16 +1186,11 @@ export function ProfilesDataTable({
         setShowCheckboxes(false);
       }
 
+      selectionAnchorIdRef.current = profileId;
       onSelectedProfilesChange(Array.from(newSet));
     },
     [profiles, browserState, onSelectedProfilesChange, selectedProfiles],
   );
-
-  React.useEffect(() => {
-    if (browserState.isClient) {
-      void loadAllTags();
-    }
-  }, [browserState.isClient, loadAllTags]);
 
   // Handle checkbox change
   const handleCheckboxChange = React.useCallback(
@@ -1606,9 +1207,82 @@ export function ProfilesDataTable({
         setShowCheckboxes(false);
       }
 
+      selectionAnchorIdRef.current = profileId;
       onSelectedProfilesChange(Array.from(newSet));
     },
     [onSelectedProfilesChange, selectedProfiles],
+  );
+
+  const getSelectableRangeIds = React.useCallback(
+    (fromId: string, toId: string) => {
+      const rows = sortedRowsRef.current;
+      const fromIndex = idToIndexRef.current[fromId];
+      const toIndex = idToIndexRef.current[toId];
+      if (fromIndex < 0 || toIndex < 0) return [];
+
+      const lo = Math.min(fromIndex, toIndex);
+      const hi = Math.max(fromIndex, toIndex);
+      const ids: string[] = [];
+      for (let i = lo; i <= hi; i++) {
+        const profile = rows[i]?.original as BrowserProfile | undefined;
+        if (profile && browserState.canSelectProfile(profile)) {
+          ids.push(profile.id);
+        }
+      }
+      return ids;
+    },
+    [browserState],
+  );
+
+  const applySelection = React.useCallback(
+    (ids: string[]) => {
+      setShowCheckboxes(ids.length > 0);
+      onSelectedProfilesChange(ids);
+    },
+    [onSelectedProfilesChange],
+  );
+
+  const selectProfileLikeExcel = React.useCallback(
+    (
+      profile: BrowserProfile,
+      event: Pick<MouseEvent, "ctrlKey" | "metaKey" | "shiftKey">,
+    ) => {
+      if (!browserState.canSelectProfile(profile)) return;
+
+      const useToggle = event.ctrlKey || event.metaKey;
+      const useRange = event.shiftKey;
+      const current = selectedProfilesRef.current;
+      let next: string[];
+
+      if (useRange) {
+        const anchorId =
+          selectionAnchorIdRef.current ?? current[0] ?? profile.id;
+        const rangeIds = getSelectableRangeIds(anchorId, profile.id);
+        if (useToggle) {
+          const set = new Set(current);
+          const allRangeSelected = rangeIds.every((id) => set.has(id));
+          for (const id of rangeIds) {
+            if (allRangeSelected) set.delete(id);
+            else set.add(id);
+          }
+          next = Array.from(set);
+        } else {
+          next = rangeIds;
+        }
+      } else if (useToggle) {
+        const set = new Set(current);
+        if (set.has(profile.id)) set.delete(profile.id);
+        else set.add(profile.id);
+        next = Array.from(set);
+        selectionAnchorIdRef.current = profile.id;
+      } else {
+        next = [profile.id];
+        selectionAnchorIdRef.current = profile.id;
+      }
+
+      applySelection(next);
+    },
+    [applySelection, browserState, getSelectableRangeIds],
   );
 
   // Handle select all checkbox
@@ -1665,24 +1339,26 @@ export function ProfilesDataTable({
         }
       }
 
-      const currentSelected = selectedProfilesRef.current;
-      const newSet = new Set(currentSelected);
-      if (session.mode === "add") {
+      const newSet = new Set(session.baseSelection);
+      if (session.mode === "replace") {
+        newSet.clear();
+        for (const id of ids) newSet.add(id);
+      } else if (session.mode === "add") {
         for (const id of ids) newSet.add(id);
       } else {
         for (const id of ids) newSet.delete(id);
       }
 
       const arr = Array.from(newSet);
+      const currentSelected = selectedProfilesRef.current;
       if (
         arr.length !== currentSelected.length ||
         arr.some((id) => !currentSelected.includes(id))
       ) {
-        setShowCheckboxes(arr.length > 0);
-        onSelectedProfilesChange(arr);
+        applySelection(arr);
       }
     },
-    [onSelectedProfilesChange, browserState],
+    [applySelection, browserState],
   );
 
   // Auto-scroll while dragging past the scroll-container edge.
@@ -1746,7 +1422,8 @@ export function ProfilesDataTable({
   const handleSelectPointerDown = React.useCallback(
     (e: React.PointerEvent, profile: BrowserProfile) => {
       if (e.button !== 0) return;
-      if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+      if (e.altKey) return;
+      if (!isRowSelectionTarget(e.target)) return;
       if (!browserState.canSelectProfile(profile)) return;
 
       const idx = idToIndexRef.current[profile.id];
@@ -1754,28 +1431,49 @@ export function ProfilesDataTable({
 
       suppressClickRef.current = false;
 
-      const isSelected = selectedProfiles.includes(profile.id);
-      if (!isSelected) {
-        const newSet = new Set(selectedProfiles);
-        newSet.add(profile.id);
-        setShowCheckboxes(true);
-        onSelectedProfilesChange(Array.from(newSet));
-      } else {
-        setShowCheckboxes(true);
-      }
+      const current = selectedProfilesRef.current;
+      const anchorId = e.shiftKey
+        ? (selectionAnchorIdRef.current ?? current[0] ?? profile.id)
+        : profile.id;
+      const anchorIndex = idToIndexRef.current[anchorId] ?? idx;
+      const isToggleDrag = e.ctrlKey || e.metaKey;
+      const isSelected = current.includes(profile.id);
 
       const session = dragSession.current;
       session.active = true;
       session.didDrag = false;
-      session.anchorIndex = idx;
-      session.lastIndex = idx;
-      session.mode = isSelected ? "remove" : "add";
+      session.anchorIndex = anchorIndex >= 0 ? anchorIndex : idx;
+      session.lastIndex = -1;
+      session.mode = e.shiftKey
+        ? isToggleDrag && isSelected
+          ? "remove"
+          : isToggleDrag
+            ? "add"
+            : "replace"
+        : isToggleDrag && isSelected
+          ? "remove"
+          : isToggleDrag
+            ? "add"
+            : "replace";
       session.startX = e.clientX;
       session.startY = e.clientY;
+      session.baseSelection = e.shiftKey || isToggleDrag ? current : [];
 
       lastPointerCoords.current = { x: e.clientX, y: e.clientY };
     },
-    [browserState, selectedProfiles, onSelectedProfilesChange],
+    [browserState],
+  );
+
+  const handleRowClick = React.useCallback(
+    (e: React.MouseEvent, profile: BrowserProfile) => {
+      if (suppressClickRef.current) {
+        suppressClickRef.current = false;
+        return;
+      }
+      if (!isRowSelectionTarget(e.target)) return;
+      selectProfileLikeExcel(profile, e.nativeEvent);
+    },
+    [selectProfileLikeExcel],
   );
 
   // These are called by stable document listeners (wired via onDragMoveRef /
@@ -1845,10 +1543,12 @@ export function ProfilesDataTable({
   // Stable document-level listeners for pointer move/up during drag.
   React.useEffect(() => {
     const onMove = (e: PointerEvent) => {
+      if (!dragSession.current.active) return;
       e.preventDefault();
       onDragMoveRef.current(e);
     };
     const onEnd = (e: PointerEvent) => {
+      if (!dragSession.current.active) return;
       e.preventDefault();
       onDragEndRef.current(e);
     };
@@ -1893,14 +1593,6 @@ export function ProfilesDataTable({
       isUpdating,
       browserState,
 
-      // Tags editor state
-      tagsOverrides,
-      allTags,
-      openTagsEditorFor,
-      setAllTags,
-      setOpenTagsEditorFor,
-      setTagsOverrides,
-
       // Note editor state
       noteOverrides,
       openNoteEditorFor,
@@ -1918,7 +1610,6 @@ export function ProfilesDataTable({
       // Extension groups
       extensionGroups,
       onAssignExtensionGroup,
-      setDnsBlocklistProfile,
 
       // Selection helpers
       isProfileSelected: (id: string) => selectedProfiles.includes(id),
@@ -1992,9 +1683,6 @@ export function ProfilesDataTable({
       stoppingProfiles,
       isUpdating,
       browserState,
-      tagsOverrides,
-      allTags,
-      openTagsEditorFor,
       noteOverrides,
       openNoteEditorFor,
       proxyOverrides,
@@ -2579,15 +2267,16 @@ export function ProfilesDataTable({
 
           return (
             <div className="flex items-center gap-1.5 min-w-0 max-w-full overflow-hidden">
-              <button
-                type="button"
+              <div
+                role="button"
+                tabIndex={isDisabled ? -1 : 0}
                 className={cn(
                   "px-2 py-1 mr-auto text-left bg-transparent rounded border-none h-6 min-w-0 max-w-full overflow-hidden",
                   isDisabled
                     ? "opacity-60 cursor-not-allowed"
                     : "cursor-pointer hover:bg-accent/50",
                 )}
-                onClick={() => {
+                onDoubleClick={() => {
                   if (isDisabled) return;
                   meta.setProfileToRename(profile);
                   meta.setNewProfileName(profile.name);
@@ -2604,7 +2293,7 @@ export function ProfilesDataTable({
                 }}
               >
                 {display}
-              </button>
+              </div>
               {isLocked && (
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -2618,39 +2307,6 @@ export function ProfilesDataTable({
                 </Tooltip>
               )}
             </div>
-          );
-        },
-      },
-      {
-        id: "tags",
-        size: 100,
-        header: ({ table }) => {
-          const meta = table.options.meta as TableMeta;
-          return meta.t("profileTable.tagsHeader");
-        },
-        cell: ({ row, table }) => {
-          const meta = table.options.meta as TableMeta;
-          const profile = row.original;
-          const isCrossOs = isCrossOsProfile(profile);
-          const isCrossOsBlocked = isCrossOs;
-          const isRunning =
-            meta.isClient && meta.runningProfiles.has(profile.id);
-          const isLaunching = meta.launchingProfiles.has(profile.id);
-          const isStopping = meta.stoppingProfiles.has(profile.id);
-          const isDisabled =
-            isRunning || isLaunching || isStopping || isCrossOsBlocked;
-
-          return (
-            <TagsCell
-              profile={profile}
-              isDisabled={isDisabled}
-              tagsOverrides={meta.tagsOverrides ?? {}}
-              allTags={meta.allTags ?? []}
-              setAllTags={meta.setAllTags}
-              openTagsEditorFor={meta.openTagsEditorFor ?? null}
-              setOpenTagsEditorFor={meta.setOpenTagsEditorFor}
-              setTagsOverrides={meta.setTagsOverrides}
-            />
           );
         },
       },
@@ -2739,7 +2395,7 @@ export function ProfilesDataTable({
               (snapshot?.current_bytes_received ?? 0);
 
             return (
-              <div className="overflow-hidden min-w-0">
+              <div className="overflow-hidden min-w-0" data-row-click-ignore>
                 <BandwidthMiniChart
                   key={`${profile.id}-${snapshot?.last_update ?? 0}-${bandwidthData.length}`}
                   data={bandwidthData}
@@ -2793,19 +2449,6 @@ export function ProfilesDataTable({
           const meta = table.options.meta as TableMeta;
           const profile = row.original;
           return <ExtCell profile={profile} meta={meta} />;
-        },
-      },
-      {
-        id: "dns",
-        size: 95,
-        header: ({ table }) => {
-          const meta = table.options.meta as TableMeta;
-          return meta.t("profiles.table.dns");
-        },
-        cell: ({ row, table }) => {
-          const meta = table.options.meta as TableMeta;
-          const profile = row.original;
-          return <DnsCell profile={profile} meta={meta} />;
         },
       },
       {
@@ -2933,6 +2576,16 @@ export function ProfilesDataTable({
   useScrollFade(scrollParentRef);
 
   React.useEffect(() => {
+    sortedRowsRef.current = sortedRows;
+    idToIndexRef.current = Object.fromEntries(
+      sortedRows.map((row, index) => [row.original.id, index]),
+    );
+    scrollParentRefForDrag.current = scrollParentRef.current;
+    onDragMoveRef.current = _onDragPointerMove;
+    onDragEndRef.current = _endDrag;
+  }, [sortedRows, _onDragPointerMove, _endDrag]);
+
+  React.useEffect(() => {
     const el = scrollParentRef.current;
     if (!el) return;
     const update = () => {
@@ -2942,10 +2595,8 @@ export function ProfilesDataTable({
         const next: VisibilityState = {
           // Always hidden — sort-only column (issue #454).
           created_at: false,
-          dns: w >= 768,
           ext: w >= 672,
           note: w >= 576,
-          tags: w >= 512,
         };
         return Object.keys(next).every((k) => prev[k] === next[k])
           ? prev
@@ -3060,8 +2711,14 @@ export function ProfilesDataTable({
                         data-state={row.getIsSelected() && "selected"}
                         title={crossOsTitle}
                         style={{ height: `${ROW_HEIGHT}px` }}
+                        onPointerDown={(e) => {
+                          handleSelectPointerDown(e, row.original);
+                        }}
+                        onClick={(e) => {
+                          handleRowClick(e, row.original);
+                        }}
                         className={cn(
-                          "overflow-visible hover:bg-accent/50 !border-0",
+                          "overflow-visible hover:bg-accent/50 !border-0 cursor-default",
                           rowIsCrossOs && "opacity-60",
                         )}
                       >
@@ -3141,9 +2798,6 @@ export function ProfilesDataTable({
               onAssignExtensionGroup={onAssignExtensionGroup}
               onOpenBypassRules={(profile) => {
                 setBypassRulesProfile(profile);
-              }}
-              onOpenDnsBlocklist={(profile) => {
-                setDnsBlocklistProfile(profile);
               }}
               onOpenLaunchHook={(profile) => {
                 setLaunchHookProfile(profile);
@@ -3250,14 +2904,6 @@ export function ProfilesDataTable({
         }}
         profileId={bypassRulesProfile?.id ?? null}
         initialRules={bypassRulesProfile?.proxy_bypass_rules ?? []}
-      />
-      <ProfileDnsBlocklistDialog
-        isOpen={dnsBlocklistProfile !== null}
-        onClose={() => {
-          setDnsBlocklistProfile(null);
-        }}
-        profileId={dnsBlocklistProfile?.id ?? null}
-        currentLevel={dnsBlocklistProfile?.dns_blocklist ?? null}
       />
       <ProfileLaunchHookDialog
         isOpen={launchHookProfile !== null}

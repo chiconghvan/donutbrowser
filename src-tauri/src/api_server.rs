@@ -710,7 +710,6 @@ async fn create_profile(
       false,
       request.group_id.clone(),
       false,
-      None,
       request.launch_hook.clone(),
     )
     .await

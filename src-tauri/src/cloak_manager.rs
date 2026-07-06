@@ -239,7 +239,6 @@ impl CloakManager {
         proxy.trim_start_matches("http://").trim_start_matches("https://")
       );
       args.push(format!("--proxy-pac-url={pac_data}"));
-      args.push("--dns-prefetch-disable".to_string());
     }
 
     args.extend(config.launch_args.iter().filter_map(|arg| {

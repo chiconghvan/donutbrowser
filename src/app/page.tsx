@@ -79,8 +79,7 @@ export default function Home() {
   } = useProfileEvents();
 
   // First-run onboarding tour (Onborda).
-  const { startOnborda, setCurrentStep, isOnbordaVisible, currentStep } =
-    useOnborda();
+  const { startOnborda, isOnbordaVisible } = useOnborda();
   const onboardingHandledRef = useRef(false);
   const [welcomeOpen, setWelcomeOpen] = useState(false);
   const [thankYouOpen, setThankYouOpen] = useState(false);
@@ -91,8 +90,7 @@ export default function Home() {
     null,
   );
 
-  // Welcome flow finished. Existing-profile users are done after the welcome +
-  // commercial-use steps; users with no profile yet continue into the in-app
+  // Welcome flow finished. Users with no profile yet continue into the in-app
   // product tour that walks them through creating their first profile.
   const handleWelcomeComplete = useCallback(() => {
     setWelcomeOpen(false);
@@ -133,7 +131,7 @@ export default function Home() {
     return () => window.removeEventListener("scroll", pin, true);
   }, [isOnbordaVisible]);
 
-  // On the very first launch, always show the welcome + commercial-use steps
+  // On the very first launch, always show the welcome flow
   // (one-shot: the backend flag is set immediately so it can't trigger again).
   // The welcome dialog itself decides whether to continue into the browser
   // download + profile-creation flow — only when the user has no profile yet.
@@ -156,16 +154,6 @@ export default function Home() {
       }
     })();
   }, [profilesLoading]);
-
-  // Advance from the "create a profile" step to the "DNS blocking" step as soon
-  // as the user's first profile exists (its DNS dropdown is now in the DOM).
-  useEffect(() => {
-    if (isOnbordaVisible && currentStep === 0 && profiles.length > 0) {
-      // Small delay so the new profile row (and its DNS dropdown target) has
-      // mounted before Onborda re-points at it.
-      setCurrentStep(1, 300);
-    }
-  }, [isOnbordaVisible, currentStep, profiles.length, setCurrentStep]);
 
   const {
     groups: groupsData,
@@ -689,7 +677,6 @@ export default function Home() {
       groupId?: string;
       extensionGroupId?: string;
       ephemeral?: boolean;
-      dnsBlocklist?: string;
       launchHook?: string;
       password?: string;
       allowDuplicateCloakSeed?: boolean;
@@ -712,7 +699,6 @@ export default function Home() {
                 ? selectedGroupId
                 : undefined),
             ephemeral: profileData.ephemeral,
-            dnsBlocklist: profileData.dnsBlocklist,
             launchHook: profileData.launchHook,
           },
         );
@@ -1262,11 +1248,6 @@ export default function Home() {
               onClose={() => {
                 setSettingsDialogOpen(false);
                 setCurrentPage("profiles");
-              }}
-              onIntegrationsOpen={() => {
-                setSettingsDialogOpen(false);
-                setIntegrationsDialogOpen(true);
-                setCurrentPage("integrations");
               }}
               subPage={currentPage === "settings"}
             />

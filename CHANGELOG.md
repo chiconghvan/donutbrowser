@@ -1,6 +1,23 @@
 # Changelog
 
 
+## v0.27.26 (2026-07-06)
+
+### Features
+
+- remove commercial license and trial gating flows
+
+### Bug Fixes
+
+- remove DNS blocklist and Wayfern terms paths from frontend and backend
+- simplify proxy server handling after DNS filtering removal
+
+### Maintenance
+
+- clean up unused settings, profile, and translation entries
+- chore: bump version to 0.27.26
+
+
 ## v0.27.25 (2026-07-03)
 
 ### Bug Fixes
@@ -453,7 +470,6 @@ Note: created manually due to CI issue
 
 ### Bug Fixes
 
-- pass correct parameter for dns list selection
 
 ### Refactoring
 
@@ -785,7 +801,6 @@ Note: created manually due to CI issue
 ### Features
 
 - captcha on email input
-- dns block lists
 - portable build
 
 ### Bug Fixes

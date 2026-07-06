@@ -143,45 +143,6 @@
       "cameraDescription": "Acceso a la cámara para aplicaciones del navegador",
       "accessRequested": "Acceso a {{permission}} solicitado"
     },
-    "integrations": {
-      "title": "Integraciones",
-      "description": "Configura la API Local y MCP (Protocolo de Contexto de Modelo) para integración con herramientas externas y asistentes de IA.",
-      "openSettings": "Abrir Configuración de Integraciones"
-    },
-    "encryption": {
-      "title": "Cifrado de sincronización",
-      "description": "Establece una contraseña para habilitar la sincronización cifrada E2E. Si pierdes esta contraseña, los perfiles cifrados no podrán recuperarse.",
-      "passwordSet": "Activo",
-      "passwordSetDescription": "La contraseña de cifrado E2E está configurada",
-      "noPassword": "Sin contraseña configurada",
-      "passwordPlaceholder": "Contraseña (mín. 8 caracteres)",
-      "confirmPlaceholder": "Confirmar contraseña",
-      "setPassword": "Establecer contraseña",
-      "changePassword": "Cambiar contraseña",
-      "removePassword": "Eliminar contraseña",
-      "removed": "Contraseña de cifrado eliminada",
-      "passwordSaved": "Contraseña de cifrado establecida",
-      "passwordMismatch": "Las contraseñas no coinciden",
-      "passwordTooShort": "La contraseña debe tener al menos 8 caracteres",
-      "requiresProOrOwner": "El cifrado de perfiles está disponible para usuarios Pro y propietarios de equipos.",
-      "validatePassword": "Validar",
-      "validateDialog": {
-        "title": "Validar contraseña de cifrado",
-        "description": "Introduce tu contraseña de cifrado para verificar que coincide con la almacenada en este dispositivo.",
-        "submit": "Validar",
-        "matchToast": "La contraseña es correcta",
-        "mismatchToast": "La contraseña no coincide"
-      }
-    },
-    "commercial": {
-      "title": "Licencia Comercial",
-      "trialActive": "Prueba: {{days}} días, {{hours}} horas restantes",
-      "trialActiveDescription": "El uso comercial es gratuito durante la prueba. Al finalizar, todas las funciones siguen funcionando — el uso personal sigue siendo gratuito, solo el uso comercial requerirá una licencia.",
-      "trialExpired": "Prueba expirada",
-      "trialExpiredDescription": "El uso personal sigue siendo gratuito. El uso comercial requiere una licencia.",
-      "subscriptionActive": "Suscrito — plan {{plan}}",
-      "subscriptionActiveDescription": "Tu suscripción a Donut Browser está activa. El uso comercial está autorizado mientras tu plan esté vigente."
-    },
     "advanced": {
       "title": "Avanzado",
       "clearCache": "Limpiar Toda la Caché de Versiones",
@@ -249,9 +210,7 @@
       "empty": "No se encontraron perfiles.",
       "notSelected": "No seleccionado",
       "ext": "EXT",
-      "dns": "DNS",
       "extDefault": "Predet.",
-      "dnsLevel": "Lista DNS: {{level}}",
       "extSearch": "Buscar grupos…",
       "extEmpty": "Sin grupos de extensiones",
       "cantModifyRunning": "No se puede modificar un perfil en ejecución",
@@ -614,7 +573,6 @@
     "apiToggleFailed": "Error al alternar el servidor API",
     "apiStartFailed": "Error al iniciar el servidor API",
     "apiUnknownError": "Error desconocido",
-    "openSettings": "Abrir configuración de integraciones",
     "apiRunningOn": "Ejecutándose en",
     "apiExampleRequest": "Solicitud de ejemplo"
   },
@@ -1241,23 +1199,6 @@
     "cookieExportLocked": "La exportación de cookies es una función Pro",
     "cookieManagementLocked": "La gestión de cookies es una función Pro"
   },
-  "dnsBlocklist": {
-    "title": "Lista de bloqueo DNS",
-    "none": "Ninguno",
-    "light": "Ligero",
-    "normal": "Normal",
-    "pro": "Pro",
-    "proPlus": "Pro++",
-    "ultimate": "Definitivo",
-    "settingsDescription": "Las listas de bloqueo DNS bloquean anuncios, rastreadores y dominios de malware a nivel de proxy. Las listas se actualizan automáticamente cada 12 horas.",
-    "manageLists": "Gestionar listas de bloqueo DNS",
-    "refreshAll": "Actualizar todas las listas",
-    "refreshFailed": "Error al actualizar las listas de bloqueo DNS",
-    "domains": "dominios",
-    "fresh": "Actualizado",
-    "stale": "Desactualizado",
-    "notCached": "Sin caché"
-  },
   "vpns": {
     "form": {
       "titleEdit": "Editar VPN",
@@ -1270,8 +1211,6 @@
       "privateKeyPlaceholder": "Clave privada codificada en Base64",
       "address": "Dirección",
       "addressPlaceholder": "p. ej. 10.0.0.2/24",
-      "dnsOptional": "DNS (opcional)",
-      "dnsPlaceholder": "p. ej. 1.1.1.1",
       "mtuOptional": "MTU (opcional)",
       "mtuPlaceholder": "p. ej. 1420",
       "peerPublicKey": "Clave Pública del Par",
@@ -1473,14 +1412,6 @@
     "acceptButton": "Acepto",
     "acceptSuccess": "Términos aceptados correctamente",
     "acceptFailed": "Error al aceptar los términos",
-    "tryAgain": "Por favor, inténtalo de nuevo"
-  },
-  "commercialTrial": {
-    "title": "Periodo de prueba comercial expirado",
-    "description": "Tu periodo de prueba comercial de 2 semanas ha terminado.",
-    "body": "Si usas Donut Browser con fines comerciales, debes adquirir una licencia comercial para continuar. Puedes seguir usándolo de forma personal gratis.",
-    "understandButton": "Entendido",
-    "failed": "Error al guardar el reconocimiento",
     "tryAgain": "Por favor, inténtalo de nuevo"
   },
   "permissionDialog": {
@@ -1835,10 +1766,6 @@
       "createProfile": {
         "title": "Crea tu primer perfil",
         "content": "Haz clic aquí para crear tu primer perfil. Elige Wayfern como navegador: el Chromium recomendado y protegido contra huellas digitales."
-      },
-      "dnsBlocking": {
-        "title": "Bloqueo DNS",
-        "content": "Usa este menú para definir el nivel de la lista de bloqueo DNS del perfil: bloquea anuncios, rastreadores y malware a nivel de red. Los niveles más altos bloquean más."
       }
     },
     "buttons": {
@@ -1895,16 +1822,6 @@
         "groups": "Grupos de perfiles",
         "cookies": "Importar y exportar cookies"
       }
-    },
-    "license": {
-      "title": "Licencias",
-      "body": "Donut Browser es de código abierto y de uso gratuito.",
-      "agree": "Entendido",
-      "personalTitle": "Uso personal",
-      "personalDesc": "Gratis para siempre.",
-      "commercialTitle": "Uso comercial",
-      "trialBadge": "2 semanas gratis",
-      "commercialDesc": "Gratis durante una evaluación de 2 semanas. Después, un plan de pago mantiene el proyecto en buen estado y próspero."
     }
   },
   "wayfernBlocked": {

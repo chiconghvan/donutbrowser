@@ -41,26 +41,6 @@ impl BrowserRunner {
     crate::app_dirs::binaries_dir()
   }
 
-  /// Resolve the DNS blocklist level to a cached file path.
-  /// If a level is set but the cache is missing, fetches on demand (blocks until done).
-  async fn resolve_blocklist_file(
-    profile: &crate::profile::BrowserProfile,
-  ) -> Result<Option<String>, String> {
-    let Some(ref level_str) = profile.dns_blocklist else {
-      return Ok(None);
-    };
-    let Some(level) = crate::dns_blocklist::BlocklistLevel::parse_level(level_str) else {
-      return Ok(None);
-    };
-    if level == crate::dns_blocklist::BlocklistLevel::None {
-      return Ok(None);
-    }
-    let path = crate::dns_blocklist::BlocklistManager::ensure_cached(level)
-      .await
-      .map_err(|e| format!("Failed to fetch DNS blocklist: {e}"))?;
-    Ok(Some(path.to_string_lossy().to_string()))
-  }
-
   /// Resolve inline proxy string from profile into launch settings.
   async fn resolve_proxy_with_refresh(
     &self,
@@ -227,7 +207,6 @@ impl BrowserRunner {
       // Start the proxy and get local proxy settings
       // If proxy startup fails, DO NOT launch Camoufox - it requires local proxy
       let profile_id_str = profile.id.to_string();
-      let blocklist_file = Self::resolve_blocklist_file(profile).await?;
       let local_proxy = PROXY_MANAGER
         .start_proxy(
           app_handle.clone(),
@@ -235,7 +214,6 @@ impl BrowserRunner {
           0, // Use 0 as temporary PID, will be updated later
           Some(&profile_id_str),
           profile.proxy_bypass_rules.clone(),
-          blocklist_file,
         )
         .await
         .map_err(|e| {
@@ -477,7 +455,6 @@ impl BrowserRunner {
       // Start the proxy and get local proxy settings
       // If proxy startup fails, DO NOT launch Wayfern - it requires local proxy
       let profile_id_str = profile.id.to_string();
-      let blocklist_file = Self::resolve_blocklist_file(profile).await?;
       let local_proxy = PROXY_MANAGER
         .start_proxy(
           app_handle.clone(),
@@ -485,7 +462,6 @@ impl BrowserRunner {
           0, // Use 0 as temporary PID, will be updated later
           Some(&profile_id_str),
           profile.proxy_bypass_rules.clone(),
-          blocklist_file,
         )
         .await
         .map_err(|e| {
@@ -728,7 +704,6 @@ impl BrowserRunner {
       );
 
       let profile_id_str = profile.id.to_string();
-      let blocklist_file = Self::resolve_blocklist_file(profile).await?;
       let local_proxy = PROXY_MANAGER
         .start_proxy(
           app_handle.clone(),
@@ -736,7 +711,6 @@ impl BrowserRunner {
           0,
           Some(&profile_id_str),
           profile.proxy_bypass_rules.clone(),
-          blocklist_file,
         )
         .await
         .map_err(|e| {

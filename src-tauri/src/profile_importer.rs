@@ -294,7 +294,6 @@ impl ProfileImporter {
       proxy_bypass_rules: Vec::new(),
       created_by_id: None,
       created_by_email: None,
-      dns_blocklist: None,
       password_protected: false,
       created_at: Some(
         std::time::SystemTime::now()

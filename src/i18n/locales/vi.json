@@ -143,45 +143,6 @@
       "cameraDescription": "Quyền truy cập camera cho ứng dụng trình duyệt",
       "accessRequested": "Yêu cầu quyền truy cập {{permission}}"
     },
-    "integrations": {
-      "title": "Tích hợp",
-      "description": "Cấu hình Local API và MCP (Model Context Protocol) để tích hợp với công cụ bên ngoài và trợ lý AI.",
-      "openSettings": "Mở cài đặt tích hợp"
-    },
-    "encryption": {
-      "title": "Mã hóa đồng bộ",
-      "description": "Đặt mật khẩu để bật mã hóa đầu cuối (E2E) cho đồng bộ. Nếu mất mật khẩu này, các hồ sơ đã mã hóa sẽ không thể khôi phục.",
-      "passwordSet": "Đang hoạt động",
-      "passwordSetDescription": "Mật khẩu mã hóa E2E đã được thiết lập",
-      "noPassword": "Chưa đặt mật khẩu",
-      "passwordPlaceholder": "Mật khẩu (tối thiểu 8 ký tự)",
-      "confirmPlaceholder": "Xác nhận mật khẩu",
-      "setPassword": "Đặt mật khẩu",
-      "changePassword": "Đổi mật khẩu",
-      "removePassword": "Xóa mật khẩu",
-      "removed": "Đã xóa mật khẩu mã hóa",
-      "passwordSaved": "Đã thiết lập mật khẩu mã hóa",
-      "passwordMismatch": "Mật khẩu không khớp",
-      "passwordTooShort": "Mật khẩu phải có ít nhất 8 ký tự",
-      "requiresProOrOwner": "Mã hóa hồ sơ chỉ dành cho người dùng Pro và chủ nhóm.",
-      "validatePassword": "Xác thực",
-      "validateDialog": {
-        "title": "Xác thực mật khẩu mã hóa",
-        "description": "Nhập mật khẩu mã hóa để xác minh khớp với mật khẩu được lưu trên thiết bị này.",
-        "submit": "Xác thực",
-        "matchToast": "Mật khẩu chính xác",
-        "mismatchToast": "Mật khẩu không khớp"
-      }
-    },
-    "commercial": {
-      "title": "Giấy phép thương mại",
-      "trialActive": "Dùng thử: còn {{days}} ngày, {{hours}} giờ",
-      "trialActiveDescription": "Sử dụng thương mại miễn phí trong thời gian dùng thử. Khi hết hạn, tất cả tính năng vẫn hoạt động — sử dụng cá nhân miễn phí, chỉ sử dụng thương mại mới cần giấy phép.",
-      "trialExpired": "Đã hết hạn dùng thử",
-      "trialExpiredDescription": "Sử dụng cá nhân vẫn miễn phí. Sử dụng thương mại cần giấy phép.",
-      "subscriptionActive": "Đã đăng ký — gói {{plan}}",
-      "subscriptionActiveDescription": "Đăng ký Donut Browser của bạn đang hoạt động. Sử dụng thương mại được cấp phép trong thời hạn gói."
-    },
     "advanced": {
       "title": "Nâng cao",
       "clearCache": "Xóa toàn bộ bộ nhớ đệm phiên bản",
@@ -249,9 +210,7 @@
       "empty": "Không tìm thấy hồ sơ.",
       "notSelected": "Chưa chọn",
       "ext": "TIỆN ÍCH",
-      "dns": "DNS",
       "extDefault": "Mặc định",
-      "dnsLevel": "Danh sách chặn DNS: {{level}}",
       "extSearch": "Tìm kiếm nhóm…",
       "extEmpty": "Không có nhóm tiện ích",
       "cantModifyRunning": "Không thể chỉnh sửa profile đang chạy",
@@ -614,7 +573,6 @@
     "apiToggleFailed": "Bật/tắt máy chủ API thất bại",
     "apiStartFailed": "Khởi động máy chủ API thất bại",
     "apiUnknownError": "Lỗi không xác định",
-    "openSettings": "Mở cài đặt tích hợp",
     "apiRunningOn": "Đang chạy trên",
     "apiExampleRequest": "Ví dụ yêu cầu"
   },
@@ -1241,23 +1199,6 @@
     "cookieExportLocked": "Xuất cookie là tính năng Pro",
     "cookieManagementLocked": "Quản lý cookie là tính năng Pro"
   },
-  "dnsBlocklist": {
-    "title": "Danh sách chặn DNS",
-    "none": "Không",
-    "light": "Nhẹ",
-    "normal": "Bình thường",
-    "pro": "Pro",
-    "proPlus": "Pro++",
-    "ultimate": "Tối đa",
-    "settingsDescription": "Danh sách chặn DNS chặn quảng cáo, trình theo dõi và tên miền độc hại ở cấp proxy. Danh sách được tự động làm mới mỗi 12 giờ.",
-    "manageLists": "Quản lý danh sách chặn DNS",
-    "refreshAll": "Làm mới tất cả danh sách",
-    "refreshFailed": "Làm mới danh sách chặn DNS thất bại",
-    "domains": "tên miền",
-    "fresh": "Mới",
-    "stale": "Cũ",
-    "notCached": "Chưa lưu bộ nhớ đệm"
-  },
   "vpns": {
     "form": {
       "titleEdit": "Chỉnh sửa VPN",
@@ -1270,8 +1211,6 @@
       "privateKeyPlaceholder": "Khóa riêng tư mã hóa Base64",
       "address": "Địa chỉ",
       "addressPlaceholder": "ví dụ: 10.0.0.2/24",
-      "dnsOptional": "DNS (tùy chọn)",
-      "dnsPlaceholder": "ví dụ: 1.1.1.1",
       "mtuOptional": "MTU (tùy chọn)",
       "mtuPlaceholder": "ví dụ: 1420",
       "peerPublicKey": "Khóa công khai peer",
@@ -1473,14 +1412,6 @@
     "acceptButton": "Tôi chấp nhận",
     "acceptSuccess": "Chấp nhận điều khoản thành công",
     "acceptFailed": "Chấp nhận điều khoản thất bại",
-    "tryAgain": "Vui lòng thử lại"
-  },
-  "commercialTrial": {
-    "title": "Thời gian dùng thử thương mại đã hết",
-    "description": "Thời gian dùng thử thương mại 2 tuần của bạn đã kết thúc.",
-    "body": "Nếu bạn sử dụng Donut Browser cho mục đích thương mại, bạn cần mua giấy phép thương mại để tiếp tục. Bạn vẫn có thể sử dụng miễn phí cho mục đích cá nhân.",
-    "understandButton": "Tôi hiểu",
-    "failed": "Lưu xác nhận thất bại",
     "tryAgain": "Vui lòng thử lại"
   },
   "permissionDialog": {
@@ -1835,10 +1766,6 @@
       "createProfile": {
         "title": "Tạo hồ sơ đầu tiên của bạn",
         "content": "Nhấn vào đây để tạo hồ sơ đầu tiên của bạn. Chọn Wayfern làm trình duyệt — Chromium được khuyến nghị, có bảo vệ vân tay."
-      },
-      "dnsBlocking": {
-        "title": "Chặn DNS",
-        "content": "Dùng menu thả xuống này để đặt mức danh sách chặn DNS cho hồ sơ — nó chặn quảng cáo, trình theo dõi và phần mềm độc hại ở cấp mạng. Mức cao hơn chặn nhiều hơn."
       }
     },
     "buttons": {
@@ -1895,16 +1822,6 @@
         "groups": "Nhóm hồ sơ",
         "cookies": "Nhập & xuất cookie"
       }
-    },
-    "license": {
-      "title": "Cấp phép",
-      "body": "Donut Browser là mã nguồn mở và miễn phí sử dụng.",
-      "agree": "Tôi hiểu",
-      "personalTitle": "Sử dụng cá nhân",
-      "personalDesc": "Miễn phí vĩnh viễn.",
-      "commercialTitle": "Sử dụng thương mại",
-      "trialBadge": "2 tuần miễn phí",
-      "commercialDesc": "Miễn phí dùng thử 2 tuần. Sau đó, gói trả phí giúp dự án được duy trì và phát triển."
     }
   },
   "wayfernBlocked": {

@@ -32,8 +32,6 @@ pub struct AppSettings {
   #[serde(default)]
   pub first_launch_timestamp: Option<u64>, // Unix epoch seconds when app was first launched
   #[serde(default)]
-  pub commercial_trial_acknowledged: bool, // Has user dismissed the trial expiration modal
-  #[serde(default)]
   pub language: Option<String>, // ISO 639-1: "en", "es", "pt", "fr", "zh", "ja", "ko", "ru", or None for system default
   #[serde(default)]
   pub window_resize_warning_dismissed: bool,
@@ -86,7 +84,6 @@ impl Default for AppSettings {
       api_enabled: false,
       api_port: 10108,
       first_launch_timestamp: None,
-      commercial_trial_acknowledged: false,
       language: None,
       window_resize_warning_dismissed: false,
       onboarding_completed: false,
@@ -556,7 +553,6 @@ mod tests {
       api_enabled: false,
       api_port: 10108,
       first_launch_timestamp: None,
-      commercial_trial_acknowledged: false,
       language: None,
       window_resize_warning_dismissed: false,
       onboarding_completed: false,

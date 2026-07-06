@@ -5,12 +5,10 @@ import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   LuArrowRight,
-  LuBriefcase,
   LuCookie,
   LuFolders,
   LuGithub,
   LuGlobe,
-  LuHeart,
   LuLoaderCircle,
   LuMic,
   LuNetwork,
@@ -26,7 +24,7 @@ import { useBrowserSetup } from "@/hooks/use-browser-setup";
 import { usePermissions } from "@/hooks/use-permissions";
 import { getBrowserDisplayName } from "@/lib/browser-utils";
 
-type WelcomeStep = "intro" | "license" | "permissions" | "setup";
+type WelcomeStep = "intro" | "permissions" | "setup";
 
 const panelTransition = {
   type: "spring",
@@ -80,9 +78,8 @@ export function WelcomeDialog({
   isOpen: boolean;
   /**
    * Whether this user still needs the browser-download + profile-creation flow.
-   * False when they already have a profile — then the welcome and commercial-use
-   * steps still show, but "continue" finishes onboarding instead of proceeding
-   * to permissions/download.
+   * False when they already have a profile, so "continue" finishes onboarding
+   * instead of proceeding to permissions/download.
    */
   needsSetup: boolean;
   onComplete: () => void;
@@ -191,80 +188,12 @@ export function WelcomeDialog({
                 <Button
                   size="sm"
                   className="gap-1.5"
-                  onClick={() => setStep("license")}
-                >
-                  {t("welcome.next")}
-                  <LuArrowRight className="size-4 shrink-0" />
-                </Button>
-              </div>
-            </motion.div>
-          )}
-
-          {step === "license" && (
-            <motion.div
-              key="license"
-              variants={panelVariants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={panelTransition}
-              className="flex flex-col gap-7"
-            >
-              <div className="flex flex-col gap-2 text-center">
-                <h2 className="text-2xl font-semibold tracking-tight text-balance">
-                  {t("welcome.license.title")}
-                </h2>
-                <p className="mx-auto max-w-[55ch] text-sm leading-6 text-pretty text-muted-foreground">
-                  {t("welcome.license.body")}
-                </p>
-              </div>
-
-              <dl className="flex flex-col gap-3">
-                <div className="flex items-start gap-3 rounded-lg border p-4">
-                  <LuHeart className="mt-0.5 size-4 shrink-0 text-success" />
-                  <div className="flex flex-col gap-0.5 text-left">
-                    <dt className="text-sm font-medium text-foreground">
-                      {t("welcome.license.personalTitle")}
-                    </dt>
-                    <dd className="text-sm text-pretty text-muted-foreground">
-                      {t("welcome.license.personalDesc")}
-                    </dd>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3 rounded-lg border p-4">
-                  <LuBriefcase className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-                  <div className="flex flex-col gap-0.5 text-left">
-                    <dt className="flex items-center gap-2 text-sm font-medium text-foreground">
-                      {t("welcome.license.commercialTitle")}
-                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                        {t("welcome.license.trialBadge")}
-                      </span>
-                    </dt>
-                    <dd className="text-sm text-pretty text-muted-foreground">
-                      {t("welcome.license.commercialDesc")}
-                    </dd>
-                  </div>
-                </div>
-              </dl>
-
-              <div className="flex items-center justify-between">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-muted-foreground hover:text-foreground"
-                  onClick={advanceToSetup}
-                >
-                  {t("welcome.skip")}
-                </Button>
-                <Button
-                  size="sm"
-                  className="gap-1.5"
                   onClick={() => {
                     if (needsSetup) setStep("permissions");
                     else onComplete();
                   }}
                 >
-                  {t("welcome.license.agree")}
+                  {t("welcome.next")}
                   <LuArrowRight className="size-4 shrink-0" />
                 </Button>
               </div>

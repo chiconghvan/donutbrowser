@@ -27,7 +27,6 @@ mod browser_version_manager;
 pub mod camoufox;
 mod camoufox_manager;
 mod default_browser;
-pub mod dns_blocklist;
 mod downloaded_browsers_registry;
 mod downloader;
 mod ephemeral_dirs;
@@ -50,7 +49,6 @@ mod wayfern_manager;
 // mod theme_detector; // removed: theme detection handled in webview via CSS prefers-color-scheme
 
 mod cloak_manager;
-mod commercial_license;
 mod cookie_manager;
 pub mod events;
 
@@ -65,9 +63,8 @@ use browser_runner::{
 use profile::manager::{
   check_browser_status, clone_profile, create_browser_profile_new, create_browser_profiles_bulk,
   delete_profile, list_browser_profiles, rename_profile, update_camoufox_config,
-  update_cloak_config, update_profile_dns_blocklist, update_profile_launch_hook,
-  update_profile_note, update_profile_proxy, update_profile_proxy_bypass_rules,
-  update_profile_tags,
+  update_cloak_config, update_profile_launch_hook, update_profile_note, update_profile_proxy,
+  update_profile_proxy_bypass_rules,
 };
 
 use profile::password::{
@@ -94,8 +91,6 @@ use settings_manager::{
   get_window_resize_warning_dismissed, open_log_directory, read_log_files, save_app_settings,
   save_data_dir_settings, save_table_sorting_settings,
 };
-
-use tag_manager::get_all_tags;
 
 use default_browser::{is_default_browser, set_as_default_browser};
 
@@ -271,27 +266,6 @@ async fn export_profile_cookies(profile_id: String, format: String) -> Result<St
 }
 
 #[tauri::command]
-async fn get_commercial_trial_status(
-  app_handle: tauri::AppHandle,
-) -> Result<commercial_license::TrialStatus, String> {
-  commercial_license::CommercialLicenseManager::instance()
-    .get_trial_status(&app_handle)
-    .await
-}
-
-#[tauri::command]
-async fn acknowledge_trial_expiration(app_handle: tauri::AppHandle) -> Result<(), String> {
-  commercial_license::CommercialLicenseManager::instance()
-    .acknowledge_expiration(&app_handle)
-    .await
-}
-
-#[tauri::command]
-fn has_acknowledged_trial_expiration(app_handle: tauri::AppHandle) -> Result<bool, String> {
-  commercial_license::CommercialLicenseManager::instance().has_acknowledged(&app_handle)
-}
-
-#[tauri::command]
 async fn is_geoip_database_available() -> Result<bool, String> {
   Ok(GeoIPDownloader::is_geoip_database_available())
 }
@@ -399,7 +373,6 @@ async fn generate_sample_fingerprint(
     proxy_bypass_rules: Vec::new(),
     created_by_id: None,
     created_by_email: None,
-    dns_blocklist: None,
     password_protected: false,
     created_at: None,
     updated_at: None,
@@ -859,17 +832,6 @@ pub fn run() {
         }
       });
 
-      // DNS blocklist refresh task (every 12 hours)
-      tauri::async_runtime::spawn(async move {
-        let manager = dns_blocklist::BlocklistManager::instance();
-        let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(43200));
-        interval.tick().await; // Skip the immediate first tick
-        loop {
-          interval.tick().await;
-          manager.refresh_all_stale().await;
-        }
-      });
-
       tauri::async_runtime::spawn(async move {
         let updater = app_auto_updater::AppAutoUpdater::instance();
         let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(3 * 60 * 60));
@@ -1192,14 +1154,11 @@ pub fn run() {
       fetch_browser_versions_cached_first,
       fetch_browser_versions_with_count_cached_first,
       get_downloaded_browser_versions,
-      get_all_tags,
       get_browser_release_types,
       update_profile_proxy,
-      update_profile_tags,
       update_profile_note,
       update_profile_launch_hook,
       update_profile_proxy_bypass_rules,
-      update_profile_dns_blocklist,
       check_browser_status,
       kill_browser_profile,
       rename_profile,
@@ -1273,12 +1232,6 @@ pub fn run() {
       copy_profile_cookies,
       import_cookies_from_file,
       export_profile_cookies,
-      get_commercial_trial_status,
-      acknowledge_trial_expiration,
-      has_acknowledged_trial_expiration,
-      // DNS blocklist commands
-      dns_blocklist::get_dns_blocklist_cache_status,
-      dns_blocklist::refresh_dns_blocklists,
       // Profile password commands
       set_profile_password,
       change_profile_password,

@@ -143,45 +143,6 @@
       "cameraDescription": "浏览器应用程序的摄像头访问权限",
       "accessRequested": "已请求 {{permission}} 访问权限"
     },
-    "integrations": {
-      "title": "集成",
-      "description": "配置本地 API 和 MCP（模型上下文协议）以与外部工具和 AI 助手集成。",
-      "openSettings": "打开集成设置"
-    },
-    "encryption": {
-      "title": "同步加密",
-      "description": "设置密码以启用E2E加密同步。如果您丢失此密码，加密的配置文件将无法恢复。",
-      "passwordSet": "已启用",
-      "passwordSetDescription": "E2E加密密码已设置",
-      "noPassword": "未设置密码",
-      "passwordPlaceholder": "密码（至少8个字符）",
-      "confirmPlaceholder": "确认密码",
-      "setPassword": "设置密码",
-      "changePassword": "更改密码",
-      "removePassword": "删除密码",
-      "removed": "加密密码已删除",
-      "passwordSaved": "加密密码已设置",
-      "passwordMismatch": "密码不匹配",
-      "passwordTooShort": "密码必须至少8个字符",
-      "requiresProOrOwner": "配置文件加密仅适用于Pro用户和团队所有者。",
-      "validatePassword": "验证",
-      "validateDialog": {
-        "title": "验证加密密码",
-        "description": "输入加密密码以验证它是否与此设备上存储的密码匹配。",
-        "submit": "验证",
-        "matchToast": "密码正确",
-        "mismatchToast": "密码不匹配"
-      }
-    },
-    "commercial": {
-      "title": "商业许可",
-      "trialActive": "试用期：剩余 {{days}} 天 {{hours}} 小时",
-      "trialActiveDescription": "试用期内商业使用免费。试用期结束后，所有功能继续正常使用 — 个人使用仍然免费，只有商业使用需要许可证。",
-      "trialExpired": "试用期已过期",
-      "trialExpiredDescription": "个人使用仍然免费。商业使用需要许可证。",
-      "subscriptionActive": "已订阅 — {{plan}} 方案",
-      "subscriptionActiveDescription": "您的 Donut Browser 订阅已激活。在订阅有效期内允许商业使用。"
-    },
     "advanced": {
       "title": "高级",
       "clearCache": "清除所有版本缓存",
@@ -249,9 +210,7 @@
       "empty": "未找到配置文件。",
       "notSelected": "未选择",
       "ext": "扩展",
-      "dns": "DNS",
       "extDefault": "默认",
-      "dnsLevel": "DNS 屏蔽列表: {{level}}",
       "extSearch": "搜索分组…",
       "extEmpty": "没有扩展组",
       "cantModifyRunning": "无法修改正在运行的配置文件",
@@ -614,7 +573,6 @@
     "apiToggleFailed": "切换 API 服务器失败",
     "apiStartFailed": "启动 API 服务器失败",
     "apiUnknownError": "未知错误",
-    "openSettings": "打开集成设置",
     "apiRunningOn": "运行于",
     "apiExampleRequest": "示例请求"
   },
@@ -1241,23 +1199,6 @@
     "cookieExportLocked": "Cookie 导出是 Pro 功能",
     "cookieManagementLocked": "Cookie 管理是 Pro 功能"
   },
-  "dnsBlocklist": {
-    "title": "DNS 拦截列表",
-    "none": "无",
-    "light": "轻量",
-    "normal": "标准",
-    "pro": "Pro",
-    "proPlus": "Pro++",
-    "ultimate": "终极",
-    "settingsDescription": "DNS 拦截列表在代理级别拦截广告、跟踪器和恶意软件域名。列表每 12 小时自动刷新一次。",
-    "manageLists": "管理 DNS 拦截列表",
-    "refreshAll": "刷新所有列表",
-    "refreshFailed": "刷新 DNS 拦截列表失败",
-    "domains": "个域名",
-    "fresh": "最新",
-    "stale": "过期",
-    "notCached": "未缓存"
-  },
   "vpns": {
     "form": {
       "titleEdit": "编辑 VPN",
@@ -1270,8 +1211,6 @@
       "privateKeyPlaceholder": "Base64 编码的私钥",
       "address": "地址",
       "addressPlaceholder": "例如：10.0.0.2/24",
-      "dnsOptional": "DNS（可选）",
-      "dnsPlaceholder": "例如：1.1.1.1",
       "mtuOptional": "MTU（可选）",
       "mtuPlaceholder": "例如：1420",
       "peerPublicKey": "对等节点公钥",
@@ -1473,14 +1412,6 @@
     "acceptButton": "我接受",
     "acceptSuccess": "已成功接受条款",
     "acceptFailed": "接受条款失败",
-    "tryAgain": "请重试"
-  },
-  "commercialTrial": {
-    "title": "商业试用期已过期",
-    "description": "你的 2 周商业试用期已结束。",
-    "body": "如果你将 Donut Browser 用于商业目的,需要购买商业许可证才能继续。你仍然可以免费用于个人用途。",
-    "understandButton": "我明白了",
-    "failed": "保存确认失败",
     "tryAgain": "请重试"
   },
   "permissionDialog": {
@@ -1835,10 +1766,6 @@
       "createProfile": {
         "title": "创建你的第一个配置文件",
         "content": "点击这里创建您的第一个配置文件。浏览器请选择 Wayfern——推荐的、具备指纹保护的 Chromium。"
-      },
-      "dnsBlocking": {
-        "title": "DNS 拦截",
-        "content": "使用此下拉菜单为配置文件设置 DNS 拦截级别——在网络层面拦截广告、跟踪器和恶意软件。级别越高，拦截越多。"
       }
     },
     "buttons": {
@@ -1895,16 +1822,6 @@
         "groups": "配置文件分组",
         "cookies": "Cookie 导入与导出"
       }
-    },
-    "license": {
-      "title": "许可",
-      "body": "Donut Browser 是开源软件，可免费使用。",
-      "agree": "我知道了",
-      "personalTitle": "个人使用",
-      "personalDesc": "永久免费。",
-      "commercialTitle": "商业使用",
-      "trialBadge": "2 周免费",
-      "commercialDesc": "在 2 周评估期内免费。之后需要付费方案，这有助于本项目的持续维护与发展。"
     }
   },
   "wayfernBlocked": {

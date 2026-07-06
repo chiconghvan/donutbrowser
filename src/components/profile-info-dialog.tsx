@@ -25,7 +25,6 @@ import {
   LuPuzzle,
   LuRefreshCw,
   LuSettings,
-  LuShield,
   LuShieldCheck,
   LuTrash2,
   LuUpload,
@@ -86,7 +85,6 @@ interface ProfileInfoDialogProps {
   onOpenCookieManagement?: (profile: BrowserProfile) => void;
   onAssignExtensionGroup?: (profileIds: string[]) => void;
   onOpenBypassRules?: (profile: BrowserProfile) => void;
-  onOpenDnsBlocklist?: (profile: BrowserProfile) => void;
   onOpenLaunchHook?: (profile: BrowserProfile) => void;
   onCloneProfile?: (profile: BrowserProfile) => void;
   onDeleteProfile?: (profile: BrowserProfile) => void;
@@ -197,7 +195,6 @@ export function ProfileInfoDialog({
   onOpenCookieManagement,
   onAssignExtensionGroup,
   onOpenBypassRules,
-  onOpenDnsBlocklist,
   onOpenLaunchHook,
   onCloneProfile,
   onDeleteProfile,
@@ -301,8 +298,8 @@ export function ProfileInfoDialog({
   // (or trigger a navigation/action that closes this one). Do NOT put inline
   // settings UI — inputs, toggles, save buttons — directly in this dialog's
   // settings tab. Each setting belongs in its own focused dialog (see
-  // `ProfileLaunchHookDialog`, `ProfileBypassRulesDialog`,
-  // `ProfileDnsBlocklistDialog` for the pattern). The settings tab is purely
+  // `ProfileLaunchHookDialog` and `ProfileBypassRulesDialog` for the pattern).
+  // The settings tab is purely
   // a navigation hub.
   interface ActionItem {
     // Stable, language-independent key used to map sidebar sections to actions.
@@ -415,13 +412,6 @@ export function ProfileInfoDialog({
       label: t("profileInfo.network.bypassRulesTitle"),
       onClick: () => {
         handleAction(() => onOpenBypassRules?.(profile));
-      },
-    },
-    {
-      icon: <LuShield className="size-4" />,
-      label: t("dnsBlocklist.title"),
-      onClick: () => {
-        handleAction(() => onOpenDnsBlocklist?.(profile));
       },
     },
     {
@@ -2232,99 +2222,6 @@ export function ProfileLaunchHookDialog({
             {t("common.buttons.save")}
           </Button>
         </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-interface ProfileDnsBlocklistDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-  profileId: string | null;
-  currentLevel: string | null;
-}
-
-export function ProfileDnsBlocklistDialog({
-  isOpen,
-  onClose,
-  profileId,
-  currentLevel,
-}: ProfileDnsBlocklistDialogProps) {
-  const { t } = useTranslation();
-  const [level, setLevel] = React.useState(currentLevel ?? "");
-  const [isSaving, setIsSaving] = React.useState(false);
-
-  React.useEffect(() => {
-    if (isOpen) {
-      setLevel(currentLevel ?? "");
-    }
-  }, [isOpen, currentLevel]);
-
-  const handleSave = async () => {
-    if (!profileId) return;
-    setIsSaving(true);
-    try {
-      await invoke("update_profile_dns_blocklist", {
-        profileId,
-        dnsBlocklist: level || null,
-      });
-      onClose();
-    } catch (err) {
-      console.error("Failed to update DNS blocklist:", err);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const options = [
-    { value: "", label: t("dnsBlocklist.none") },
-    { value: "light", label: t("dnsBlocklist.light") },
-    { value: "normal", label: t("dnsBlocklist.normal") },
-    { value: "pro", label: t("dnsBlocklist.pro") },
-    { value: "pro_plus", label: t("dnsBlocklist.proPlus") },
-    { value: "ultimate", label: t("dnsBlocklist.ultimate") },
-  ];
-
-  return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-xs">
-        <DialogHeader>
-          <DialogTitle>{t("dnsBlocklist.title")}</DialogTitle>
-        </DialogHeader>
-        <p className="text-xs text-muted-foreground">
-          {t("dnsBlocklist.settingsDescription")}{" "}
-          <a
-            href="https://github.com/hagezi/dns-blocklists"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary hover:underline"
-          >
-            {t("common.buttons.moreInfo")}
-          </a>
-        </p>
-        <div className="space-y-1">
-          {options.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => setLevel(option.value)}
-              className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-                level === option.value
-                  ? "bg-primary/10 text-primary border border-primary/30"
-                  : "hover:bg-accent border border-transparent"
-              }`}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-        <Button
-          onClick={() => void handleSave()}
-          disabled={isSaving || level === (currentLevel ?? "")}
-          className="w-full"
-        >
-          {t("common.buttons.save")}
-        </Button>
       </DialogContent>
     </Dialog>
   );

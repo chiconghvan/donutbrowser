@@ -143,45 +143,6 @@
       "cameraDescription": "Acesso à câmera para aplicativos do navegador",
       "accessRequested": "Acesso a {{permission}} solicitado"
     },
-    "integrations": {
-      "title": "Integrações",
-      "description": "Configure a API Local e MCP (Protocolo de Contexto de Modelo) para integração com ferramentas externas e assistentes de IA.",
-      "openSettings": "Abrir Configurações de Integrações"
-    },
-    "encryption": {
-      "title": "Criptografia de sincronização",
-      "description": "Defina uma senha para habilitar a sincronização criptografada E2E. Se você perder esta senha, os perfis criptografados não poderão ser recuperados.",
-      "passwordSet": "Ativo",
-      "passwordSetDescription": "A senha de criptografia E2E está definida",
-      "noPassword": "Sem senha definida",
-      "passwordPlaceholder": "Senha (mín. 8 caracteres)",
-      "confirmPlaceholder": "Confirmar senha",
-      "setPassword": "Definir senha",
-      "changePassword": "Alterar senha",
-      "removePassword": "Remover senha",
-      "removed": "Senha de criptografia removida",
-      "passwordSaved": "Senha de criptografia definida",
-      "passwordMismatch": "As senhas não coincidem",
-      "passwordTooShort": "A senha deve ter pelo menos 8 caracteres",
-      "requiresProOrOwner": "A criptografia de perfis está disponível para usuários Pro e proprietários de equipe.",
-      "validatePassword": "Validar",
-      "validateDialog": {
-        "title": "Validar senha de criptografia",
-        "description": "Digite sua senha de criptografia para verificar se corresponde à armazenada neste dispositivo.",
-        "submit": "Validar",
-        "matchToast": "A senha está correta",
-        "mismatchToast": "A senha não corresponde"
-      }
-    },
-    "commercial": {
-      "title": "Licença Comercial",
-      "trialActive": "Teste: {{days}} dias, {{hours}} horas restantes",
-      "trialActiveDescription": "O uso comercial é gratuito durante o teste. Após o término, todos os recursos continuam funcionando — o uso pessoal permanece gratuito, apenas o uso comercial exigirá uma licença.",
-      "trialExpired": "Teste expirado",
-      "trialExpiredDescription": "O uso pessoal continua gratuito. O uso comercial requer uma licença.",
-      "subscriptionActive": "Assinado — plano {{plan}}",
-      "subscriptionActiveDescription": "Sua assinatura do Donut Browser está ativa. O uso comercial está licenciado enquanto seu plano estiver vigente."
-    },
     "advanced": {
       "title": "Avançado",
       "clearCache": "Limpar Todo o Cache de Versões",
@@ -249,9 +210,7 @@
       "empty": "Nenhum perfil encontrado.",
       "notSelected": "Não selecionado",
       "ext": "EXT",
-      "dns": "DNS",
       "extDefault": "Padrão",
-      "dnsLevel": "Lista DNS: {{level}}",
       "extSearch": "Pesquisar grupos…",
       "extEmpty": "Sem grupos de extensões",
       "cantModifyRunning": "Não é possível modificar um perfil em execução",
@@ -614,7 +573,6 @@
     "apiToggleFailed": "Falha ao alternar o servidor API",
     "apiStartFailed": "Falha ao iniciar o servidor API",
     "apiUnknownError": "Erro desconhecido",
-    "openSettings": "Abrir configurações de integrações",
     "apiRunningOn": "Em execução em",
     "apiExampleRequest": "Exemplo de solicitação"
   },
@@ -1241,23 +1199,6 @@
     "cookieExportLocked": "A exportação de cookies é um recurso Pro",
     "cookieManagementLocked": "O gerenciamento de cookies é um recurso Pro"
   },
-  "dnsBlocklist": {
-    "title": "Lista de bloqueio DNS",
-    "none": "Nenhum",
-    "light": "Leve",
-    "normal": "Normal",
-    "pro": "Pro",
-    "proPlus": "Pro++",
-    "ultimate": "Definitivo",
-    "settingsDescription": "As listas de bloqueio DNS bloqueiam anúncios, rastreadores e domínios de malware no nível do proxy. As listas são atualizadas automaticamente a cada 12 horas.",
-    "manageLists": "Gerenciar listas de bloqueio DNS",
-    "refreshAll": "Atualizar todas as listas",
-    "refreshFailed": "Falha ao atualizar as listas de bloqueio DNS",
-    "domains": "domínios",
-    "fresh": "Atualizado",
-    "stale": "Desatualizado",
-    "notCached": "Sem cache"
-  },
   "vpns": {
     "form": {
       "titleEdit": "Editar VPN",
@@ -1270,8 +1211,6 @@
       "privateKeyPlaceholder": "Chave privada codificada em Base64",
       "address": "Endereço",
       "addressPlaceholder": "p. ex. 10.0.0.2/24",
-      "dnsOptional": "DNS (opcional)",
-      "dnsPlaceholder": "p. ex. 1.1.1.1",
       "mtuOptional": "MTU (opcional)",
       "mtuPlaceholder": "p. ex. 1420",
       "peerPublicKey": "Chave Pública do Par",
@@ -1473,14 +1412,6 @@
     "acceptButton": "Aceito",
     "acceptSuccess": "Termos aceitos com sucesso",
     "acceptFailed": "Falha ao aceitar os termos",
-    "tryAgain": "Tente novamente"
-  },
-  "commercialTrial": {
-    "title": "Período de teste comercial expirado",
-    "description": "Seu período de teste comercial de 2 semanas terminou.",
-    "body": "Se você está usando o Donut Browser para fins comerciais, precisa adquirir uma licença comercial para continuar. Você ainda pode usá-lo gratuitamente para uso pessoal.",
-    "understandButton": "Entendi",
-    "failed": "Falha ao salvar a confirmação",
     "tryAgain": "Tente novamente"
   },
   "permissionDialog": {
@@ -1835,10 +1766,6 @@
       "createProfile": {
         "title": "Crie seu primeiro perfil",
         "content": "Clique aqui para criar seu primeiro perfil. Escolha o Wayfern como navegador: o Chromium recomendado e protegido contra fingerprint."
-      },
-      "dnsBlocking": {
-        "title": "Bloqueio de DNS",
-        "content": "Use este menu para definir o nível da lista de bloqueio DNS do perfil — ele bloqueia anúncios, rastreadores e malware no nível da rede. Níveis mais altos bloqueiam mais."
       }
     },
     "buttons": {
@@ -1895,16 +1822,6 @@
         "groups": "Grupos de perfis",
         "cookies": "Importar e exportar cookies"
       }
-    },
-    "license": {
-      "title": "Licenciamento",
-      "body": "O Donut Browser é de código aberto e gratuito.",
-      "agree": "Entendi",
-      "personalTitle": "Uso pessoal",
-      "personalDesc": "Gratuito para sempre.",
-      "commercialTitle": "Uso comercial",
-      "trialBadge": "2 semanas grátis",
-      "commercialDesc": "Gratuito durante uma avaliação de 2 semanas. Depois, um plano pago mantém o projeto ativo e próspero."
     }
   },
   "wayfernBlocked": {

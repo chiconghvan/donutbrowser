@@ -715,7 +715,6 @@ impl WayfernManager {
         proxy.trim_start_matches("http://").trim_start_matches("https://")
       );
       args.push(format!("--proxy-pac-url={pac_data}"));
-      args.push("--dns-prefetch-disable".to_string());
     }
 
     let mut command = TokioCommand::new(&executable_path);

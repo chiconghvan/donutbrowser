@@ -143,45 +143,6 @@
       "cameraDescription": "Access to camera for browser applications",
       "accessRequested": "{{permission}} access requested"
     },
-    "integrations": {
-      "title": "Integrations",
-      "description": "Configure Local API and MCP (Model Context Protocol) for integrating with external tools and AI assistants.",
-      "openSettings": "Open Integrations Settings"
-    },
-    "encryption": {
-      "title": "Sync Encryption",
-      "description": "Set a password to enable E2E encrypted sync. If you lose this password, encrypted profiles cannot be recovered.",
-      "passwordSet": "Active",
-      "passwordSetDescription": "E2E encryption password is set",
-      "noPassword": "No password set",
-      "passwordPlaceholder": "Password (min 8 characters)",
-      "confirmPlaceholder": "Confirm password",
-      "setPassword": "Set Password",
-      "changePassword": "Change Password",
-      "removePassword": "Remove Password",
-      "removed": "Encryption password removed",
-      "passwordSaved": "Encryption password set",
-      "passwordMismatch": "Passwords do not match",
-      "passwordTooShort": "Password must be at least 8 characters",
-      "requiresProOrOwner": "Profile encryption is available for Pro users and team owners.",
-      "validatePassword": "Validate",
-      "validateDialog": {
-        "title": "Validate Encryption Password",
-        "description": "Enter your encryption password to verify it matches the one stored on this device.",
-        "submit": "Validate",
-        "matchToast": "Password is correct",
-        "mismatchToast": "Password does not match"
-      }
-    },
-    "commercial": {
-      "title": "Commercial License",
-      "trialActive": "Trial: {{days}} days, {{hours}} hours remaining",
-      "trialActiveDescription": "Commercial use is free during the trial. When it ends, all features keep working — personal use stays free, only commercial use will require a license.",
-      "trialExpired": "Trial expired",
-      "trialExpiredDescription": "Personal use remains free. Commercial use requires a license.",
-      "subscriptionActive": "Subscribed — {{plan}} plan",
-      "subscriptionActiveDescription": "Your Donut Browser subscription is active. Commercial use is licensed for the duration of your plan."
-    },
     "advanced": {
       "title": "Advanced",
       "clearCache": "Clear All Version Cache",
@@ -249,9 +210,7 @@
       "empty": "No profiles found.",
       "notSelected": "Not Selected",
       "ext": "EXT",
-      "dns": "DNS",
       "extDefault": "Default",
-      "dnsLevel": "DNS blocklist: {{level}}",
       "extSearch": "Search groups…",
       "extEmpty": "No extension groups",
       "cantModifyRunning": "Can't modify running profile",
@@ -614,7 +573,6 @@
     "apiToggleFailed": "Failed to toggle API server",
     "apiStartFailed": "Failed to start API server",
     "apiUnknownError": "Unknown error",
-    "openSettings": "Open Integrations Settings",
     "apiRunningOn": "Running on",
     "apiExampleRequest": "Example request"
   },
@@ -1241,23 +1199,6 @@
     "cookieExportLocked": "Cookie export is a Pro feature",
     "cookieManagementLocked": "Cookie management is a Pro feature"
   },
-  "dnsBlocklist": {
-    "title": "DNS Blocklist",
-    "none": "None",
-    "light": "Light",
-    "normal": "Normal",
-    "pro": "Pro",
-    "proPlus": "Pro++",
-    "ultimate": "Ultimate",
-    "settingsDescription": "DNS blocklists block ads, trackers, and malware domains at the proxy level. Lists are automatically refreshed every 12 hours.",
-    "manageLists": "Manage DNS Blocklists",
-    "refreshAll": "Refresh All Lists",
-    "refreshFailed": "Failed to refresh DNS blocklists",
-    "domains": "domains",
-    "fresh": "Fresh",
-    "stale": "Stale",
-    "notCached": "Not cached"
-  },
   "vpns": {
     "form": {
       "titleEdit": "Edit VPN",
@@ -1270,8 +1211,6 @@
       "privateKeyPlaceholder": "Base64-encoded private key",
       "address": "Address",
       "addressPlaceholder": "e.g. 10.0.0.2/24",
-      "dnsOptional": "DNS (optional)",
-      "dnsPlaceholder": "e.g. 1.1.1.1",
       "mtuOptional": "MTU (optional)",
       "mtuPlaceholder": "e.g. 1420",
       "peerPublicKey": "Peer Public Key",
@@ -1474,14 +1413,6 @@
     "acceptButton": "I Accept",
     "acceptSuccess": "Terms accepted successfully",
     "acceptFailed": "Failed to accept terms",
-    "tryAgain": "Please try again"
-  },
-  "commercialTrial": {
-    "title": "Commercial Trial Expired",
-    "description": "Your 2-week commercial trial period has ended.",
-    "body": "If you are using Donut Browser for business purposes, you need to purchase a commercial license to continue. You can still use it for personal use for free.",
-    "understandButton": "I Understand",
-    "failed": "Failed to save acknowledgment",
     "tryAgain": "Please try again"
   },
   "permissionDialog": {
@@ -1836,10 +1767,6 @@
       "createProfile": {
         "title": "Create your first profile",
         "content": "Click here to create your first profile. Pick Wayfern as the browser — the recommended, fingerprint-protected Chromium."
-      },
-      "dnsBlocking": {
-        "title": "DNS blocking",
-        "content": "Use this dropdown to set a DNS blocklist level for the profile — it blocks ads, trackers, and malware at the network level. Higher levels block more."
       }
     },
     "buttons": {
@@ -1896,16 +1823,6 @@
         "groups": "Profile Groups",
         "cookies": "Cookie Import & Export"
       }
-    },
-    "license": {
-      "title": "Licensing",
-      "body": "Donut Browser is open source and free to use.",
-      "agree": "I understand",
-      "personalTitle": "Personal use",
-      "personalDesc": "Free forever.",
-      "commercialTitle": "Commercial use",
-      "trialBadge": "2 weeks free",
-      "commercialDesc": "Free for a 2-week evaluation. After that, a paid plan keeps the project maintained and thriving."
     }
   },
   "wayfernBlocked": {

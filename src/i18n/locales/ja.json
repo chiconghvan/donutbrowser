@@ -143,45 +143,6 @@
       "cameraDescription": "ブラウザアプリケーションのカメラアクセス",
       "accessRequested": "{{permission}} アクセスを要求しました"
     },
-    "integrations": {
-      "title": "統合",
-      "description": "外部ツールやAIアシスタントと統合するためのローカルAPIとMCP（モデルコンテキストプロトコル）を設定します。",
-      "openSettings": "統合設定を開く"
-    },
-    "encryption": {
-      "title": "同期暗号化",
-      "description": "E2E暗号化同期を有効にするためのパスワードを設定してください。このパスワードを紛失すると、暗号化されたプロファイルは復元できません。",
-      "passwordSet": "有効",
-      "passwordSetDescription": "E2E暗号化パスワードが設定されています",
-      "noPassword": "パスワード未設定",
-      "passwordPlaceholder": "パスワード（8文字以上）",
-      "confirmPlaceholder": "パスワードを確認",
-      "setPassword": "パスワードを設定",
-      "changePassword": "パスワードを変更",
-      "removePassword": "パスワードを削除",
-      "removed": "暗号化パスワードが削除されました",
-      "passwordSaved": "暗号化パスワードが設定されました",
-      "passwordMismatch": "パスワードが一致しません",
-      "passwordTooShort": "パスワードは8文字以上である必要があります",
-      "requiresProOrOwner": "プロファイルの暗号化はProユーザーとチームオーナーのみ利用できます。",
-      "validatePassword": "確認",
-      "validateDialog": {
-        "title": "暗号化パスワードを確認",
-        "description": "このデバイスに保存されているパスワードと一致するか、暗号化パスワードを入力してください。",
-        "submit": "確認",
-        "matchToast": "パスワードが一致しました",
-        "mismatchToast": "パスワードが一致しません"
-      }
-    },
-    "commercial": {
-      "title": "商用ライセンス",
-      "trialActive": "トライアル: 残り {{days}} 日 {{hours}} 時間",
-      "trialActiveDescription": "トライアル期間中は商用利用が無料です。期間が終了してもすべての機能はそのまま使用できます — 個人利用は引き続き無料で、商用利用のみライセンスが必要になります。",
-      "trialExpired": "トライアル期限切れ",
-      "trialExpiredDescription": "個人利用は引き続き無料です。商用利用にはライセンスが必要です。",
-      "subscriptionActive": "サブスクリプション中 — {{plan}} プラン",
-      "subscriptionActiveDescription": "Donut Browser のサブスクリプションが有効です。プランの期間中、商用利用がライセンスされます。"
-    },
     "advanced": {
       "title": "詳細設定",
       "clearCache": "すべてのバージョンキャッシュをクリア",
@@ -249,9 +210,7 @@
       "empty": "プロファイルが見つかりません。",
       "notSelected": "未選択",
       "ext": "拡張",
-      "dns": "DNS",
       "extDefault": "既定",
-      "dnsLevel": "DNS ブロックリスト: {{level}}",
       "extSearch": "グループを検索…",
       "extEmpty": "拡張機能グループがありません",
       "cantModifyRunning": "実行中のプロファイルは変更できません",
@@ -614,7 +573,6 @@
     "apiToggleFailed": "API サーバーの切り替えに失敗しました",
     "apiStartFailed": "API サーバーの起動に失敗しました",
     "apiUnknownError": "不明なエラー",
-    "openSettings": "統合設定を開く",
     "apiRunningOn": "実行中",
     "apiExampleRequest": "リクエスト例"
   },
@@ -1241,23 +1199,6 @@
     "cookieExportLocked": "Cookieのエクスポートはプロ機能です",
     "cookieManagementLocked": "Cookie管理はプロ機能です"
   },
-  "dnsBlocklist": {
-    "title": "DNSブロックリスト",
-    "none": "なし",
-    "light": "ライト",
-    "normal": "標準",
-    "pro": "Pro",
-    "proPlus": "Pro++",
-    "ultimate": "アルティメット",
-    "settingsDescription": "DNSブロックリストは、プロキシレベルで広告、トラッカー、マルウェアドメインをブロックします。リストは12時間ごとに自動的に更新されます。",
-    "manageLists": "DNSブロックリストを管理",
-    "refreshAll": "すべてのリストを更新",
-    "refreshFailed": "DNSブロックリストの更新に失敗しました",
-    "domains": "ドメイン",
-    "fresh": "最新",
-    "stale": "期限切れ",
-    "notCached": "キャッシュなし"
-  },
   "vpns": {
     "form": {
       "titleEdit": "VPN を編集",
@@ -1270,8 +1211,6 @@
       "privateKeyPlaceholder": "Base64 エンコードされた秘密鍵",
       "address": "アドレス",
       "addressPlaceholder": "例: 10.0.0.2/24",
-      "dnsOptional": "DNS (任意)",
-      "dnsPlaceholder": "例: 1.1.1.1",
       "mtuOptional": "MTU (任意)",
       "mtuPlaceholder": "例: 1420",
       "peerPublicKey": "ピア公開鍵",
@@ -1473,14 +1412,6 @@
     "acceptButton": "同意します",
     "acceptSuccess": "規約に同意しました",
     "acceptFailed": "規約への同意に失敗しました",
-    "tryAgain": "もう一度お試しください"
-  },
-  "commercialTrial": {
-    "title": "商用試用期間が終了しました",
-    "description": "2 週間の商用試用期間が終了しました。",
-    "body": "商用目的で Donut Browser を使用する場合は、続行するために商用ライセンスを購入する必要があります。個人利用は引き続き無料でお使いいただけます。",
-    "understandButton": "了解しました",
-    "failed": "確認の保存に失敗しました",
     "tryAgain": "もう一度お試しください"
   },
   "permissionDialog": {
@@ -1835,10 +1766,6 @@
       "createProfile": {
         "title": "最初のプロファイルを作成",
         "content": "ここをクリックして最初のプロファイルを作成します。ブラウザには Wayfern を選んでください。フィンガープリント対策済みの推奨 Chromium です。"
-      },
-      "dnsBlocking": {
-        "title": "DNS ブロック",
-        "content": "このドロップダウンでプロファイルの DNS ブロックリストのレベルを設定します。広告・トラッカー・マルウェアをネットワークレベルでブロックします。レベルが高いほど多くブロックします。"
       }
     },
     "buttons": {
@@ -1895,16 +1822,6 @@
         "groups": "プロファイルグループ",
         "cookies": "Cookieのインポート・エクスポート"
       }
-    },
-    "license": {
-      "title": "ライセンス",
-      "body": "Donut Browser はオープンソースで、無料で利用できます。",
-      "agree": "了解しました",
-      "personalTitle": "個人利用",
-      "personalDesc": "永久に無料です。",
-      "commercialTitle": "商用利用",
-      "trialBadge": "2週間無料",
-      "commercialDesc": "2週間の評価期間は無料です。その後は有料プランが必要で、これによりプロジェクトの維持と発展が支えられます。"
     }
   },
   "wayfernBlocked": {

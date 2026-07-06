@@ -8,11 +8,9 @@ import Color from "color";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { BsCamera, BsMic } from "react-icons/bs";
-import { DnsBlocklistDialog } from "@/components/dns-blocklist-dialog";
 import { LoadingButton } from "@/components/loading-button";
 import { useTheme } from "@/components/theme-provider";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   ColorPicker,
@@ -26,7 +24,6 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -45,7 +42,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useCommercialTrial } from "@/hooks/use-commercial-trial";
 import { useLanguage } from "@/hooks/use-language";
 import type { PermissionType } from "@/hooks/use-permissions";
 import { usePermissions } from "@/hooks/use-permissions";
@@ -95,14 +91,12 @@ interface PermissionInfo {
 interface SettingsDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onIntegrationsOpen?: () => void;
   subPage?: boolean;
 }
 
 export function SettingsDialog({
   isOpen,
   onClose,
-  onIntegrationsOpen,
   subPage,
 }: SettingsDialogProps) {
   const [settings, setSettings] = useState<AppSettings>({
@@ -137,17 +131,7 @@ export function SettingsDialog({
   const [requestingPermission, setRequestingPermission] =
     useState<PermissionType | null>(null);
   const [isMacOS, setIsMacOS] = useState(false);
-  const [dnsBlocklistDialogOpen, setDnsBlocklistDialogOpen] = useState(false);
   const [isLinux, setIsLinux] = useState(false);
-  const [hasE2ePassword, setHasE2ePassword] = useState(false);
-  const [e2ePassword, setE2ePassword] = useState("");
-  const [e2ePasswordConfirm, setE2ePasswordConfirm] = useState("");
-  const [e2eError, setE2eError] = useState("");
-  const [isSavingE2e, setIsSavingE2e] = useState(false);
-  const [isRemovingE2e, setIsRemovingE2e] = useState(false);
-  const [isVerifyE2eOpen, setIsVerifyE2eOpen] = useState(false);
-  const [verifyE2ePassword, setVerifyE2ePassword] = useState("");
-  const [isVerifyingE2e, setIsVerifyingE2e] = useState(false);
   const [systemInfo, setSystemInfo] = useState<{
     app_version: string;
     os: string;
@@ -166,8 +150,6 @@ export function SettingsDialog({
     isMicrophoneAccessGranted,
     isCameraAccessGranted,
   } = usePermissions();
-  const { trialStatus } = useCommercialTrial();
-  const canUseEncryption = true;
   const {
     currentLanguage,
     changeLanguage,
@@ -267,13 +249,6 @@ export function SettingsDialog({
           selectedThemeId: "tokyo-night",
           colors: tokyoNightTheme.colors,
         });
-      }
-      // Check E2E password status
-      try {
-        const hasPassword = await invoke<boolean>("check_has_e2e_password");
-        setHasE2ePassword(hasPassword);
-      } catch {
-        setHasE2ePassword(false);
       }
       // Load system info
       try {
@@ -675,928 +650,595 @@ export function SettingsDialog({
     dataDirInput !== originalDataDirInput;
 
   return (
-    <>
-      <Dialog open={isOpen} onOpenChange={handleClose} subPage={subPage}>
-        <DialogContent className="max-w-md max-h-[80vh] my-8 flex flex-col">
-          {!subPage && (
-            <DialogHeader className="shrink-0">
-              <DialogTitle>{t("settings.title")}</DialogTitle>
-            </DialogHeader>
+    <Dialog open={isOpen} onOpenChange={handleClose} subPage={subPage}>
+      <DialogContent className="max-w-md max-h-[80vh] my-8 flex flex-col">
+        {!subPage && (
+          <DialogHeader className="shrink-0">
+            <DialogTitle>{t("settings.title")}</DialogTitle>
+          </DialogHeader>
+        )}
+
+        <div
+          className={cn(
+            "grid overflow-y-auto flex-1 gap-6 min-h-0",
+            subPage ? "py-2" : "py-4",
           )}
+        >
+          {/* Appearance Section */}
+          <div className="space-y-4">
+            <Label className="text-base font-medium">
+              {t("settings.appearance.title")}
+            </Label>
 
-          <div
-            className={cn(
-              "grid overflow-y-auto flex-1 gap-6 min-h-0",
-              subPage ? "py-2" : "py-4",
-            )}
-          >
-            {/* Appearance Section */}
-            <div className="space-y-4">
-              <Label className="text-base font-medium">
-                {t("settings.appearance.title")}
+            <div className="grid gap-2">
+              <Label htmlFor="theme-select" className="text-sm">
+                {t("settings.appearance.theme")}
               </Label>
-
-              <div className="grid gap-2">
-                <Label htmlFor="theme-select" className="text-sm">
-                  {t("settings.appearance.theme")}
-                </Label>
-                <Select
-                  value={settings.theme}
-                  onValueChange={(value) => {
-                    updateSetting("theme", value);
-                    if (value === "custom") {
-                      const tokyoNightTheme = getThemeById("tokyo-night");
-                      if (tokyoNightTheme) {
-                        setCustomThemeState({
-                          selectedThemeId: "tokyo-night",
-                          colors: tokyoNightTheme.colors,
-                        });
-                      }
+              <Select
+                value={settings.theme}
+                onValueChange={(value) => {
+                  updateSetting("theme", value);
+                  if (value === "custom") {
+                    const tokyoNightTheme = getThemeById("tokyo-night");
+                    if (tokyoNightTheme) {
+                      setCustomThemeState({
+                        selectedThemeId: "tokyo-night",
+                        colors: tokyoNightTheme.colors,
+                      });
                     }
-                  }}
-                >
-                  <SelectTrigger id="theme-select">
-                    <SelectValue
-                      placeholder={t("settings.appearance.selectTheme")}
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="light">
-                      {t("settings.appearance.light")}
-                    </SelectItem>
-                    <SelectItem value="dark">
-                      {t("settings.appearance.dark")}
-                    </SelectItem>
-                    <SelectItem value="system">
-                      {t("settings.appearance.system")}
-                    </SelectItem>
-                    <SelectItem value="custom">
-                      {t("common.labels.custom")}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <p className="text-xs text-muted-foreground">
-                {t("settings.appearance.themeDescription")}
-              </p>
-
-              {settings.theme === "custom" && (
-                <div className="space-y-3">
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="theme-preset-select"
-                      className="text-sm font-medium"
-                    >
-                      {t("settings.appearance.themePreset")}
-                    </Label>
-                    <Select
-                      value={customThemeState.selectedThemeId ?? "custom"}
-                      onValueChange={(value) => {
-                        if (value === "custom") {
-                          setCustomThemeState((prev) => ({
-                            ...prev,
-                            selectedThemeId: null,
-                          }));
-                        } else {
-                          const theme = getThemeById(value);
-                          if (theme) {
-                            setCustomThemeState({
-                              selectedThemeId: value,
-                              colors: theme.colors,
-                            });
-                          }
-                        }
-                      }}
-                    >
-                      <SelectTrigger id="theme-preset-select">
-                        <SelectValue
-                          placeholder={t(
-                            "settings.appearance.selectThemePreset",
-                          )}
-                        />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {THEMES.map((theme) => (
-                          <SelectItem key={theme.id} value={theme.id}>
-                            {theme.name}
-                          </SelectItem>
-                        ))}
-                        <SelectItem value="custom">
-                          {t("settings.appearance.yourOwn")}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="text-sm font-medium">
-                    {t("settings.appearance.customColors")}
-                  </div>
-                  <div className="grid grid-cols-4 gap-3">
-                    {THEME_VARIABLES.map(({ key, label }) => {
-                      const colorValue =
-                        customThemeState.colors[key] ?? "#000000";
-                      return (
-                        <div
-                          key={key}
-                          className="flex flex-col gap-1 items-center"
-                        >
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <button
-                                type="button"
-                                aria-label={label}
-                                className="size-8 rounded-md border shadow-sm cursor-pointer"
-                                style={{ backgroundColor: colorValue }}
-                              />
-                            </PopoverTrigger>
-                            <PopoverContent
-                              className="w-[320px] p-3"
-                              sideOffset={6}
-                            >
-                              <ColorPicker
-                                className="p-3 rounded-md border shadow-sm bg-background"
-                                value={colorValue}
-                                onColorChange={([r, g, b, a]) => {
-                                  const next = Color({ r, g, b }).alpha(a);
-                                  const nextStr = next.hexa();
-                                  const newColors = {
-                                    ...customThemeState.colors,
-                                    [key]: nextStr,
-                                  };
-
-                                  // Check if colors match any preset theme
-                                  const matchingTheme =
-                                    getThemeByColors(newColors);
-
-                                  setCustomThemeState({
-                                    selectedThemeId: matchingTheme?.id ?? null,
-                                    colors: newColors,
-                                  });
-                                }}
-                              >
-                                <ColorPickerSelection className="h-36 rounded" />
-                                <div className="flex gap-3 items-center mt-3">
-                                  <ColorPickerEyeDropper />
-                                  <div className="grid gap-1 w-full">
-                                    <ColorPickerHue />
-                                    <ColorPickerAlpha />
-                                  </div>
-                                </div>
-                                <div className="flex gap-2 items-center mt-3">
-                                  <ColorPickerOutput />
-                                  <ColorPickerFormat />
-                                </div>
-                              </ColorPicker>
-                            </PopoverContent>
-                          </Popover>
-                          <div className="text-[10px] text-muted-foreground text-center leading-tight">
-                            {label}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
+                  }
+                }}
+              >
+                <SelectTrigger id="theme-select">
+                  <SelectValue
+                    placeholder={t("settings.appearance.selectTheme")}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="light">
+                    {t("settings.appearance.light")}
+                  </SelectItem>
+                  <SelectItem value="dark">
+                    {t("settings.appearance.dark")}
+                  </SelectItem>
+                  <SelectItem value="system">
+                    {t("settings.appearance.system")}
+                  </SelectItem>
+                  <SelectItem value="custom">
+                    {t("common.labels.custom")}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            {/* Language Section */}
-            <div className="space-y-4">
-              <Label className="text-base font-medium">
-                {t("settings.language.title")}
-              </Label>
+            <p className="text-xs text-muted-foreground">
+              {t("settings.appearance.themeDescription")}
+            </p>
 
-              <div className="grid gap-2">
-                <Label htmlFor="language-select" className="text-sm">
-                  {t("settings.language.interface")}
-                </Label>
-                <Select
-                  value={selectedLanguage ?? "system"}
-                  onValueChange={(value) => {
-                    setSelectedLanguage(value);
-                  }}
-                  disabled={isLanguageLoading}
-                >
-                  <SelectTrigger id="language-select">
-                    <SelectValue
-                      placeholder={t("settings.language.selectLanguage")}
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="system">
-                      {t("settings.language.systemDefault")}
-                    </SelectItem>
-                    {supportedLanguages.map((lang) => (
-                      <SelectItem key={lang.code} value={lang.code}>
-                        {lang.nativeName} ({lang.name})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <p className="text-xs text-muted-foreground">
-                {t("settings.language.description")}
-              </p>
-            </div>
-
-            {/* Default Browser Section - hidden in portable mode */}
-            {!systemInfo?.portable && (
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <Label className="text-base font-medium">
-                    {t("settings.defaultBrowser.title")}
+            {settings.theme === "custom" && (
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="theme-preset-select"
+                    className="text-sm font-medium"
+                  >
+                    {t("settings.appearance.themePreset")}
                   </Label>
-                  <Badge variant={isDefaultBrowser ? "default" : "secondary"}>
-                    {isDefaultBrowser
-                      ? t("common.status.active")
-                      : t("common.status.inactive")}
-                  </Badge>
+                  <Select
+                    value={customThemeState.selectedThemeId ?? "custom"}
+                    onValueChange={(value) => {
+                      if (value === "custom") {
+                        setCustomThemeState((prev) => ({
+                          ...prev,
+                          selectedThemeId: null,
+                        }));
+                      } else {
+                        const theme = getThemeById(value);
+                        if (theme) {
+                          setCustomThemeState({
+                            selectedThemeId: value,
+                            colors: theme.colors,
+                          });
+                        }
+                      }
+                    }}
+                  >
+                    <SelectTrigger id="theme-preset-select">
+                      <SelectValue
+                        placeholder={t("settings.appearance.selectThemePreset")}
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {THEMES.map((theme) => (
+                        <SelectItem key={theme.id} value={theme.id}>
+                          {theme.name}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="custom">
+                        {t("settings.appearance.yourOwn")}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                <LoadingButton
-                  isLoading={isSettingDefault}
-                  onClick={() => {
-                    handleSetDefaultBrowser().catch((err: unknown) => {
-                      console.error(err);
-                    });
-                  }}
-                  disabled={isDefaultBrowser}
-                  variant={isDefaultBrowser ? "outline" : "default"}
-                  className="w-full"
-                >
-                  {isDefaultBrowser
-                    ? t("settings.defaultBrowser.alreadyDefault")
-                    : t("settings.defaultBrowser.setAsDefault")}
-                </LoadingButton>
-
-                <p className="text-xs text-muted-foreground">
-                  {t("settings.defaultBrowser.description")}
-                </p>
-              </div>
-            )}
-
-            {/* Permissions Section - Only show on macOS */}
-            {isMacOS && (
-              <div className="space-y-4">
-                <Label className="text-base font-medium">
-                  {t("settings.permissions.title")}
-                </Label>
-
-                {isLoadingPermissions ? (
-                  <div className="text-sm text-muted-foreground">
-                    {t("settings.permissions.loading")}
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {permissions.map((permission) => (
+                <div className="text-sm font-medium">
+                  {t("settings.appearance.customColors")}
+                </div>
+                <div className="grid grid-cols-4 gap-3">
+                  {THEME_VARIABLES.map(({ key, label }) => {
+                    const colorValue =
+                      customThemeState.colors[key] ?? "#000000";
+                    return (
                       <div
-                        key={permission.permission_type}
-                        className="flex justify-between items-center p-3 rounded-lg border"
+                        key={key}
+                        className="flex flex-col gap-1 items-center"
                       >
-                        <div className="flex items-center gap-x-3">
-                          {getPermissionIcon(permission.permission_type)}
-                          <div>
-                            <div className="text-sm font-medium">
-                              {getPermissionDisplayName(
-                                permission.permission_type,
-                              )}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {permission.description}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-x-2">
-                          {getStatusBadge(permission.isGranted)}
-                          {!permission.isGranted && (
-                            <LoadingButton
-                              size="sm"
-                              isLoading={
-                                requestingPermission ===
-                                permission.permission_type
-                              }
-                              onClick={() => {
-                                handleRequestPermission(
-                                  permission.permission_type,
-                                ).catch((err: unknown) => {
-                                  console.error(err);
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <button
+                              type="button"
+                              aria-label={label}
+                              className="size-8 rounded-md border shadow-sm cursor-pointer"
+                              style={{ backgroundColor: colorValue }}
+                            />
+                          </PopoverTrigger>
+                          <PopoverContent
+                            className="w-[320px] p-3"
+                            sideOffset={6}
+                          >
+                            <ColorPicker
+                              className="p-3 rounded-md border shadow-sm bg-background"
+                              value={colorValue}
+                              onColorChange={([r, g, b, a]) => {
+                                const next = Color({ r, g, b }).alpha(a);
+                                const nextStr = next.hexa();
+                                const newColors = {
+                                  ...customThemeState.colors,
+                                  [key]: nextStr,
+                                };
+
+                                // Check if colors match any preset theme
+                                const matchingTheme =
+                                  getThemeByColors(newColors);
+
+                                setCustomThemeState({
+                                  selectedThemeId: matchingTheme?.id ?? null,
+                                  colors: newColors,
                                 });
                               }}
                             >
-                              Grant
-                            </LoadingButton>
-                          )}
+                              <ColorPickerSelection className="h-36 rounded" />
+                              <div className="flex gap-3 items-center mt-3">
+                                <ColorPickerEyeDropper />
+                                <div className="grid gap-1 w-full">
+                                  <ColorPickerHue />
+                                  <ColorPickerAlpha />
+                                </div>
+                              </div>
+                              <div className="flex gap-2 items-center mt-3">
+                                <ColorPickerOutput />
+                                <ColorPickerFormat />
+                              </div>
+                            </ColorPicker>
+                          </PopoverContent>
+                        </Popover>
+                        <div className="text-[10px] text-muted-foreground text-center leading-tight">
+                          {label}
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
-
-                <p className="text-xs text-muted-foreground">
-                  These permissions allow browsers launched from Donut Browser
-                  to access system resources. Each website will still ask for
-                  your permission individually.
-                </p>
+                    );
+                  })}
+                </div>
               </div>
             )}
+          </div>
 
-            {/* Integrations Section */}
-            <div className="space-y-4">
-              <Label className="text-base font-medium">
-                {t("settings.integrations.title")}
+          {/* Language Section */}
+          <div className="space-y-4">
+            <Label className="text-base font-medium">
+              {t("settings.language.title")}
+            </Label>
+
+            <div className="grid gap-2">
+              <Label htmlFor="language-select" className="text-sm">
+                {t("settings.language.interface")}
               </Label>
-              <p className="text-xs text-muted-foreground">
-                {t("settings.integrations.description")}
-              </p>
-              <RippleButton
-                variant="outline"
-                className="w-full"
-                onClick={onIntegrationsOpen}
+              <Select
+                value={selectedLanguage ?? "system"}
+                onValueChange={(value) => {
+                  setSelectedLanguage(value);
+                }}
+                disabled={isLanguageLoading}
               >
-                {t("integrations.openSettings")}
-              </RippleButton>
+                <SelectTrigger id="language-select">
+                  <SelectValue
+                    placeholder={t("settings.language.selectLanguage")}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="system">
+                    {t("settings.language.systemDefault")}
+                  </SelectItem>
+                  {supportedLanguages.map((lang) => (
+                    <SelectItem key={lang.code} value={lang.code}>
+                      {lang.nativeName} ({lang.name})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            {/* DNS Blocklist Section */}
+            <p className="text-xs text-muted-foreground">
+              {t("settings.language.description")}
+            </p>
+          </div>
+
+          {/* Default Browser Section - hidden in portable mode */}
+          {!systemInfo?.portable && (
             <div className="space-y-4">
-              <Label className="text-base font-medium">
-                {t("dnsBlocklist.title")}
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                {t("dnsBlocklist.settingsDescription")}
-              </p>
-              <RippleButton
-                variant="outline"
+              <div className="flex justify-between items-center">
+                <Label className="text-base font-medium">
+                  {t("settings.defaultBrowser.title")}
+                </Label>
+                <Badge variant={isDefaultBrowser ? "default" : "secondary"}>
+                  {isDefaultBrowser
+                    ? t("common.status.active")
+                    : t("common.status.inactive")}
+                </Badge>
+              </div>
+
+              <LoadingButton
+                isLoading={isSettingDefault}
+                onClick={() => {
+                  handleSetDefaultBrowser().catch((err: unknown) => {
+                    console.error(err);
+                  });
+                }}
+                disabled={isDefaultBrowser}
+                variant={isDefaultBrowser ? "outline" : "default"}
                 className="w-full"
-                onClick={() => setDnsBlocklistDialogOpen(true)}
               >
-                {t("dnsBlocklist.manageLists")}
-              </RippleButton>
-            </div>
+                {isDefaultBrowser
+                  ? t("settings.defaultBrowser.alreadyDefault")
+                  : t("settings.defaultBrowser.setAsDefault")}
+              </LoadingButton>
 
-            {/* Sync Encryption Section */}
+              <p className="text-xs text-muted-foreground">
+                {t("settings.defaultBrowser.description")}
+              </p>
+            </div>
+          )}
+
+          {/* Permissions Section - Only show on macOS */}
+          {isMacOS && (
             <div className="space-y-4">
               <Label className="text-base font-medium">
-                {t("settings.encryption.title")}
+                {t("settings.permissions.title")}
               </Label>
-              <p className="text-xs text-muted-foreground">
-                {t("settings.encryption.description")}
-              </p>
 
-              {!canUseEncryption ? (
-                <p className="text-sm text-muted-foreground">
-                  {t("settings.encryption.requiresProOrOwner")}
-                </p>
-              ) : hasE2ePassword ? (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="default">
-                      {t("settings.encryption.passwordSet")}
-                    </Badge>
-                    <span className="text-sm text-muted-foreground">
-                      {t("settings.encryption.passwordSetDescription")}
-                    </span>
-                  </div>
-                  <div className="flex gap-2 flex-wrap">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={isRemovingE2e}
-                      onClick={() => {
-                        setVerifyE2ePassword("");
-                        setIsVerifyE2eOpen(true);
-                      }}
-                    >
-                      {t("settings.encryption.validatePassword")}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={isRemovingE2e}
-                      onClick={() => {
-                        setHasE2ePassword(false);
-                        setE2ePassword("");
-                        setE2ePasswordConfirm("");
-                        setE2eError("");
-                      }}
-                    >
-                      {t("settings.encryption.changePassword")}
-                    </Button>
-                    <LoadingButton
-                      variant="destructive"
-                      size="sm"
-                      isLoading={isRemovingE2e}
-                      onClick={async () => {
-                        setIsRemovingE2e(true);
-                        try {
-                          // Await the rollover so the user sees an error if
-                          // re-syncing fails. Previously the rollover was
-                          // fire-and-forget (`void invoke(...)`) which left
-                          // half-removed state on screen with no feedback —
-                          // the source of issue #360 "completely bugged".
-                          await invoke("delete_e2e_password");
-                          setHasE2ePassword(false);
-                          try {
-                            await invoke(
-                              "rollover_encryption_for_all_entities",
-                            );
-                          } catch (rolloverErr) {
-                            console.error(
-                              "Rollover after password removal failed:",
-                              rolloverErr,
-                            );
-                            showErrorToast(String(rolloverErr));
-                          }
-                          showSuccessToast(t("settings.encryption.removed"));
-                        } catch (error) {
-                          showErrorToast(String(error));
-                        } finally {
-                          setIsRemovingE2e(false);
-                        }
-                      }}
-                    >
-                      {t("settings.encryption.removePassword")}
-                    </LoadingButton>
-                  </div>
+              {isLoadingPermissions ? (
+                <div className="text-sm text-muted-foreground">
+                  {t("settings.permissions.loading")}
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <Input
-                    type="password"
-                    placeholder={t("settings.encryption.passwordPlaceholder")}
-                    value={e2ePassword}
-                    onChange={(e) => {
-                      setE2ePassword(e.target.value);
-                      setE2eError("");
-                    }}
-                  />
-                  <Input
-                    type="password"
-                    placeholder={t("settings.encryption.confirmPlaceholder")}
-                    value={e2ePasswordConfirm}
-                    onChange={(e) => {
-                      setE2ePasswordConfirm(e.target.value);
-                      setE2eError("");
-                    }}
-                  />
-                  {e2eError && (
-                    <p className="text-sm text-destructive">{e2eError}</p>
-                  )}
-                  <LoadingButton
-                    variant="default"
-                    size="sm"
-                    isLoading={isSavingE2e}
-                    onClick={async () => {
-                      if (e2ePassword.length < 8) {
-                        setE2eError(t("settings.encryption.passwordTooShort"));
-                        return;
-                      }
-                      if (e2ePassword !== e2ePasswordConfirm) {
-                        setE2eError(t("settings.encryption.passwordMismatch"));
-                        return;
-                      }
-                      setIsSavingE2e(true);
-                      try {
-                        await invoke("set_e2e_password", {
-                          password: e2ePassword,
-                        });
-                        setHasE2ePassword(true);
-                        setE2ePassword("");
-                        setE2ePasswordConfirm("");
-                        try {
-                          // Await rollover so any failure surfaces to the
-                          // user instead of being lost via fire-and-forget.
-                          // Without this, "change password" leaves entities
-                          // half-re-encrypted with no visible error.
-                          await invoke("rollover_encryption_for_all_entities");
-                        } catch (rolloverErr) {
-                          console.error(
-                            "Rollover after password set failed:",
-                            rolloverErr,
-                          );
-                          showErrorToast(String(rolloverErr));
-                        }
-                        showSuccessToast(
-                          t("settings.encryption.passwordSaved"),
-                        );
-                      } catch (error) {
-                        showErrorToast(String(error));
-                      } finally {
-                        setIsSavingE2e(false);
-                      }
-                    }}
-                  >
-                    {t("settings.encryption.setPassword")}
-                  </LoadingButton>
-                </div>
-              )}
-            </div>
-
-            {/* Commercial License Section */}
-            <div className="space-y-4">
-              <Label className="text-base font-medium">
-                {t("settings.commercial.title")}
-              </Label>
-
-              <div className="flex items-center justify-between p-3 rounded-md border bg-muted/40">
-                {trialStatus?.type === "Active" ? (
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">
-                      {t("settings.commercial.trialActive", {
-                        days: trialStatus.days_remaining,
-                        hours: trialStatus.hours_remaining,
-                      })}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {t("settings.commercial.trialActiveDescription")}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-warning">
-                      {t("settings.commercial.trialExpired")}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {t("settings.commercial.trialExpiredDescription")}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Advanced Section */}
-            <div className="space-y-4">
-              <Label className="text-base font-medium">
-                {t("settings.advanced.title")}
-              </Label>
-
-              {!isLinux && (
-                <div className="flex items-start gap-x-3 p-3 rounded-lg border">
-                  <Checkbox
-                    id="disable-auto-updates"
-                    checked={settings.disable_auto_updates ?? false}
-                    onCheckedChange={(checked) => {
-                      updateSetting("disable_auto_updates", checked as boolean);
-                    }}
-                  />
-                  <div className="space-y-1">
-                    <Label
-                      htmlFor="disable-auto-updates"
-                      className="text-sm font-medium"
+                  {permissions.map((permission) => (
+                    <div
+                      key={permission.permission_type}
+                      className="flex justify-between items-center p-3 rounded-lg border"
                     >
-                      {t("settings.disableAutoUpdates")}
-                    </Label>
-                    <p className="text-xs text-muted-foreground">
-                      {t("settings.disableAutoUpdatesDescription")}
-                    </p>
-                  </div>
+                      <div className="flex items-center gap-x-3">
+                        {getPermissionIcon(permission.permission_type)}
+                        <div>
+                          <div className="text-sm font-medium">
+                            {getPermissionDisplayName(
+                              permission.permission_type,
+                            )}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {permission.description}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-x-2">
+                        {getStatusBadge(permission.isGranted)}
+                        {!permission.isGranted && (
+                          <LoadingButton
+                            size="sm"
+                            isLoading={
+                              requestingPermission ===
+                              permission.permission_type
+                            }
+                            onClick={() => {
+                              handleRequestPermission(
+                                permission.permission_type,
+                              ).catch((err: unknown) => {
+                                console.error(err);
+                              });
+                            }}
+                          >
+                            Grant
+                          </LoadingButton>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
 
-              <div className="flex items-start gap-x-3 p-3 rounded-lg border">
-                <Checkbox
-                  id="keep-decrypted-profiles-in-ram"
-                  checked={settings.keep_decrypted_profiles_in_ram ?? false}
-                  onCheckedChange={(checked) => {
-                    updateSetting(
-                      "keep_decrypted_profiles_in_ram",
-                      checked as boolean,
-                    );
-                  }}
-                />
-                <div className="space-y-1">
-                  <Label
-                    htmlFor="keep-decrypted-profiles-in-ram"
-                    className="text-sm font-medium"
-                  >
-                    {t("settings.keepDecryptedProfilesInRam")}
-                  </Label>
-                  <p className="text-xs text-muted-foreground">
-                    {t("settings.keepDecryptedProfilesInRamDescription")}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-x-3 p-3 rounded-lg border">
-                <Checkbox
-                  id="clear-cache-after-browser-close"
-                  checked={settings.clear_cache_after_browser_close ?? true}
-                  onCheckedChange={(checked) => {
-                    updateSetting(
-                      "clear_cache_after_browser_close",
-                      checked as boolean,
-                    );
-                  }}
-                />
-                <div className="space-y-1">
-                  <Label
-                    htmlFor="clear-cache-after-browser-close"
-                    className="text-sm font-medium"
-                  >
-                    {t("settings.clearCacheAfterBrowserClose")}
-                  </Label>
-                  <p className="text-xs text-muted-foreground">
-                    {t("settings.clearCacheAfterBrowserCloseDescription")}
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-3 p-3 rounded-lg border">
-                <div className="space-y-1">
-                  <Label
-                    htmlFor="data-dir-input"
-                    className="text-sm font-medium"
-                  >
-                    {t("settings.advanced.dataDirTitle")}
-                  </Label>
-                  <p className="text-xs text-muted-foreground">
-                    {t("settings.advanced.dataDirDescription")}
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-xs text-muted-foreground">
-                    {t("settings.advanced.dataDirCurrent")}
-                  </Label>
-                  <Input
-                    value={dataDirSettings?.current_data_dir ?? ""}
-                    readOnly
-                    className="text-xs"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="data-dir-input"
-                    className="text-xs text-muted-foreground"
-                  >
-                    {t("settings.advanced.dataDirCustom")}
-                  </Label>
-                  <Input
-                    id="data-dir-input"
-                    value={dataDirInput}
-                    disabled={
-                      dataDirSettings?.env_override_active ||
-                      dataDirSettings?.portable
-                    }
-                    onChange={(event) => setDataDirInput(event.target.value)}
-                    placeholder={dataDirSettings?.default_data_dir ?? ""}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <RippleButton
-                    variant="outline"
-                    disabled={
-                      dataDirSettings?.env_override_active ||
-                      dataDirSettings?.portable
-                    }
-                    onClick={async () => {
-                      const selected = await openDialog({
-                        directory: true,
-                        multiple: false,
-                        title: t("settings.advanced.dataDirSelectTitle"),
-                      });
-                      if (typeof selected === "string") {
-                        setDataDirInput(selected);
-                      }
-                    }}
-                  >
-                    {t("settings.advanced.dataDirBrowse")}
-                  </RippleButton>
-                  <RippleButton
-                    variant="outline"
-                    disabled={
-                      dataDirSettings?.env_override_active ||
-                      dataDirSettings?.portable
-                    }
-                    onClick={() => setDataDirInput("")}
-                  >
-                    {t("settings.advanced.dataDirUseDefault")}
-                  </RippleButton>
-                </div>
-
-                {dataDirSettings?.env_override_active ? (
-                  <p className="text-xs text-warning">
-                    {t("settings.advanced.dataDirEnvOverride")}
-                  </p>
-                ) : dataDirSettings?.portable ? (
-                  <p className="text-xs text-warning">
-                    {t("settings.advanced.dataDirPortableMode")}
-                  </p>
-                ) : (
-                  <div className="space-y-1">
-                    <p className="text-xs text-warning">
-                      {t("settings.advanced.dataDirRestartWarning")}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {t("settings.advanced.dataDirNoMigrationWarning")}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              <LoadingButton
-                isLoading={isClearingCache}
-                onClick={() => {
-                  handleClearCache().catch((err: unknown) => {
-                    console.error(err);
-                  });
-                }}
-                variant="outline"
-                className="w-full"
-              >
-                {t("settings.advanced.clearCache")}
-              </LoadingButton>
-
               <p className="text-xs text-muted-foreground">
-                {t("settings.advanced.clearCacheDescription")}
-              </p>
-
-              <div className="grid grid-cols-2 gap-2 pt-2">
-                <RippleButton
-                  variant="outline"
-                  className="text-xs"
-                  onClick={async () => {
-                    try {
-                      const content = await invoke<string>("read_log_files");
-                      await writeClipboardText(content);
-                      showSuccessToast(t("settings.advanced.copyLogsSuccess"));
-                    } catch (err) {
-                      showErrorToast(String(err));
-                    }
-                  }}
-                >
-                  {t("settings.advanced.copyLogs")}
-                </RippleButton>
-                <RippleButton
-                  variant="outline"
-                  className="text-xs"
-                  onClick={async () => {
-                    try {
-                      await invoke("open_log_directory");
-                    } catch (err) {
-                      showErrorToast(String(err));
-                    }
-                  }}
-                >
-                  {t("settings.advanced.openLogDir")}
-                </RippleButton>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {t("settings.advanced.copyLogsDescription")}
+                These permissions allow browsers launched from Donut Browser to
+                access system resources. Each website will still ask for your
+                permission individually.
               </p>
             </div>
+          )}
 
-            {/* System Info */}
-            {systemInfo && (
-              <div className="pt-2 border-t">
-                <p className="text-xs text-muted-foreground font-mono whitespace-pre-line select-all">
-                  {`Donut Browser ${systemInfo.app_version}\n${systemInfo.os} ${systemInfo.arch}${systemInfo.portable ? " (portable)" : ""}`}
-                </p>
+          {/* Advanced Section */}
+          <div className="space-y-4">
+            <Label className="text-base font-medium">
+              {t("settings.advanced.title")}
+            </Label>
+
+            {!isLinux && (
+              <div className="flex items-start gap-x-3 p-3 rounded-lg border">
+                <Checkbox
+                  id="disable-auto-updates"
+                  checked={settings.disable_auto_updates ?? false}
+                  onCheckedChange={(checked) => {
+                    updateSetting("disable_auto_updates", checked as boolean);
+                  }}
+                />
+                <div className="space-y-1">
+                  <Label
+                    htmlFor="disable-auto-updates"
+                    className="text-sm font-medium"
+                  >
+                    {t("settings.disableAutoUpdates")}
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    {t("settings.disableAutoUpdatesDescription")}
+                  </p>
+                </div>
               </div>
             )}
+
+            <div className="flex items-start gap-x-3 p-3 rounded-lg border">
+              <Checkbox
+                id="keep-decrypted-profiles-in-ram"
+                checked={settings.keep_decrypted_profiles_in_ram ?? false}
+                onCheckedChange={(checked) => {
+                  updateSetting(
+                    "keep_decrypted_profiles_in_ram",
+                    checked as boolean,
+                  );
+                }}
+              />
+              <div className="space-y-1">
+                <Label
+                  htmlFor="keep-decrypted-profiles-in-ram"
+                  className="text-sm font-medium"
+                >
+                  {t("settings.keepDecryptedProfilesInRam")}
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  {t("settings.keepDecryptedProfilesInRamDescription")}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-x-3 p-3 rounded-lg border">
+              <Checkbox
+                id="clear-cache-after-browser-close"
+                checked={settings.clear_cache_after_browser_close ?? true}
+                onCheckedChange={(checked) => {
+                  updateSetting(
+                    "clear_cache_after_browser_close",
+                    checked as boolean,
+                  );
+                }}
+              />
+              <div className="space-y-1">
+                <Label
+                  htmlFor="clear-cache-after-browser-close"
+                  className="text-sm font-medium"
+                >
+                  {t("settings.clearCacheAfterBrowserClose")}
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  {t("settings.clearCacheAfterBrowserCloseDescription")}
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3 p-3 rounded-lg border">
+              <div className="space-y-1">
+                <Label htmlFor="data-dir-input" className="text-sm font-medium">
+                  {t("settings.advanced.dataDirTitle")}
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  {t("settings.advanced.dataDirDescription")}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">
+                  {t("settings.advanced.dataDirCurrent")}
+                </Label>
+                <Input
+                  value={dataDirSettings?.current_data_dir ?? ""}
+                  readOnly
+                  className="text-xs"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label
+                  htmlFor="data-dir-input"
+                  className="text-xs text-muted-foreground"
+                >
+                  {t("settings.advanced.dataDirCustom")}
+                </Label>
+                <Input
+                  id="data-dir-input"
+                  value={dataDirInput}
+                  disabled={
+                    dataDirSettings?.env_override_active ||
+                    dataDirSettings?.portable
+                  }
+                  onChange={(event) => setDataDirInput(event.target.value)}
+                  placeholder={dataDirSettings?.default_data_dir ?? ""}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <RippleButton
+                  variant="outline"
+                  disabled={
+                    dataDirSettings?.env_override_active ||
+                    dataDirSettings?.portable
+                  }
+                  onClick={async () => {
+                    const selected = await openDialog({
+                      directory: true,
+                      multiple: false,
+                      title: t("settings.advanced.dataDirSelectTitle"),
+                    });
+                    if (typeof selected === "string") {
+                      setDataDirInput(selected);
+                    }
+                  }}
+                >
+                  {t("settings.advanced.dataDirBrowse")}
+                </RippleButton>
+                <RippleButton
+                  variant="outline"
+                  disabled={
+                    dataDirSettings?.env_override_active ||
+                    dataDirSettings?.portable
+                  }
+                  onClick={() => setDataDirInput("")}
+                >
+                  {t("settings.advanced.dataDirUseDefault")}
+                </RippleButton>
+              </div>
+
+              {dataDirSettings?.env_override_active ? (
+                <p className="text-xs text-warning">
+                  {t("settings.advanced.dataDirEnvOverride")}
+                </p>
+              ) : dataDirSettings?.portable ? (
+                <p className="text-xs text-warning">
+                  {t("settings.advanced.dataDirPortableMode")}
+                </p>
+              ) : (
+                <div className="space-y-1">
+                  <p className="text-xs text-warning">
+                    {t("settings.advanced.dataDirRestartWarning")}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {t("settings.advanced.dataDirNoMigrationWarning")}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <LoadingButton
+              isLoading={isClearingCache}
+              onClick={() => {
+                handleClearCache().catch((err: unknown) => {
+                  console.error(err);
+                });
+              }}
+              variant="outline"
+              className="w-full"
+            >
+              {t("settings.advanced.clearCache")}
+            </LoadingButton>
+
+            <p className="text-xs text-muted-foreground">
+              {t("settings.advanced.clearCacheDescription")}
+            </p>
+
+            <div className="grid grid-cols-2 gap-2 pt-2">
+              <RippleButton
+                variant="outline"
+                className="text-xs"
+                onClick={async () => {
+                  try {
+                    const content = await invoke<string>("read_log_files");
+                    await writeClipboardText(content);
+                    showSuccessToast(t("settings.advanced.copyLogsSuccess"));
+                  } catch (err) {
+                    showErrorToast(String(err));
+                  }
+                }}
+              >
+                {t("settings.advanced.copyLogs")}
+              </RippleButton>
+              <RippleButton
+                variant="outline"
+                className="text-xs"
+                onClick={async () => {
+                  try {
+                    await invoke("open_log_directory");
+                  } catch (err) {
+                    showErrorToast(String(err));
+                  }
+                }}
+              >
+                {t("settings.advanced.openLogDir")}
+              </RippleButton>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {t("settings.advanced.copyLogsDescription")}
+            </p>
           </div>
 
-          {subPage ? (
-            <div className="shrink-0 flex items-center justify-end gap-2 pt-2 border-t border-border">
-              <LoadingButton
-                size="sm"
-                isLoading={isSaving}
-                onClick={() => {
-                  handleSave().catch((err: unknown) => {
-                    console.error(err);
-                  });
-                }}
-                disabled={isLoading || !hasChanges}
-              >
-                {t("common.buttons.saveSettings")}
-              </LoadingButton>
+          {/* System Info */}
+          {systemInfo && (
+            <div className="pt-2 border-t">
+              <p className="text-xs text-muted-foreground font-mono whitespace-pre-line select-all">
+                {`Donut Browser ${systemInfo.app_version}\n${systemInfo.os} ${systemInfo.arch}${systemInfo.portable ? " (portable)" : ""}`}
+              </p>
             </div>
-          ) : (
-            <DialogFooter className="shrink-0">
-              <RippleButton variant="outline" onClick={handleClose}>
-                {t("common.buttons.cancel")}
-              </RippleButton>
-              <LoadingButton
-                isLoading={isSaving}
-                onClick={() => {
-                  handleSave().catch((err: unknown) => {
-                    console.error(err);
-                  });
-                }}
-                disabled={isLoading || !hasChanges}
-              >
-                {t("common.buttons.saveSettings")}
-              </LoadingButton>
-            </DialogFooter>
           )}
-        </DialogContent>
-      </Dialog>
-      <DnsBlocklistDialog
-        isOpen={dnsBlocklistDialogOpen}
-        onClose={() => setDnsBlocklistDialogOpen(false)}
-      />
-      <Dialog
-        open={isVerifyE2eOpen}
-        onOpenChange={(open) => {
-          if (!isVerifyingE2e) {
-            setIsVerifyE2eOpen(open);
-            if (!open) setVerifyE2ePassword("");
-          }
-        }}
-      >
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>
-              {t("settings.encryption.validateDialog.title")}
-            </DialogTitle>
-            <DialogDescription>
-              {t("settings.encryption.validateDialog.description")}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3">
-            <Input
-              type="password"
-              placeholder={t("settings.encryption.passwordPlaceholder")}
-              value={verifyE2ePassword}
-              autoFocus
-              onChange={(e) => setVerifyE2ePassword(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && verifyE2ePassword.length > 0) {
-                  e.preventDefault();
-                  void (async () => {
-                    setIsVerifyingE2e(true);
-                    try {
-                      const ok = await invoke<boolean>("verify_e2e_password", {
-                        password: verifyE2ePassword,
-                      });
-                      if (ok) {
-                        showSuccessToast(
-                          t("settings.encryption.validateDialog.matchToast"),
-                        );
-                        setIsVerifyE2eOpen(false);
-                        setVerifyE2ePassword("");
-                      } else {
-                        showErrorToast(
-                          t("settings.encryption.validateDialog.mismatchToast"),
-                        );
-                      }
-                    } catch (error) {
-                      showErrorToast(String(error));
-                    } finally {
-                      setIsVerifyingE2e(false);
-                    }
-                  })();
-                }
-              }}
-            />
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              disabled={isVerifyingE2e}
-              onClick={() => {
-                setIsVerifyE2eOpen(false);
-                setVerifyE2ePassword("");
-              }}
-            >
-              {t("common.buttons.cancel")}
-            </Button>
+        </div>
+
+        {subPage ? (
+          <div className="shrink-0 flex items-center justify-end gap-2 pt-2 border-t border-border">
             <LoadingButton
-              isLoading={isVerifyingE2e}
-              disabled={verifyE2ePassword.length === 0}
-              onClick={async () => {
-                setIsVerifyingE2e(true);
-                try {
-                  const ok = await invoke<boolean>("verify_e2e_password", {
-                    password: verifyE2ePassword,
-                  });
-                  if (ok) {
-                    showSuccessToast(
-                      t("settings.encryption.validateDialog.matchToast"),
-                    );
-                    setIsVerifyE2eOpen(false);
-                    setVerifyE2ePassword("");
-                  } else {
-                    showErrorToast(
-                      t("settings.encryption.validateDialog.mismatchToast"),
-                    );
-                  }
-                } catch (error) {
-                  showErrorToast(String(error));
-                } finally {
-                  setIsVerifyingE2e(false);
-                }
+              size="sm"
+              isLoading={isSaving}
+              onClick={() => {
+                handleSave().catch((err: unknown) => {
+                  console.error(err);
+                });
               }}
+              disabled={isLoading || !hasChanges}
             >
-              {t("settings.encryption.validateDialog.submit")}
+              {t("common.buttons.saveSettings")}
+            </LoadingButton>
+          </div>
+        ) : (
+          <DialogFooter className="shrink-0">
+            <RippleButton variant="outline" onClick={handleClose}>
+              {t("common.buttons.cancel")}
+            </RippleButton>
+            <LoadingButton
+              isLoading={isSaving}
+              onClick={() => {
+                handleSave().catch((err: unknown) => {
+                  console.error(err);
+                });
+              }}
+              disabled={isLoading || !hasChanges}
+            >
+              {t("common.buttons.saveSettings")}
             </LoadingButton>
           </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }

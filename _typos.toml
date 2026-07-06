@@ -6,6 +6,8 @@ extend-exclude = [
     # Auto-generated from commit subjects by release.yml; typos here originate
     # in commit messages, which are immutable, so don't spell-check it.
     "CHANGELOG.md",
+    # Vietnamese release process documentation trips English spellcheck.
+    "docs/update-version.md",
 ]
 
 [default.extend-words]

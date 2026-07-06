@@ -352,7 +352,6 @@ mod tests {
       // These are test keys, not real ones
       private_key: "YEocP0e2o1WT5GlvBvQzVF7EeR6z9aCk+ZdZ5NKEuXA=".to_string(),
       address: "10.0.0.2/24".to_string(),
-      dns: Some("1.1.1.1".to_string()),
       mtu: Some(1420),
       peer_public_key: "aGnF7JlG+U5t0BqB1PVf1yOuELHrWLGGcUJb0eCK9Aw=".to_string(),
       peer_endpoint: "127.0.0.1:51820".to_string(),

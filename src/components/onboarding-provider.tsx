@@ -32,20 +32,6 @@ export function OnboardingProvider({
           pointerPadding: 8,
           pointerRadius: 10,
         },
-        {
-          icon: null,
-          title: t("onboarding.steps.dnsBlocking.title"),
-          content: t("onboarding.steps.dnsBlocking.content"),
-          selector: '[data-onborda="dns-blocklist"]',
-          // The DNS dropdown sits in the right-hand columns. A centered "bottom"
-          // card runs off the right edge; "bottom-right" anchors the card's right
-          // edge to the dropdown and extends it left/down, keeping it fully
-          // on-screen with its arrow pointing up at the option.
-          side: "bottom-right",
-          showControls: true,
-          pointerPadding: 6,
-          pointerRadius: 8,
-        },
       ],
     },
   ];

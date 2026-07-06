@@ -165,10 +165,6 @@ pub fn extensions_dir() -> PathBuf {
   data_dir().join("extensions")
 }
 
-pub fn dns_blocklist_dir() -> PathBuf {
-  cache_dir().join("dns_blocklists")
-}
-
 /// Resolve the directory that tauri-plugin-log writes to. Mirrors the
 /// `LogDir` target used in the plugin builder so the path matches what's
 /// actually on disk for this OS.
@@ -267,7 +263,6 @@ mod tests {
     assert!(proxy_workers_dir().ends_with("proxy_workers"));
     assert!(vpn_dir().ends_with("vpn"));
     assert!(extensions_dir().ends_with("extensions"));
-    assert!(dns_blocklist_dir().ends_with("dns_blocklists"));
   }
 
   #[test]

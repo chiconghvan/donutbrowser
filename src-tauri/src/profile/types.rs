@@ -70,8 +70,6 @@ pub struct BrowserProfile {
   pub created_by_id: Option<String>,
   #[serde(default)]
   pub created_by_email: Option<String>,
-  #[serde(default)]
-  pub dns_blocklist: Option<String>,
   /// True when the on-disk profile dir is encrypted with a per-profile password.
   /// Decryption goes to a RAM-backed ephemeral dir, never to disk.
   #[serde(default)]
@@ -82,7 +80,7 @@ pub struct BrowserProfile {
   #[serde(default)]
   pub created_at: Option<u64>,
   /// Unix seconds of the last meaningful metadata edit (name, tags, note,
-  /// proxy/vpn/group/extension assignment, launch hook, bypass rules, dns).
+  /// proxy/vpn/group/extension assignment, launch hook, bypass rules).
   /// Source of truth for metadata sync conflict resolution (last-write-wins);
   /// NOT bumped by browser-file changes, which sync via the file manifest.
   #[serde(default)]

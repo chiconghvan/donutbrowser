@@ -234,7 +234,6 @@ impl ProfileManager {
     allow_duplicate_cloak_seed: bool,
     group_id: Option<String>,
     ephemeral: bool,
-    dns_blocklist: Option<String>,
     launch_hook: Option<String>,
   ) -> Result<BrowserProfile, Box<dyn std::error::Error>> {
     if proxy.is_some() && vpn_id.is_some() {
@@ -335,7 +334,6 @@ impl ProfileManager {
           proxy_bypass_rules: Vec::new(),
           created_by_id: None,
           created_by_email: None,
-          dns_blocklist: None,
           password_protected: false,
           created_at: None,
           updated_at: None,
@@ -407,7 +405,6 @@ impl ProfileManager {
       proxy_bypass_rules: Vec::new(),
       created_by_id: None,
       created_by_email: None,
-      dns_blocklist,
       password_protected: false,
       created_at: Some(
         std::time::SystemTime::now()
@@ -926,31 +923,6 @@ impl ProfileManager {
     Ok(profile)
   }
 
-  pub fn update_profile_dns_blocklist(
-    &self,
-    profile_id: &str,
-    dns_blocklist: Option<String>,
-  ) -> Result<BrowserProfile, Box<dyn std::error::Error>> {
-    let profile_uuid =
-      uuid::Uuid::parse_str(profile_id).map_err(|_| format!("Invalid profile ID: {profile_id}"))?;
-    let profiles = self.list_profiles()?;
-    let mut profile = profiles
-      .into_iter()
-      .find(|p| p.id == profile_uuid)
-      .ok_or_else(|| format!("Profile with ID '{profile_id}' not found"))?;
-
-    profile.dns_blocklist = dns_blocklist;
-    profile.updated_at = Some(crate::proxy_manager::now_secs());
-
-    self.save_profile(&profile)?;
-
-    if let Err(e) = events::emit_empty("profiles-changed") {
-      log::warn!("Warning: Failed to emit profiles-changed event: {e}");
-    }
-
-    Ok(profile)
-  }
-
   pub fn delete_multiple_profiles(
     &self,
     _app_handle: &tauri::AppHandle,
@@ -1075,7 +1047,6 @@ impl ProfileManager {
       proxy_bypass_rules: source.proxy_bypass_rules,
       created_by_id: None,
       created_by_email: None,
-      dns_blocklist: source.dns_blocklist,
       password_protected: false,
       created_at: Some(
         std::time::SystemTime::now()
@@ -2237,7 +2208,6 @@ pub async fn create_browser_profile_with_group(
   allow_duplicate_cloak_seed: Option<bool>,
   group_id: Option<String>,
   ephemeral: bool,
-  dns_blocklist: Option<String>,
   launch_hook: Option<String>,
 ) -> Result<BrowserProfile, String> {
   let profile_manager = ProfileManager::instance();
@@ -2255,7 +2225,6 @@ pub async fn create_browser_profile_with_group(
       allow_duplicate_cloak_seed.unwrap_or(false),
       group_id,
       ephemeral,
-      dns_blocklist,
       launch_hook,
     )
     .await
@@ -2295,18 +2264,6 @@ pub async fn update_profile_vpn(
     .update_profile_vpn(app_handle, &profile_id, vpn_id)
     .await
     .map_err(|e| format!("Failed to update profile VPN: {e}"))
-}
-
-#[tauri::command]
-pub fn update_profile_tags(
-  app_handle: tauri::AppHandle,
-  profile_id: String,
-  tags: Vec<String>,
-) -> Result<BrowserProfile, String> {
-  let profile_manager = ProfileManager::instance();
-  profile_manager
-    .update_profile_tags(&app_handle, &profile_id, tags)
-    .map_err(|e| format!("Failed to update profile tags: {e}"))
 }
 
 #[tauri::command]
@@ -2368,17 +2325,6 @@ pub fn update_profile_proxy_bypass_rules(
 }
 
 #[tauri::command]
-pub fn update_profile_dns_blocklist(
-  profile_id: String,
-  dns_blocklist: Option<String>,
-) -> Result<BrowserProfile, String> {
-  let profile_manager = ProfileManager::instance();
-  profile_manager
-    .update_profile_dns_blocklist(&profile_id, dns_blocklist)
-    .map_err(|e| format!("Failed to update DNS blocklist: {e}"))
-}
-
-#[tauri::command]
 pub async fn check_browser_status(
   app_handle: tauri::AppHandle,
   profile: BrowserProfile,
@@ -2417,7 +2363,6 @@ pub async fn create_browser_profile_new(
   allow_duplicate_cloak_seed: Option<bool>,
   group_id: Option<String>,
   ephemeral: Option<bool>,
-  dns_blocklist: Option<String>,
   launch_hook: Option<String>,
 ) -> Result<BrowserProfile, String> {
   if browser_str == "wayfern" {
@@ -2448,7 +2393,6 @@ pub async fn create_browser_profile_new(
     allow_duplicate_cloak_seed,
     group_id,
     ephemeral.unwrap_or(false),
-    dns_blocklist,
     launch_hook,
   )
   .await
@@ -2516,7 +2460,6 @@ pub async fn create_browser_profiles_bulk(
         false,
         group_id.clone(),
         false,
-        None,
         None,
       )
       .await
