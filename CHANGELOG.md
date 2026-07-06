@@ -3,6 +3,9 @@
 
 ## v0.27.26 (2026-07-06)
 
+
+## v0.27.26 (2026-07-06)
+
 ### Features
 
 - remove commercial license and trial gating flows
