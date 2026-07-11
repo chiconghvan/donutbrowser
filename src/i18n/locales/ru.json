@@ -1846,9 +1846,10 @@
     "createButton": "Create {{count}} Profiles",
     "success": "Created {{count}} profiles successfully.",
     "failed": "Failed to create profiles.",
-    "namePattern": "Names: {{prefix}}.01 through {{prefix}}.{{count}}",
+    "namePattern": "Names: {{prefix}}01 through {{prefix}}{{count}}",
     "proxyCountMatch": "{{count}} proxy line(s) — matches {{count}} profile(s).",
-    "proxyCountInfo": "{{proxyCount}} proxy line(s) for {{profileCount}} profile(s). Extra proxies ignored, missing proxies left unset."
+    "proxyCountInfo": "{{proxyCount}} proxy line(s) for {{profileCount}} profile(s). Extra proxies ignored, missing proxies left unset.",
+    "prefixLabel": "Префикс"
   },
   "proxyAssignment": {
     "title": "Назначить прокси",

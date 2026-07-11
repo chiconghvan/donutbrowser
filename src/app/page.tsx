@@ -131,10 +131,8 @@ export default function Home() {
     return () => window.removeEventListener("scroll", pin, true);
   }, [isOnbordaVisible]);
 
-  // On the very first launch, always show the welcome flow
-  // (one-shot: the backend flag is set immediately so it can't trigger again).
-  // The welcome dialog itself decides whether to continue into the browser
-  // download + profile-creation flow — only when the user has no profile yet.
+  // On the very first launch, skip the welcome flow and go straight in.
+  // The backend onboarding flag is set immediately so it can't trigger again.
   useEffect(() => {
     if (profilesLoading || onboardingHandledRef.current) return;
     onboardingHandledRef.current = true;
@@ -146,8 +144,7 @@ export default function Home() {
           return;
         }
         await invoke("complete_onboarding");
-        setFirstRunOnboarding(true);
-        setWelcomeOpen(true);
+        setFirstRunOnboarding(false);
       } catch (err) {
         console.error("Onboarding init failed:", err);
         setFirstRunOnboarding(false);

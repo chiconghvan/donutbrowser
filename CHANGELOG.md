@@ -1,6 +1,22 @@
 # Changelog
 
 
+## v0.27.27 (2026-07-11)
+
+### Features
+
+- add prefix input to bulk create profile dialog for custom profile name prefix
+- skip welcome dialog on first launch
+
+### Bug Fixes
+
+- remove checkbox column from profile data table while keeping Excel-like row selection
+
+### Maintenance
+
+- chore: bump version to 0.27.27
+
+
 ## v0.27.26 (2026-07-06)
 
 

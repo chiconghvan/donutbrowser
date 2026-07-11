@@ -16,7 +16,7 @@ import { emit, listen } from "@tauri-apps/api/event";
 import type { Dispatch, SetStateAction } from "react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { FaApple, FaLinux, FaWindows } from "react-icons/fa";
+
 import {
   LuCheck,
   LuChevronDown,
@@ -42,7 +42,6 @@ import {
 } from "@/components/profile-info-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Command,
   CommandEmpty,
@@ -82,7 +81,6 @@ import { useTeamLocks } from "@/hooks/use-team-locks";
 import {
   getBrowserDisplayName,
   getOSDisplayName,
-  getProfileIcon,
   isCrossOsProfile,
 } from "@/lib/browser-utils";
 import { formatRelativeTime } from "@/lib/flag-utils";
@@ -111,8 +109,6 @@ import { RippleButton } from "./ui/ripple";
 interface TableMeta {
   t: (key: string, options?: Record<string, unknown>) => string;
   selectedProfiles: string[];
-  selectableCount: number;
-  showCheckboxes: boolean;
   isClient: boolean;
   runningProfiles: Set<string>;
   launchingProfiles: Set<string>;
@@ -147,9 +143,6 @@ interface TableMeta {
 
   // Selection helpers
   isProfileSelected: (id: string) => boolean;
-  handleToggleAll: (checked: boolean) => void;
-  handleCheckboxChange: (id: string, checked: boolean) => void;
-  handleIconClick: (id: string) => void;
   /** Pointer-down handler to initiate drag selection from the select cell */
   handleSelectPointerDown: (
     e: React.PointerEvent,
@@ -734,13 +727,6 @@ export function ProfilesDataTable({
       }
       setRowSelection(newSelection);
       prevSelectedProfilesRef.current = selectedProfiles;
-      // When the parent clears the selection (e.g. after a bulk action like
-      // delete / move-to-group), collapse the checkbox column back to icons.
-      // Otherwise the row checkboxes stay visible and only revert after the
-      // user clicks one — which the per-checkbox handler resets.
-      if (selectedProfiles.length === 0) {
-        setShowCheckboxes(false);
-      }
     }
   }, [selectedProfiles]);
 
@@ -817,7 +803,6 @@ export function ProfilesDataTable({
   const [vpnOverrides, setVpnOverrides] = React.useState<
     Record<string, string | null>
   >({});
-  const [showCheckboxes, setShowCheckboxes] = React.useState(false);
   const [noteOverrides, setNoteOverrides] = React.useState<
     Record<string, string | null>
   >({});
@@ -1162,57 +1147,6 @@ export function ProfilesDataTable({
     }
   };
 
-  // Handle icon/checkbox click
-  const handleIconClick = React.useCallback(
-    (profileId: string) => {
-      const profile = profiles.find((p) => p.id === profileId);
-      if (!profile) return;
-
-      // Prevent selection of profiles whose browsers are updating
-      if (!browserState.canSelectProfile(profile)) {
-        return;
-      }
-
-      setShowCheckboxes(true);
-      const newSet = new Set(selectedProfiles);
-      if (newSet.has(profileId)) {
-        newSet.delete(profileId);
-      } else {
-        newSet.add(profileId);
-      }
-
-      // Hide checkboxes if no profiles are selected
-      if (newSet.size === 0) {
-        setShowCheckboxes(false);
-      }
-
-      selectionAnchorIdRef.current = profileId;
-      onSelectedProfilesChange(Array.from(newSet));
-    },
-    [profiles, browserState, onSelectedProfilesChange, selectedProfiles],
-  );
-
-  // Handle checkbox change
-  const handleCheckboxChange = React.useCallback(
-    (profileId: string, checked: boolean) => {
-      const newSet = new Set(selectedProfiles);
-      if (checked) {
-        newSet.add(profileId);
-      } else {
-        newSet.delete(profileId);
-      }
-
-      // Hide checkboxes if no profiles are selected
-      if (newSet.size === 0) {
-        setShowCheckboxes(false);
-      }
-
-      selectionAnchorIdRef.current = profileId;
-      onSelectedProfilesChange(Array.from(newSet));
-    },
-    [onSelectedProfilesChange, selectedProfiles],
-  );
-
   const getSelectableRangeIds = React.useCallback(
     (fromId: string, toId: string) => {
       const rows = sortedRowsRef.current;
@@ -1236,7 +1170,6 @@ export function ProfilesDataTable({
 
   const applySelection = React.useCallback(
     (ids: string[]) => {
-      setShowCheckboxes(ids.length > 0);
       onSelectedProfilesChange(ids);
     },
     [onSelectedProfilesChange],
@@ -1283,36 +1216,6 @@ export function ProfilesDataTable({
       applySelection(next);
     },
     [applySelection, browserState, getSelectableRangeIds],
-  );
-
-  // Handle select all checkbox
-  const handleToggleAll = React.useCallback(
-    (checked: boolean) => {
-      const newSet = checked
-        ? new Set(
-            profiles
-              .filter((profile) => {
-                const isRunning =
-                  browserState.isClient && runningProfiles.has(profile.id);
-                const isLaunching = launchingProfiles.has(profile.id);
-                const isStopping = stoppingProfiles.has(profile.id);
-                return !isRunning && !isLaunching && !isStopping;
-              })
-              .map((profile) => profile.id),
-          )
-        : new Set<string>();
-
-      setShowCheckboxes(checked);
-      onSelectedProfilesChange(Array.from(newSet));
-    },
-    [
-      profiles,
-      onSelectedProfilesChange,
-      browserState.isClient,
-      runningProfiles,
-      launchingProfiles,
-      stoppingProfiles,
-    ],
   );
 
   // ── Drag selection helpers ──────────────────────────────────────────────
@@ -1562,30 +1465,11 @@ export function ProfilesDataTable({
     };
   }, []);
 
-  // Memoize selectableProfiles calculation
-  const selectableProfiles = React.useMemo(() => {
-    return profiles.filter((profile) => {
-      const isRunning =
-        browserState.isClient && runningProfiles.has(profile.id);
-      const isLaunching = launchingProfiles.has(profile.id);
-      const isStopping = stoppingProfiles.has(profile.id);
-      return !isRunning && !isLaunching && !isStopping;
-    });
-  }, [
-    profiles,
-    browserState.isClient,
-    runningProfiles,
-    launchingProfiles,
-    stoppingProfiles,
-  ]);
-
   // Build table meta from volatile state so columns can stay stable
   const tableMeta = React.useMemo<TableMeta>(
     () => ({
       t,
       selectedProfiles,
-      selectableCount: selectableProfiles.length,
-      showCheckboxes,
       isClient: browserState.isClient,
       runningProfiles,
       launchingProfiles,
@@ -1613,9 +1497,6 @@ export function ProfilesDataTable({
 
       // Selection helpers
       isProfileSelected: (id: string) => selectedProfiles.includes(id),
-      handleToggleAll,
-      handleCheckboxChange,
-      handleIconClick,
       handleSelectPointerDown,
 
       // Rename helpers
@@ -1675,8 +1556,6 @@ export function ProfilesDataTable({
     [
       t,
       selectedProfiles,
-      selectableProfiles.length,
-      showCheckboxes,
       browserState.isClient,
       runningProfiles,
       launchingProfiles,
@@ -1691,9 +1570,6 @@ export function ProfilesDataTable({
       handleVpnSelection,
       extensionGroups,
       onAssignExtensionGroup,
-      handleToggleAll,
-      handleCheckboxChange,
-      handleIconClick,
       handleSelectPointerDown,
       handleRename,
       profileToRename,
@@ -1723,226 +1599,6 @@ export function ProfilesDataTable({
 
   const columns: ColumnDef<BrowserProfile>[] = React.useMemo(
     () => [
-      {
-        id: "select",
-        header: ({ table }) => {
-          const meta = table.options.meta as TableMeta;
-          return (
-            <span>
-              <Checkbox
-                checked={
-                  meta.selectedProfiles.length === meta.selectableCount &&
-                  meta.selectableCount !== 0
-                }
-                onCheckedChange={(value) => {
-                  meta.handleToggleAll(!!value);
-                }}
-                aria-label={t("common.aria.selectAll")}
-                className="cursor-pointer"
-              />
-            </span>
-          );
-        },
-        cell: ({ row, table }) => {
-          const meta = table.options.meta as TableMeta;
-          const profile = row.original;
-          const browser = profile.browser;
-          const IconComponent = getProfileIcon(profile);
-          const isCrossOs = isCrossOsProfile(profile);
-
-          const isSelected = meta.isProfileSelected(profile.id);
-          const isRunning =
-            meta.isClient && meta.runningProfiles.has(profile.id);
-          const isLaunching = meta.launchingProfiles.has(profile.id);
-          const isStopping = meta.stoppingProfiles.has(profile.id);
-          const isDisabled = isRunning || isLaunching || isStopping;
-
-          // Cross-OS profiles: show OS icon when checkboxes aren't visible, show checkbox when they are
-          if (isCrossOs && !meta.showCheckboxes && !isSelected) {
-            const resolvedOs =
-              profile.host_os ||
-              profile.camoufox_config?.os ||
-              profile.cloak_config?.platform;
-            const osName = resolvedOs
-              ? getOSDisplayName(resolvedOs)
-              : "another OS";
-            const crossOsTooltip = t("crossOs.viewOnly", { os: osName });
-            const OsIcon =
-              resolvedOs === "macos"
-                ? FaApple
-                : resolvedOs === "windows"
-                  ? FaWindows
-                  : FaLinux;
-            return (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span
-                    className="flex justify-center items-center size-4"
-                    onPointerDown={(e) => {
-                      meta.handleSelectPointerDown(e, profile);
-                    }}
-                  >
-                    <button
-                      type="button"
-                      className="flex justify-center items-center p-0 border-none cursor-pointer"
-                      onClick={() => {
-                        if (suppressClickRef.current) {
-                          suppressClickRef.current = false;
-                          return;
-                        }
-                        meta.handleIconClick(profile.id);
-                      }}
-                      aria-label={t("common.aria.selectProfile")}
-                    >
-                      <span className="size-4 group">
-                        <OsIcon className="size-4 text-muted-foreground group-hover:hidden" />
-                        <span className="peer border-input dark:bg-input/30 dark:data-[state=checked]:bg-primary size-4 shrink-0 rounded-[4px] border shadow-xs transition-shadow outline-none size-4 hidden group-hover:block pointer-events-none items-center justify-center duration-150" />
-                      </span>
-                    </button>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{crossOsTooltip}</p>
-                </TooltipContent>
-              </Tooltip>
-            );
-          }
-
-          // Cross-OS profiles with checkboxes visible: show checkbox (selectable for bulk delete)
-          if (isCrossOs && (meta.showCheckboxes || isSelected)) {
-            const resolvedOs =
-              profile.host_os ||
-              profile.camoufox_config?.os ||
-              profile.cloak_config?.platform;
-            const osName = resolvedOs
-              ? getOSDisplayName(resolvedOs)
-              : "another OS";
-            const crossOsTooltip = t("crossOs.viewOnly", { os: osName });
-            return (
-              <NonHoverableTooltip
-                content={<p>{crossOsTooltip}</p>}
-                sideOffset={4}
-                horizontalOffset={8}
-              >
-                <span
-                  className="flex justify-center items-center size-4"
-                  onPointerDown={(e) => {
-                    meta.handleSelectPointerDown(e, profile);
-                  }}
-                >
-                  <Checkbox
-                    checked={isSelected}
-                    onCheckedChange={(value) => {
-                      if (suppressClickRef.current) {
-                        suppressClickRef.current = false;
-                        return;
-                      }
-                      meta.handleCheckboxChange(profile.id, !!value);
-                    }}
-                    aria-label={t("common.aria.selectRow")}
-                    className="size-4"
-                  />
-                </span>
-              </NonHoverableTooltip>
-            );
-          }
-
-          if (isDisabled) {
-            const tooltipMessage = isRunning
-              ? t("profiles.table.cantModifyRunning")
-              : isLaunching
-                ? t("profiles.table.cantModifyLaunching")
-                : isStopping
-                  ? t("profiles.table.cantModifyStopping")
-                  : t("profiles.table.cantModifyUpdating");
-
-            return (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="flex justify-center items-center size-4 cursor-not-allowed">
-                    {IconComponent && (
-                      <IconComponent className="size-4 opacity-50" />
-                    )}
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{tooltipMessage}</p>
-                </TooltipContent>
-              </Tooltip>
-            );
-          }
-
-          const browserName = getBrowserDisplayName(browser);
-
-          if (meta.showCheckboxes || isSelected) {
-            return (
-              <NonHoverableTooltip
-                content={<p>{browserName}</p>}
-                sideOffset={4}
-                horizontalOffset={8}
-              >
-                <span
-                  className="flex justify-center items-center size-4"
-                  onPointerDown={(e) => {
-                    meta.handleSelectPointerDown(e, profile);
-                  }}
-                >
-                  <Checkbox
-                    checked={isSelected}
-                    onCheckedChange={(value) => {
-                      if (suppressClickRef.current) {
-                        suppressClickRef.current = false;
-                        return;
-                      }
-                      meta.handleCheckboxChange(profile.id, !!value);
-                    }}
-                    aria-label={t("common.aria.selectRow")}
-                    className="size-4"
-                  />
-                </span>
-              </NonHoverableTooltip>
-            );
-          }
-
-          return (
-            <NonHoverableTooltip
-              content={<p>{browserName}</p>}
-              sideOffset={4}
-              horizontalOffset={8}
-            >
-              <span
-                className="flex relative justify-center items-center size-4"
-                onPointerDown={(e) => {
-                  meta.handleSelectPointerDown(e, profile);
-                }}
-              >
-                <button
-                  type="button"
-                  className="flex justify-center items-center p-0 border-none cursor-pointer"
-                  onClick={() => {
-                    if (suppressClickRef.current) {
-                      suppressClickRef.current = false;
-                      return;
-                    }
-                    meta.handleIconClick(profile.id);
-                  }}
-                  aria-label={t("common.aria.selectProfile")}
-                >
-                  <span className="size-4 group">
-                    {IconComponent && (
-                      <IconComponent className="size-4 group-hover:hidden" />
-                    )}
-                    <span className="peer border-input dark:bg-input/30 dark:data-[state=checked]:bg-primary size-4 shrink-0 rounded-[4px] border shadow-xs transition-shadow outline-none size-4 hidden group-hover:block pointer-events-none items-center justify-center duration-150" />
-                  </span>
-                </button>
-              </span>
-            </NonHoverableTooltip>
-          );
-        },
-        enableSorting: false,
-        enableHiding: false,
-        size: 28,
-      },
       {
         id: "actions",
         size: 48,

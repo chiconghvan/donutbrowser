@@ -37,8 +37,7 @@ function makeDatePrefix(): string {
   const now = new Date();
   const dd = String(now.getDate()).padStart(2, "0");
   const mm = String(now.getMonth() + 1).padStart(2, "0");
-  const yy = String(now.getFullYear()).slice(-2);
-  return `${dd}${mm}${yy}`;
+  return `${dd}${mm}.`;
 }
 
 export function BulkCreateProfileDialog({
@@ -54,6 +53,7 @@ export function BulkCreateProfileDialog({
   const [selectedBrowser, setSelectedBrowser] =
     useState<BrowserTypeString | null>(null);
   const [profileCount, setProfileCount] = useState<number>(1);
+  const [namePrefix, setNamePrefix] = useState(makeDatePrefix());
   const [proxyText, setProxyText] = useState("");
   const [isCreating, setIsCreating] = useState(false);
 
@@ -182,9 +182,8 @@ export function BulkCreateProfileDialog({
     const versionInfo = getCreatableVersion(selectedBrowser);
     if (!versionInfo) return;
 
-    const datePrefix = makeDatePrefix();
     const entries = Array.from({ length: profileCount }, (_, i) => ({
-      name: `${datePrefix}.${String(i + 1).padStart(2, "0")}`,
+      name: `${namePrefix}${String(i + 1).padStart(2, "0")}`,
       proxy: proxyLines[i] || null,
     }));
 
@@ -219,6 +218,7 @@ export function BulkCreateProfileDialog({
     setCurrentStep("browser-selection");
     setSelectedBrowser(null);
     setProfileCount(1);
+    setNamePrefix(makeDatePrefix());
     setProxyText("");
     setReleaseTypesByBrowser({});
     setIsLoadingReleaseTypes(false);
@@ -384,10 +384,23 @@ export function BulkCreateProfileDialog({
                 />
                 <p className="text-xs text-muted-foreground">
                   {t("bulkCreateProfile.namePattern", {
-                    prefix: makeDatePrefix(),
+                    prefix: namePrefix,
                     count: profileCount,
                   })}
                 </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="bulk-prefix">
+                  {t("bulkCreateProfile.prefixLabel")}
+                </Label>
+                <Input
+                  id="bulk-prefix"
+                  type="text"
+                  value={namePrefix}
+                  onChange={(e) => setNamePrefix(e.target.value)}
+                  disabled={isCreating}
+                />
               </div>
 
               <div className="space-y-2">
