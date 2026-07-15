@@ -1,6 +1,23 @@
 # Changelog
 
 
+## v0.27.27 (2026-07-15)
+
+### Bug Fixes
+
+- remove redundant & in info! argument (clippy useless_borrows_in_formatting)
+- ignore RUSTSEC-2026-0204 (crossbeam-epoch transitive dep)
+- clippy '?' operator warnings in api_client and proxy_manager
+
+### Documentation
+
+- update CHANGELOG.md and README.md for v0.27.26 [skip ci]
+
+### Other
+
+- release: v0.27.27
+
+
 ## v0.27.27 (2026-07-11)
 
 ### Features
