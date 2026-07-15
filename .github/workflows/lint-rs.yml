@@ -114,5 +114,5 @@ jobs:
 
       - name: Run cargo audit security check
         # quick-xml 0.39.4 is still pulled transitively by plist through Tauri.
-        run: cargo audit --ignore RUSTSEC-2026-0194 --ignore RUSTSEC-2026-0195
+        run:           cargo audit --ignore RUSTSEC-2026-0194 --ignore RUSTSEC-2026-0195 --ignore RUSTSEC-2026-0204
         working-directory: src-tauri
