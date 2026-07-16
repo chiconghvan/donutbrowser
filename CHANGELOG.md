@@ -1,6 +1,17 @@
 # Changelog
 
 
+## v0.27.29 (2026-07-16)
+
+### Bug Fixes
+
+- fix spellcheck CI failing on Vietnamese Single-Instance.md
+- fix contributors CI Branch not found error on tag trigger
+
+### Maintenance
+
+- chore: bump version to 0.27.29
+
 ## v0.27.28 (2026-07-16)
 
 ### Features
