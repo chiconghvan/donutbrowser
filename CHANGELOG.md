@@ -7,10 +7,14 @@
 
 - fix spellcheck CI failing on Vietnamese Single-Instance.md
 - fix contributors CI Branch not found error on tag trigger
+- fix: make cargo-audit install resilient with retries and --locked
 
 ### Maintenance
 
 - chore: bump version to 0.27.29
+- ci: pin action versions to commit SHA in release-build.yml
+- ci: fix Discord notification download URLs with embedded quotes
+- ci: remove dead Windows autocrlf step from lint-js.yml
 
 ## v0.27.28 (2026-07-16)
 

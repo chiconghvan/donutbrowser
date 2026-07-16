@@ -460,10 +460,10 @@ jobs:
             --arg title "Donut Browser ${VERSION} Released" \
             --arg url "$RELEASE_URL" \
             --arg changes "$CHANGES" \
-            --arg dl_mac_arm "https://github.com/'"${GITHUB_REPOSITORY}"'/releases/download/'"${VERSION}"'/Donut_'"${VERSION#v}"'_aarch64.dmg" \
-            --arg dl_mac_intel "https://github.com/'"${GITHUB_REPOSITORY}"'/releases/download/'"${VERSION}"'/Donut_'"${VERSION#v}"'_x64.dmg" \
-            --arg dl_win "https://github.com/'"${GITHUB_REPOSITORY}"'/releases/download/'"${VERSION}"'/Donut_'"${VERSION#v}"'_x64-setup.exe" \
-            --arg dl_linux "https://github.com/'"${GITHUB_REPOSITORY}"'/releases/download/'"${VERSION}"'/Donut_'"${VERSION#v}"'_amd64.AppImage" \
+            --arg dl_mac_arm "https://github.com/${GITHUB_REPOSITORY}/releases/download/${VERSION}/Donut_${VERSION#v}_aarch64.dmg" \
+            --arg dl_mac_intel "https://github.com/${GITHUB_REPOSITORY}/releases/download/${VERSION}/Donut_${VERSION#v}_x64.dmg" \
+            --arg dl_win "https://github.com/${GITHUB_REPOSITORY}/releases/download/${VERSION}/Donut_${VERSION#v}_x64-setup.exe" \
+            --arg dl_linux "https://github.com/${GITHUB_REPOSITORY}/releases/download/${VERSION}/Donut_${VERSION#v}_amd64.AppImage" \
             '{
               embeds: [{
                 title: $title,
