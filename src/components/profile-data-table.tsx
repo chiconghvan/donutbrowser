@@ -81,6 +81,7 @@ import { useTeamLocks } from "@/hooks/use-team-locks";
 import {
   getBrowserDisplayName,
   getOSDisplayName,
+  getProfileIcon,
   isCrossOsProfile,
 } from "@/lib/browser-utils";
 import { formatRelativeTime } from "@/lib/flag-utils";
@@ -711,6 +712,7 @@ export function ProfilesDataTable({
   // Sync external selectedProfiles with table's row selection state
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
   const prevSelectedProfilesRef = React.useRef<string[]>(selectedProfiles);
+  const isExternalSyncRef = React.useRef(false);
 
   // Update row selection when external selectedProfiles changes
   React.useEffect(() => {
@@ -730,33 +732,46 @@ export function ProfilesDataTable({
     }
   }, [selectedProfiles]);
 
+  // Store latest callback in a ref
+  const onSelectedProfilesChangeRef = React.useRef(onSelectedProfilesChange);
+  React.useEffect(() => {
+    onSelectedProfilesChangeRef.current = onSelectedProfilesChange;
+  }, [onSelectedProfilesChange]);
+
+  // Track previous rowSelection to detect changes
+  const prevRowSelectionRef = React.useRef<RowSelectionState>({});
+
+  // Sync internal rowSelection to parent — only for UI-originated changes
+  React.useEffect(() => {
+    if (isExternalSyncRef.current) {
+      isExternalSyncRef.current = false;
+      prevRowSelectionRef.current = rowSelection;
+      return;
+    }
+
+    const prevIds = Object.keys(prevRowSelectionRef.current).filter(
+      (id) => prevRowSelectionRef.current[id],
+    );
+    const selectedIds = Object.keys(rowSelection).filter(
+      (id) => rowSelection[id],
+    );
+
+    if (
+      selectedIds.length !== prevIds.length ||
+      !selectedIds.every((id) => prevIds.includes(id))
+    ) {
+      setTimeout(() => onSelectedProfilesChangeRef.current(selectedIds));
+    }
+
+    prevRowSelectionRef.current = rowSelection;
+  }, [rowSelection]);
+
   // Update external selectedProfiles when table selection changes
   const handleRowSelectionChange = React.useCallback(
     (updater: React.SetStateAction<RowSelectionState>) => {
-      setRowSelection((prevSelection) => {
-        const newSelection =
-          typeof updater === "function" ? updater(prevSelection) : updater;
-
-        const selectedIds = Object.keys(newSelection).filter(
-          (id) => newSelection[id],
-        );
-
-        // Only update external state if selection actually changed
-        const prevIds = Object.keys(prevSelection).filter(
-          (id) => prevSelection[id],
-        );
-
-        if (
-          selectedIds.length !== prevIds.length ||
-          !selectedIds.every((id) => prevIds.includes(id))
-        ) {
-          onSelectedProfilesChange(selectedIds);
-        }
-
-        return newSelection;
-      });
+      setRowSelection(typeof updater === "function" ? updater : () => updater);
     },
-    [onSelectedProfilesChange],
+    [],
   );
   const [profileToRename, setProfileToRename] =
     React.useState<BrowserProfile | null>(null);
@@ -1600,8 +1615,25 @@ export function ProfilesDataTable({
   const columns: ColumnDef<BrowserProfile>[] = React.useMemo(
     () => [
       {
+        id: "icon",
+        size: 20,
+        header: () => null,
+        cell: ({ row }) => {
+          const profile = row.original;
+          const IconComponent = getProfileIcon(profile);
+          if (!IconComponent) return null;
+          return (
+            <span className="flex justify-center items-center size-4">
+              <IconComponent className="size-4" />
+            </span>
+          );
+        },
+        enableSorting: false,
+        enableHiding: false,
+      },
+      {
         id: "actions",
-        size: 48,
+        size: 25,
         cell: ({ row, table }) => {
           const meta = table.options.meta as TableMeta;
           const profile = row.original;

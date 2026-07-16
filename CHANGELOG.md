@@ -1,6 +1,21 @@
 # Changelog
 
 
+## v0.27.28 (2026-07-16)
+
+### Features
+
+- add browser icon column to profile data table (restored from v0.27.26)
+
+### Bug Fixes
+
+- fix "Maximum update depth exceeded" error when selecting profiles via click/drag
+- fix browser icons appearing faded in the new icon column
+
+### Maintenance
+
+- chore: bump version to 0.27.28
+
 ## v0.27.27 (2026-07-15)
 
 ### Bug Fixes
@@ -16,7 +31,6 @@
 ### Other
 
 - release: v0.27.27
-
 
 ## v0.27.27 (2026-07-11)
 
