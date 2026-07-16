@@ -5,6 +5,19 @@
 
 ### Bug Fixes
 
+- make cargo-audit install resilient with retries and --locked
+
+### Other
+
+- release: v0.27.29
+- release: v0.27.29
+- release: v0.27.28
+
+
+## v0.27.29 (2026-07-16)
+
+### Bug Fixes
+
 - fix spellcheck CI failing on Vietnamese Single-Instance.md
 - fix contributors CI Branch not found error on tag trigger
 - fix: make cargo-audit install resilient with retries and --locked
