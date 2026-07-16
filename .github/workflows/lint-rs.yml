@@ -61,7 +61,18 @@ jobs:
           components: rustfmt, clippy
 
       - name: Install cargo-audit
-        run: cargo install cargo-audit
+        shell: bash
+        run: |
+          for i in 1 2 3; do
+            cargo install cargo-audit --locked && break
+            if [ $i -lt 3 ]; then
+              echo "Retrying cargo-audit install ($i/3) in 5 seconds..."
+              sleep 5
+            else
+              echo "cargo-audit install failed after 3 attempts" >&2
+              exit 1
+            fi
+          done
 
       - name: Install dependencies (Ubuntu only)
         if: matrix.os == 'ubuntu-22.04'
